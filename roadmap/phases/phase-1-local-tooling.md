@@ -1,6 +1,6 @@
 # Phase 1: Local Tooling
 
-**Status**: In Progress
+**Status**: Alpha Complete (2026-08-20)
 **Goal**: CLI tools for single-user KB population
 
 ---
@@ -42,7 +42,7 @@ Build tools that help individual developers populate their local KB faster:
 ./scripts/kb-ingest --input notes.md --auto
 ```
 
-**Status**: 🔨 Alpha (basic implementation)
+**Status**: Alpha Complete - basic text parsing, auto-bucket detection, file ref extraction
 
 ---
 
@@ -68,7 +68,7 @@ Build tools that help individual developers populate their local KB faster:
 ./scripts/kb-discover ./legacy-app --focus api-routes
 ```
 
-**Status**: 🔨 Alpha (basic implementation)
+**Status**: Alpha Complete - project type detection, entry point analysis, integration scanning
 
 ---
 
@@ -92,11 +92,13 @@ Build tools that help individual developers populate their local KB faster:
 
 | Milestone | Description | Status |
 |-----------|-------------|--------|
-| M1.1 | `kb-ingest` alpha — basic text parsing | 🔨 In Progress |
-| M1.2 | `kb-discover` alpha — directory analysis | 🔨 In Progress |
-| M1.3 | `kb-ingest` beta — Claude session parsing | 📋 Planned |
-| M1.4 | `kb-suggest` prototype | 📋 Planned |
-| M1.5 | Documentation + examples | 📋 Planned |
+| M1.1 | `kb-ingest` alpha — basic text parsing | Done (2026-08-20) |
+| M1.2 | `kb-discover` alpha — directory analysis | Done (2026-08-20) |
+| M1.3 | `kb-lint` — KB validation with --fix | Done (2026-08-20) |
+| M1.4 | Test suite for CLI tools | Done (2026-08-20) |
+| M1.5 | Worked examples in KB | Done (2026-08-20) |
+| M1.6 | `kb-ingest` beta — Claude session parsing | Planned |
+| M1.7 | `kb-suggest` prototype | Planned (Phase 2 prerequisite) |
 
 ---
 

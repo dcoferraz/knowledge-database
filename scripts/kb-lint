@@ -24,6 +24,20 @@ ERRORS=0
 WARNINGS=0
 FIXED=0
 
+# Sanitize string for safe use in sed replacement
+# Escapes: / & \ and newlines
+sanitize_for_sed() {
+    local input="$1"
+    printf '%s' "$input" | sed 's/[&/\]/\\&/g' | tr -d '\n'
+}
+
+# Sanitize for safe YAML/markdown (remove control chars, limit length)
+sanitize_metadata() {
+    local input="$1"
+    local max_len="${2:-100}"
+    printf '%s' "$input" | tr -cd '[:print:]' | head -c "$max_len"
+}
+
 # Parse args
 for arg in "$@"; do
     case $arg in
@@ -73,8 +87,52 @@ else
                 [[ -f "$entry" ]] || continue
                 filename=$(basename "$entry")
                 if ! grep -q "$filename" "$INDEX_FILE" 2>/dev/null; then
-                    echo -e "${RED}  ERROR: Entry not in INDEX.md: $bucket/$filename${NC}"
-                    ((ERRORS++))
+                    if [[ "$FIX_MODE" == true ]]; then
+                        # Extract and sanitize metadata for INDEX row
+                        entry_date=$(grep "^date:" "$entry" | head -1 | sed 's/date:[[:space:]]*//' | tr -cd '0-9-')
+                        entry_title=$(grep "^title:" "$entry" | head -1 | sed 's/title:[[:space:]]*//' | sed 's/^"//' | sed 's/"$//')
+                        entry_title=$(sanitize_metadata "$entry_title" 60)
+                        entry_status=$(grep "^status:" "$entry" | head -1 | sed 's/status:[[:space:]]*//' | tr -cd 'a-z')
+                        entry_tags=$(grep "^tags:" "$entry" | head -1 | sed 's/tags:[[:space:]]*//')
+                        entry_tags=$(sanitize_metadata "$entry_tags" 80)
+
+                        # Validate date format
+                        if [[ ! "$entry_date" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                            entry_date="????-??-??"
+                        fi
+
+                        # Determine which section to add to
+                        section_name=""
+                        case $bucket in
+                            explorations) section_name="Explorations" ;;
+                            solutions) section_name="Solutions" ;;
+                            errors) section_name="Errors" ;;
+                            decisions) section_name="Decisions" ;;
+                        esac
+
+                        # Build the row with sanitized values for sed
+                        safe_title=$(sanitize_for_sed "${entry_title:-Untitled}")
+                        safe_tags=$(sanitize_for_sed "${entry_tags:-[]}")
+                        new_row="| ${entry_date:-????-??-??} | ${safe_title} | ${entry_status:-tentative} | ${safe_tags} | $bucket/$filename |"
+
+                        # Find the section and add after the header row
+                        if grep -q "^## $section_name" "$INDEX_FILE"; then
+                            # Use awk for safer insertion (avoids sed injection)
+                            awk -v section="## $section_name" -v row="$new_row" '
+                                $0 == section { in_section=1 }
+                                in_section && /^\| Date / { print; print row; in_section=0; next }
+                                { print }
+                            ' "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
+                            echo -e "${GREEN}  FIXED: Added to INDEX.md: $bucket/$filename${NC}"
+                            ((FIXED++))
+                        else
+                            echo -e "${YELLOW}  WARN: Could not find ## $section_name in INDEX.md, add manually${NC}"
+                            ((WARNINGS++))
+                        fi
+                    else
+                        echo -e "${RED}  ERROR: Entry not in INDEX.md: $bucket/$filename${NC}"
+                        ((ERRORS++))
+                    fi
                 fi
             done
         fi
@@ -134,14 +192,29 @@ for bucket in explorations solutions errors decisions; do
             if [[ "$status" == "verified" ]]; then
                 # Check for Verification section with actual content
                 if ! grep -q "^## Verification" "$entry"; then
-                    echo -e "${RED}  ERROR: verified status but no Verification section: $bucket/$filename${NC}"
-                    ((ERRORS++))
+                    if [[ "$FIX_MODE" == true ]]; then
+                        # Downgrade to tentative
+                        sed -i.bak "s/^status:[[:space:]]*verified/status: tentative/" "$entry"
+                        rm -f "$entry.bak"
+                        echo -e "${GREEN}  FIXED: Downgraded to tentative (no Verification): $bucket/$filename${NC}"
+                        ((FIXED++))
+                    else
+                        echo -e "${RED}  ERROR: verified status but no Verification section: $bucket/$filename${NC}"
+                        ((ERRORS++))
+                    fi
                 else
                     # Check if Verification has content (not just comments)
                     verif_content=$(sed -n '/^## Verification/,/^## /p' "$entry" | grep -v "^## " | grep -v "^<!--" | grep -v "^-->" | grep -v "^$" | head -5)
                     if [[ -z "$verif_content" ]]; then
-                        echo -e "${YELLOW}  WARN: Verification section appears empty: $bucket/$filename${NC}"
-                        ((WARNINGS++))
+                        if [[ "$FIX_MODE" == true ]]; then
+                            sed -i.bak "s/^status:[[:space:]]*verified/status: tentative/" "$entry"
+                            rm -f "$entry.bak"
+                            echo -e "${GREEN}  FIXED: Downgraded to tentative (empty Verification): $bucket/$filename${NC}"
+                            ((FIXED++))
+                        else
+                            echo -e "${YELLOW}  WARN: Verification section appears empty: $bucket/$filename${NC}"
+                            ((WARNINGS++))
+                        fi
                     fi
                 fi
             fi
@@ -197,8 +270,8 @@ fi
 # --- Check 7: Tag hygiene ---
 echo -e "${BLUE}[7/7] Checking tag hygiene...${NC}"
 
-# Collect all tags
-all_tags=$(grep -rh "^tags:" "$KB_DIR" 2>/dev/null | sed 's/tags:[[:space:]]*//' | tr -d '[]' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | grep -v "^$" | sort)
+# Collect all tags (exclude template file)
+all_tags=$(grep -rh "^tags:" "$KB_DIR" --include="*.md" 2>/dev/null | grep -v "_TEMPLATE.md" | sed 's/tags:[[:space:]]*//' | tr -d '[]' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | grep -v "^$" | grep -v "^#" | grep -v "<" | sort)
 
 if [[ -n "$all_tags" ]]; then
     # Find tags used only once (potential typos)
@@ -236,6 +309,10 @@ done
 echo "  Total entries: $total_entries"
 echo ""
 
+if [[ "$FIX_MODE" == true && $FIXED -gt 0 ]]; then
+    echo -e "${GREEN}Fixed: $FIXED${NC}"
+fi
+
 if [[ $ERRORS -eq 0 && $WARNINGS -eq 0 ]]; then
     echo -e "${GREEN}All checks passed.${NC}"
     exit 0
@@ -248,5 +325,8 @@ else
     echo -e "${RED}Errors: $ERRORS${NC}"
     echo ""
     echo -e "${RED}KB has issues that need fixing.${NC}"
+    if [[ "$FIX_MODE" == false ]]; then
+        echo -e "${BLUE}Tip: Run with --fix to auto-fix some issues${NC}"
+    fi
     exit 1
 fi

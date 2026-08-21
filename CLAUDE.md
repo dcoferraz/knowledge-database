@@ -34,10 +34,12 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ## The Eight Enforcement Mechanisms
 
+> **Implementation Status**: These mechanisms are conventions enforced by agent behavior (reading this file). They are NOT automated (no hooks, CI gates, or runtime validation). See Phase 2 in roadmap/ for planned automation.
+
 ### 1. Always-On Enforcement
 
 - Loop is mandatory, not triggered by user phrases
-- On adoption: append HARD RULE to agent config (`.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules/`, `AGENTS.md`). Detect-before-append; add exactly once. Create file if absent.
+- **Planned**: On adoption, auto-append HARD RULE to agent config. Not yet implemented - requires manual copy.
 
 ### 2. Routing to Canonical Docs
 
@@ -52,6 +54,8 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
   - API route change → update route reference
   - Config change → update deployment docs
 - Before finishing: verify each invariant held. Code changed but paired doc didn't? Task is INCOMPLETE.
+
+> **Note**: Currently manual verification via checklist. Automated detection (git hook or CI) planned for Phase 2.
 
 ### 4. Source-of-Truth Hierarchy + Hard Grounding
 
@@ -79,13 +83,15 @@ No proof → `status: tentative`. Period.
 
 ### 6. Tiered Memory Scopes
 
-| Scope | Contents | Location |
-|-------|----------|----------|
-| **user** | Cross-project preferences, personal patterns | `~/.kb/user/` or agent config |
-| **repo** | Verified codebase facts, build/deploy gotchas, conventions | `knowledge-db/` |
-| **session** | Task-only working notes (discardable) | In-memory or temp file |
+| Scope | Contents | Location | Status |
+|-------|----------|----------|--------|
+| **user** | Cross-project preferences, personal patterns | `~/.kb/user/` or agent config | **Planned** |
+| **repo** | Verified codebase facts, build/deploy gotchas, conventions | `knowledge-db/` | Implemented |
+| **session** | Task-only working notes (discardable) | In-memory or temp file | Agent-native |
 
 Write build/runtime traps and fixes to **repo scope** so they're reused, not rediscovered.
+
+> **Note**: User-scope (`~/.kb/user/`) is not yet implemented. Currently all KB lives in repo scope.
 
 ### 7. Maintenance + Dedup Discipline
 

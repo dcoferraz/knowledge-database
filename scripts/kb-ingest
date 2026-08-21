@@ -24,6 +24,20 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Sanitize string for YAML value (escape special chars)
+sanitize_yaml() {
+    local input="$1"
+    # Remove newlines, escape colons if not in quotes, escape quotes
+    echo "$input" | tr '\n' ' ' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g"
+}
+
+# Sanitize for safe filename
+sanitize_filename() {
+    local input="$1"
+    # Remove any path traversal attempts and special chars
+    echo "$input" | tr -cd '[:alnum:][:space:]-_.' | tr '[:space:]' '-' | sed 's/--*/-/g'
+}
+
 usage() {
     cat << EOF
 kb-ingest: Parse text into Knowledge Database entries
@@ -286,7 +300,12 @@ SOURCES=$(extract_sources "$CONTENT")
 TAGS=$(extract_tags "$CONTENT")
 SUMMARY=$(generate_summary "$CONTENT")
 DATE=$(date +%Y-%m-%d)
-SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | head -c 40)
+# Sanitize slug to prevent path traversal and special chars
+SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:] -' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | head -c 40)
+# Validate slug is not empty or suspicious
+if [[ -z "$SLUG" || "$SLUG" == "-" ]]; then
+    SLUG="untitled"
+fi
 FILENAME="${DATE}-${SLUG}.md"
 FILEPATH="$KB_DIR/$BUCKET/$FILENAME"
 
@@ -300,13 +319,19 @@ esac
 
 # Build entry content
 build_entry() {
+    # Sanitize values for safe YAML embedding
+    local safe_title
+    safe_title=$(sanitize_yaml "$TITLE")
+    local safe_tags
+    safe_tags=$(sanitize_yaml "$TAGS")
+
     cat << EOF
 ---
-title: $TITLE
+title: "${safe_title}"
 type: $TYPE
 status: tentative
 date: $DATE
-tags: [${TAGS}]
+tags: [${safe_tags}]
 sources:
 EOF
 
