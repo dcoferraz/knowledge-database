@@ -83,22 +83,24 @@ No proof → `status: tentative`. Period.
 
 ### 6. Tiered Memory Scopes
 
-| Scope | Contents | Location | Status |
-|-------|----------|----------|--------|
-| **user** | Cross-project preferences, personal patterns | `~/.kb/user/` or agent config | **Planned** |
-| **repo** | Verified codebase facts, build/deploy gotchas, conventions | `knowledge-db/` | Implemented |
-| **session** | Task-only working notes (discardable) | In-memory or temp file | Agent-native |
+Memory belongs at different levels. Write to the appropriate scope:
+
+| Scope | Contents | Location |
+|-------|----------|----------|
+| **repo** | Verified codebase facts, build/deploy gotchas, conventions | `knowledge-db/` |
+| **session** | Task-only working notes (discardable) | In-memory or temp file |
 
 Write build/runtime traps and fixes to **repo scope** so they're reused, not rediscovered.
 
-> **Note**: User-scope (`~/.kb/user/`) is not yet implemented. Currently all KB lives in repo scope.
+> **Future**: User-scope (`~/.kb/user/`) for cross-project preferences planned for Phase 2.
 
 ### 7. Maintenance + Dedup Discipline
 
 - **Reuse tags**: grep existing tags before creating new ones; vocabulary lives in INDEX.md
 - **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
-- **Periodic lint**: every entry has sources, valid status, INDEX row; newest rows on top
+- **Periodic lint**: run `kb-lint` to check sources, valid status, INDEX sync; newest rows on top
+- **Archival at scale**: When INDEX.md exceeds ~100 entries, move older entries (6+ months) to `INDEX-archive-YYYY.md`. Keep INDEX.md focused on active knowledge.
 
 ### 8. Auto-Capture (Mandatory)
 
@@ -122,6 +124,8 @@ Different buckets have different granularity rules:
 | decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
 
 **decisions/ rule**: If you debated A vs B, that's one entry. Multiple debates = multiple entries.
+
+**When to split**: If you would search for it separately, it deserves a separate entry.
 
 #### What Triggers Auto-Capture
 

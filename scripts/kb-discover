@@ -113,8 +113,15 @@ if [[ -z "$OUTPUT_DIR" ]]; then
     OUTPUT_DIR="$KB_DIR/explorations"
 fi
 
-# Resolve to absolute path
+# Resolve to absolute path and validate
 TARGET_DIR=$(cd "$TARGET_DIR" && pwd)
+
+# Security: Validate resolved path contains only safe characters
+# Prevents command injection via malicious directory names
+if [[ "$TARGET_DIR" =~ [\`\$\(\)\;\|\&\<\>\"\'] ]]; then
+    echo -e "${RED}Error: Path contains unsafe characters${NC}"
+    exit 1
+fi
 TARGET_NAME=$(basename "$TARGET_DIR")
 
 echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"

@@ -118,11 +118,14 @@ else
                         # Find the section and add after the header row
                         if grep -q "^## $section_name" "$INDEX_FILE"; then
                             # Use awk for safer insertion (avoids sed injection)
+                            # Use mktemp for secure temp file (prevents symlink attacks)
+                            TEMP_FILE=$(mktemp)
+                            trap "rm -f '$TEMP_FILE'" EXIT
                             awk -v section="## $section_name" -v row="$new_row" '
                                 $0 == section { in_section=1 }
                                 in_section && /^\| Date / { print; print row; in_section=0; next }
                                 { print }
-                            ' "$INDEX_FILE" > "$INDEX_FILE.tmp" && mv "$INDEX_FILE.tmp" "$INDEX_FILE"
+                            ' "$INDEX_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$INDEX_FILE"
                             echo -e "${GREEN}  FIXED: Added to INDEX.md: $bucket/$filename${NC}"
                             ((FIXED++))
                         else
@@ -193,9 +196,9 @@ for bucket in explorations solutions errors decisions; do
                 # Check for Verification section with actual content
                 if ! grep -q "^## Verification" "$entry"; then
                     if [[ "$FIX_MODE" == true ]]; then
-                        # Downgrade to tentative
-                        sed -i.bak "s/^status:[[:space:]]*verified/status: tentative/" "$entry"
-                        rm -f "$entry.bak"
+                        # Downgrade to tentative (portable sed - works on both macOS and Linux)
+                        TEMP_ENTRY=$(mktemp)
+                        sed "s/^status:[[:space:]]*verified/status: tentative/" "$entry" > "$TEMP_ENTRY" && mv "$TEMP_ENTRY" "$entry"
                         echo -e "${GREEN}  FIXED: Downgraded to tentative (no Verification): $bucket/$filename${NC}"
                         ((FIXED++))
                     else
@@ -207,8 +210,9 @@ for bucket in explorations solutions errors decisions; do
                     verif_content=$(sed -n '/^## Verification/,/^## /p' "$entry" | grep -v "^## " | grep -v "^<!--" | grep -v "^-->" | grep -v "^$" | head -5)
                     if [[ -z "$verif_content" ]]; then
                         if [[ "$FIX_MODE" == true ]]; then
-                            sed -i.bak "s/^status:[[:space:]]*verified/status: tentative/" "$entry"
-                            rm -f "$entry.bak"
+                            # Portable sed - works on both macOS and Linux
+                            TEMP_ENTRY=$(mktemp)
+                            sed "s/^status:[[:space:]]*verified/status: tentative/" "$entry" > "$TEMP_ENTRY" && mv "$TEMP_ENTRY" "$entry"
                             echo -e "${GREEN}  FIXED: Downgraded to tentative (empty Verification): $bucket/$filename${NC}"
                             ((FIXED++))
                         else

@@ -104,19 +104,31 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Max input size (1MB) to prevent DoS
+MAX_SIZE=$((1024 * 1024))
+
 # Read input
 if [[ -n "$INPUT_FILE" ]]; then
     if [[ ! -f "$INPUT_FILE" ]]; then
         echo -e "${RED}Error: File not found: $INPUT_FILE${NC}"
         exit 1
     fi
+    # Check file size before reading
+    FILE_SIZE=$(stat -f%z "$INPUT_FILE" 2>/dev/null || stat -c%s "$INPUT_FILE" 2>/dev/null || echo 0)
+    if [[ "$FILE_SIZE" -gt "$MAX_SIZE" ]]; then
+        echo -e "${RED}Error: File too large (max 1MB). Consider splitting input.${NC}"
+        exit 1
+    fi
     CONTENT=$(cat "$INPUT_FILE")
 else
-    # Read from stdin
+    # Read from stdin with size limit
     if [[ -t 0 ]]; then
         echo -e "${YELLOW}Reading from stdin (paste text, then Ctrl+D):${NC}"
     fi
-    CONTENT=$(cat)
+    CONTENT=$(head -c "$MAX_SIZE")
+    if [[ ${#CONTENT} -ge $MAX_SIZE ]]; then
+        echo -e "${YELLOW}Warning: Input truncated to 1MB${NC}"
+    fi
 fi
 
 if [[ -z "$CONTENT" ]]; then
@@ -291,6 +303,19 @@ if [[ ! -d "$KB_DIR" ]]; then
     echo -e "${YELLOW}Run ./scripts/init-knowledge-db.sh first${NC}"
     exit 1
 fi
+
+# Security: Validate KB_DIR is within acceptable paths (prevent path traversal to system dirs)
+KB_DIR_REAL=$(cd "$KB_DIR" 2>/dev/null && pwd)
+CURRENT_DIR=$(pwd)
+# Allow: current working tree, home directory, or standard temp directories
+if [[ ! "$KB_DIR_REAL" =~ ^"$CURRENT_DIR" && \
+      ! "$KB_DIR_REAL" =~ ^"$HOME" && \
+      ! "$KB_DIR_REAL" =~ ^/tmp && \
+      ! "$KB_DIR_REAL" =~ ^/var/folders ]]; then
+    echo -e "${RED}Error: KB directory must be within project, home, or temp directory${NC}"
+    exit 1
+fi
+KB_DIR="$KB_DIR_REAL"
 
 # Extract metadata
 if [[ -z "$TITLE" ]]; then

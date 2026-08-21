@@ -9,7 +9,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-0.3.0-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.1-orange)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-blueviolet)](https://claude.ai/claude-code)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-compatible-green)](https://github.com/features/copilot)
@@ -129,7 +129,7 @@ Not opt-in — these **ten mechanisms** enforce on every non-trivial task:
 │                                                                                │
 │  5. EVIDENCE         verified status REQUIRES proof block                      │
 │                                                                                │
-│  6. SCOPES           user / repo / session separation                          │
+│  6. SCOPES           repo / session separation (write to right level)          │
 │                                                                                │
 │  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
 │                                                                                │

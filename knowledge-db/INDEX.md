@@ -86,6 +86,7 @@ _"Why we chose X" — design/architecture choices and trade-offs_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-08-21 | Security hardening approach for CLI tools | verified | [area:tooling, layer:cli, area:security] | decisions/2026-08-21-security-hardening-approach.md |
 | 2026-08-21 | decisions/ bucket: one entry per choice | verified | [area:tooling, layer:enforcement] | decisions/2026-08-21-one-entry-per-choice.md |
 | 2026-08-21 | Consent only for superseding verified entries | verified | [area:tooling, layer:enforcement] | decisions/2026-08-21-consent-only-for-superseding.md |
 | 2026-08-21 | Incremental capture vs batched at session end | verified | [area:tooling, layer:enforcement] | decisions/2026-08-21-incremental-vs-batched-capture.md |
@@ -123,6 +124,7 @@ _Reuse existing tags before creating new ones. Grep first: `grep -r "tags:" know
 - `area:infra` - Infrastructure/deployment
 - `area:test` - Testing
 - `area:tooling` - CLI tools, scripts, automation
+- `area:security` - Security fixes and hardening
 
 ### Layers (architecture)
 - `layer:controller` - Request handlers

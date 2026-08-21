@@ -14,8 +14,7 @@ trigger_phrases:
   - log this bug
   - bootstrap knowledge database
   - initialize KB
-  - start of task
-  - before exploring
+  - what do we know about
 ---
 
 # Knowledge Database Skill

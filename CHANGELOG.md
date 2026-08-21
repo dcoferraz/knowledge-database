@@ -5,6 +5,21 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-21
+
+### Fixed
+- **Security**: Command injection via unsanitized directory path in kb-discover
+- **Security**: Path traversal in kb-ingest --kb-dir flag
+- **Security**: Temp file race condition in kb-lint (now uses mktemp)
+- **Portability**: sed -i.bak macOS-only syntax now works on Linux
+- **DoS prevention**: Added 1MB input size limit to kb-ingest
+
+### Changed
+- Mechanism 6 (SCOPES) clarified: repo/session only, user-scope moved to Phase 2
+- Removed generic trigger phrases ("start of task") from SKILL.md
+- Added archival guidance for INDEX.md at scale (100+ entries)
+- Added "when to split" heuristic for entry granularity
+
 ## [0.3.0] - 2026-08-21
 
 ### Added
@@ -68,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.3.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.0...v0.2.1
