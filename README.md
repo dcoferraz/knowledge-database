@@ -133,7 +133,7 @@ Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
 │                                                                                │
 │  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
 │                                                                                │
-│  8. AUTO-CAPTURE     Prompt user at task end: "Create KB entry?"               │
+│  8. AUTO-CAPTURE     Non-trivial task = KB entry created (mandatory)           │
 │                                                                                │
 │  9. CONSENT          Ask before superseding verified entries                   │
 │                                                                                │

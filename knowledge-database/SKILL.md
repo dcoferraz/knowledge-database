@@ -76,18 +76,21 @@ Bootstrap is safe to run multiple times. Never overwrites existing entries.
 
 ## 3. WRITE Loop (end of task)
 
-### Auto-Capture Enforcement
+### Auto-Capture (Mandatory)
 
-**At the end of EVERY non-trivial task, you MUST prompt the user:**
+**At the end of EVERY non-trivial task, CREATE a KB entry.**
 
 ```
-This session involved [describe work]. Create KB entry?
-- [Y] Create entry in [bucket]/
-- [N] Skip (work was trivial)
-- [T] Mark as tentative (lacking proof)
+Creating KB entry for: [describe work]
+  Bucket: [suggested bucket]/
+  Status: [verified if proven, tentative if not]
+
+Review and confirm entry content.
 ```
 
-Do NOT silently skip. Do NOT assume user wants to skip. ALWAYS ask.
+This is NOT optional. Non-trivial work = KB entry created. User reviews content, not whether to create.
+
+"Non-trivial" = search, multi-file reads, debugging, or decisions. One-liners skip this.
 
 ### Consent Before Superseding
 
@@ -166,10 +169,10 @@ This repo keeps durable memory in `knowledge-db/` so we never explore the same t
 2) **DO THE WORK**.
 3) **WRITE BACK** — copy _TEMPLATE.md into explorations|solutions|errors|decisions, ground every claim in a real source file, set status, update INDEX.md. errors/ entries must record Symptom -> Root cause -> Fix -> Prevention.
 
-**AUTO-CAPTURE**: At task end, ALWAYS prompt user: "Create KB entry? [Y/N/Tentative]"
-**CONSENT REQUIRED**: Before creating tentative entries or superseding verified entries, ask user.
+**AUTO-CAPTURE**: Non-trivial task = KB entry created. This is mandatory, not a prompt.
+**CONSENT**: Only required before superseding verified entries.
 
-Leaving a task without prompting about KB update is incomplete work.
+Leaving a non-trivial task without a KB entry is incomplete work.
 ```
 
 ---

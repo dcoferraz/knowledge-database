@@ -100,18 +100,21 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
 - **Periodic lint**: every entry has sources, valid status, INDEX row; newest rows on top
 
-### 8. Auto-Capture with User Prompts
+### 8. Auto-Capture (Mandatory)
 
-**At the END of every non-trivial task, ALWAYS prompt the user:**
+**At the END of every non-trivial task, CREATE a KB entry.**
 
 ```
-This session involved [describe work]. Create KB entry?
-  [Y] Create entry in [suggested bucket]/
-  [N] Skip (work was trivial)
-  [T] Create as tentative (lacking proof)
+Creating KB entry for: [describe work]
+  Bucket: [suggested bucket]/
+  Status: [verified if proven, tentative if not]
+
+Review and confirm entry content.
 ```
 
-Do NOT silently skip KB write-back. Do NOT assume. ALWAYS ask.
+This is NOT optional. Non-trivial work = KB entry created. The only user input is reviewing the entry content, not deciding whether to create it.
+
+"Non-trivial" = search, multi-file reads, debugging, or decisions. One-liners (typo fix, rename) are trivial and skip this.
 
 ### 9. Consent Before Superseding Verified
 
