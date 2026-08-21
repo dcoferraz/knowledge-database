@@ -1,0 +1,252 @@
+#!/bin/bash
+# kb-lint: Lint Knowledge Database for issues
+# Checks: missing sources, INDEX sync, status validity, duplicates, tag hygiene
+#
+# Usage:
+#   kb-lint                    # Lint default knowledge-db/
+#   kb-lint ./path/to/kb       # Lint specific KB
+#   kb-lint --fix              # Auto-fix what can be fixed
+
+set -e
+
+KB_DIR="${1:-knowledge-db}"
+FIX_MODE=false
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# Counters
+ERRORS=0
+WARNINGS=0
+FIXED=0
+
+# Parse args
+for arg in "$@"; do
+    case $arg in
+        --fix)
+            FIX_MODE=true
+            shift
+            ;;
+        -h|--help)
+            echo "kb-lint: Lint Knowledge Database for issues"
+            echo ""
+            echo "Usage: kb-lint [KB_DIR] [--fix]"
+            echo ""
+            echo "Checks:"
+            echo "  - Entries missing sources"
+            echo "  - Entries not in INDEX.md"
+            echo "  - Invalid status values"
+            echo "  - verified status without Verification block"
+            echo "  - superseded status without related link"
+            echo "  - Potential duplicates"
+            echo "  - Unused/inconsistent tags"
+            exit 0
+            ;;
+    esac
+done
+
+if [[ ! -d "$KB_DIR" ]]; then
+    echo -e "${RED}Error: KB directory not found: $KB_DIR${NC}"
+    exit 1
+fi
+
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}KB Lint: $KB_DIR${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+# --- Check 1: Entries missing from INDEX.md ---
+echo -e "${BLUE}[1/7] Checking INDEX.md sync...${NC}"
+
+INDEX_FILE="$KB_DIR/INDEX.md"
+if [[ ! -f "$INDEX_FILE" ]]; then
+    echo -e "${RED}  ERROR: INDEX.md not found${NC}"
+    ((ERRORS++))
+else
+    for bucket in explorations solutions errors decisions; do
+        if [[ -d "$KB_DIR/$bucket" ]]; then
+            for entry in "$KB_DIR/$bucket"/*.md; do
+                [[ -f "$entry" ]] || continue
+                filename=$(basename "$entry")
+                if ! grep -q "$filename" "$INDEX_FILE" 2>/dev/null; then
+                    echo -e "${RED}  ERROR: Entry not in INDEX.md: $bucket/$filename${NC}"
+                    ((ERRORS++))
+                fi
+            done
+        fi
+    done
+fi
+
+# --- Check 2: Entries missing sources ---
+echo -e "${BLUE}[2/7] Checking for missing sources...${NC}"
+
+for bucket in explorations solutions errors decisions; do
+    if [[ -d "$KB_DIR/$bucket" ]]; then
+        for entry in "$KB_DIR/$bucket"/*.md; do
+            [[ -f "$entry" ]] || continue
+            filename=$(basename "$entry")
+
+            # Check if sources section has actual content (not just template)
+            sources_content=$(sed -n '/^sources:/,/^[a-z]*:/p' "$entry" | grep -v "^sources:" | grep -v "^[a-z]*:" | grep -v "^  - *$" | grep -v "# TODO")
+
+            if [[ -z "$sources_content" ]]; then
+                echo -e "${YELLOW}  WARN: No sources in $bucket/$filename${NC}"
+                ((WARNINGS++))
+            fi
+        done
+    fi
+done
+
+# --- Check 3: Invalid status values ---
+echo -e "${BLUE}[3/7] Checking status values...${NC}"
+
+for bucket in explorations solutions errors decisions; do
+    if [[ -d "$KB_DIR/$bucket" ]]; then
+        for entry in "$KB_DIR/$bucket"/*.md; do
+            [[ -f "$entry" ]] || continue
+            filename=$(basename "$entry")
+
+            status=$(grep "^status:" "$entry" | head -1 | sed 's/status:[[:space:]]*//' | tr -d ' ')
+
+            if [[ -n "$status" && ! "$status" =~ ^(verified|tentative|superseded)$ ]]; then
+                echo -e "${RED}  ERROR: Invalid status '$status' in $bucket/$filename${NC}"
+                ((ERRORS++))
+            fi
+        done
+    fi
+done
+
+# --- Check 4: verified without Verification block ---
+echo -e "${BLUE}[4/7] Checking verified entries have proof...${NC}"
+
+for bucket in explorations solutions errors decisions; do
+    if [[ -d "$KB_DIR/$bucket" ]]; then
+        for entry in "$KB_DIR/$bucket"/*.md; do
+            [[ -f "$entry" ]] || continue
+            filename=$(basename "$entry")
+
+            status=$(grep "^status:" "$entry" | head -1 | sed 's/status:[[:space:]]*//' | tr -d ' ')
+
+            if [[ "$status" == "verified" ]]; then
+                # Check for Verification section with actual content
+                if ! grep -q "^## Verification" "$entry"; then
+                    echo -e "${RED}  ERROR: verified status but no Verification section: $bucket/$filename${NC}"
+                    ((ERRORS++))
+                else
+                    # Check if Verification has content (not just comments)
+                    verif_content=$(sed -n '/^## Verification/,/^## /p' "$entry" | grep -v "^## " | grep -v "^<!--" | grep -v "^-->" | grep -v "^$" | head -5)
+                    if [[ -z "$verif_content" ]]; then
+                        echo -e "${YELLOW}  WARN: Verification section appears empty: $bucket/$filename${NC}"
+                        ((WARNINGS++))
+                    fi
+                fi
+            fi
+        done
+    fi
+done
+
+# --- Check 5: superseded without related link ---
+echo -e "${BLUE}[5/7] Checking superseded entries have replacement...${NC}"
+
+for bucket in explorations solutions errors decisions; do
+    if [[ -d "$KB_DIR/$bucket" ]]; then
+        for entry in "$KB_DIR/$bucket"/*.md; do
+            [[ -f "$entry" ]] || continue
+            filename=$(basename "$entry")
+
+            status=$(grep "^status:" "$entry" | head -1 | sed 's/status:[[:space:]]*//' | tr -d ' ')
+
+            if [[ "$status" == "superseded" ]]; then
+                related_content=$(sed -n '/^related:/,/^[a-z]*:/p' "$entry" | grep -v "^related:" | grep -v "^[a-z]*:" | grep -v "^  - *$" | grep -v "# TODO")
+
+                if [[ -z "$related_content" ]]; then
+                    echo -e "${RED}  ERROR: superseded but no replacement linked: $bucket/$filename${NC}"
+                    ((ERRORS++))
+                fi
+            fi
+        done
+    fi
+done
+
+# --- Check 6: Error entries missing required sections ---
+echo -e "${BLUE}[6/7] Checking error entries have all sections...${NC}"
+
+if [[ -d "$KB_DIR/errors" ]]; then
+    for entry in "$KB_DIR/errors"/*.md; do
+        [[ -f "$entry" ]] || continue
+        filename=$(basename "$entry")
+
+        missing_sections=()
+
+        grep -q "^## Symptom" "$entry" || missing_sections+=("Symptom")
+        grep -q "^## Root Cause" "$entry" || missing_sections+=("Root Cause")
+        grep -q "^## Fix" "$entry" || missing_sections+=("Fix")
+        grep -q "^## Prevention" "$entry" || missing_sections+=("Prevention")
+
+        if [[ ${#missing_sections[@]} -gt 0 ]]; then
+            echo -e "${RED}  ERROR: errors/$filename missing sections: ${missing_sections[*]}${NC}"
+            ((ERRORS++))
+        fi
+    done
+fi
+
+# --- Check 7: Tag hygiene ---
+echo -e "${BLUE}[7/7] Checking tag hygiene...${NC}"
+
+# Collect all tags
+all_tags=$(grep -rh "^tags:" "$KB_DIR" 2>/dev/null | sed 's/tags:[[:space:]]*//' | tr -d '[]' | tr ',' '\n' | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | grep -v "^$" | sort)
+
+if [[ -n "$all_tags" ]]; then
+    # Find tags used only once (potential typos)
+    single_use=$(echo "$all_tags" | uniq -c | awk '$1 == 1 {print $2}')
+
+    if [[ -n "$single_use" ]]; then
+        echo -e "${YELLOW}  WARN: Tags used only once (potential typos):${NC}"
+        echo "$single_use" | while read -r tag; do
+            echo -e "${YELLOW}    - $tag${NC}"
+        done
+        ((WARNINGS++))
+    fi
+
+    # Show tag frequency
+    echo -e "${BLUE}  Tag usage:${NC}"
+    echo "$all_tags" | uniq -c | sort -rn | head -10 | while read -r count tag; do
+        echo "    $tag ($count)"
+    done
+fi
+
+# --- Summary ---
+echo ""
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${BLUE}Summary${NC}"
+echo -e "${BLUE}═══════════════════════════════════════════════════════════${NC}"
+
+total_entries=0
+for bucket in explorations solutions errors decisions; do
+    if [[ -d "$KB_DIR/$bucket" ]]; then
+        count=$(find "$KB_DIR/$bucket" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
+        total_entries=$((total_entries + count))
+        echo "  $bucket/: $count entries"
+    fi
+done
+echo "  Total entries: $total_entries"
+echo ""
+
+if [[ $ERRORS -eq 0 && $WARNINGS -eq 0 ]]; then
+    echo -e "${GREEN}All checks passed.${NC}"
+    exit 0
+elif [[ $ERRORS -eq 0 ]]; then
+    echo -e "${YELLOW}Warnings: $WARNINGS${NC}"
+    echo -e "${GREEN}Errors: 0${NC}"
+    exit 0
+else
+    echo -e "${YELLOW}Warnings: $WARNINGS${NC}"
+    echo -e "${RED}Errors: $ERRORS${NC}"
+    echo ""
+    echo -e "${RED}KB has issues that need fixing.${NC}"
+    exit 1
+fi

@@ -1,14 +1,14 @@
 # Knowledge Database
 
-This folder is the project's **durable memory**. Its purpose: never investigate the same thing twice, and never re-introduce a bug already fixed.
+This folder is the project's **durable memory**. Never investigate the same thing twice. Never re-introduce a fixed bug.
 
-## The Hard Rule
+## The Hard Rule (Mandatory, Not Opt-In)
 
-Every non-trivial task follows this loop:
+Every non-trivial task follows this loop — **no exceptions**:
 
-1. **READ FIRST** — Search this folder before exploring. Reuse a verified entry instead of re-exploring.
+1. **READ FIRST** — Check INDEX.md (Ready-Answer Table + entries). If answered, USE IT and STOP.
 2. **DO THE WORK** — Explore or implement.
-3. **WRITE BACK** — Record what you learned/changed/broke+fixed. Update INDEX.md.
+3. **WRITE BACK** — Run Write-Back Checklist. Task is INCOMPLETE until checklist passes.
 
 "Non-trivial" = anything requiring search, reading multiple files, debugging, or making decisions.
 
@@ -17,7 +17,7 @@ Every non-trivial task follows this loop:
 ```
 knowledge-db/
   README.md        <- You are here
-  INDEX.md         <- Front door: catalog of all entries
+  INDEX.md         <- Front door: Ready-Answer Table + entry catalog
   _TEMPLATE.md     <- Copy this to create new entries
   explorations/    <- "What is true" - findings from investigation
   solutions/       <- "What we did" - implementation details
@@ -34,11 +34,11 @@ knowledge-db/
 | A build/runtime/test failure | `errors/` |
 | Choosing between options | `decisions/` |
 
-File under the dominant intent. Cross-link related entries.
+File under dominant intent. Cross-link related entries.
 
 ## Entry Format
 
-Every entry is named `YYYY-MM-DD-short-kebab-slug.md` with YAML front-matter:
+Named `YYYY-MM-DD-short-kebab-slug.md` with YAML front-matter:
 
 ```yaml
 ---
@@ -48,23 +48,58 @@ status: verified | tentative | superseded
 date: YYYY-MM-DD
 tags: [area:<area>, layer:<layer>]
 sources:
-  - path/to/file.ts:42-56
+  - path/to/file.ts:42-56    # REQUIRED: ground every claim
 related:
-  - solutions/other-entry.md
+  - solutions/other-entry.md  # REQUIRED if superseded
 ---
 ```
 
-## Status Meanings
+## Status Rules
 
-- **verified** — Proven true (tests pass, output confirmed, reproduced)
-- **tentative** — Best current understanding, not yet proven
-- **superseded** — Kept for history; `related` points to replacement
+| Status | Meaning | Requirements |
+|--------|---------|--------------|
+| `verified` | Proven true | Verification block with ACTUAL PROOF |
+| `tentative` | Best understanding | Any unsourced claim |
+| `superseded` | Outdated | `related:` MUST link replacement |
 
-## Content Rules
+**No proof = no verified.** Verification block must contain: command + output, test result, row count, or screenshot.
 
-1. Ground every claim in a source file (path + line range)
-2. Unsourced claims -> tentative status
-3. Write the answer, not the journey
-4. `errors/` entries MUST have: Symptom -> Root cause -> Fix -> Prevention
-5. Keep entries current: wrong = fix it, mark superseded, link replacement
-6. Small + linked beats large + orphaned
+## Error Entries
+
+MUST have all four sections:
+
+1. **Symptom** — Exact error message/behavior
+2. **Root Cause** — Why? (cite source files)
+3. **Fix** — What changes? (file paths + code)
+4. **Prevention** — How to avoid in future?
+
+## Lock-Step Invariants
+
+Some changes require paired updates. Check INDEX.md for declared invariants:
+- Schema change → schema doc
+- API change → API doc
+- Config change → deployment doc
+
+Task is INCOMPLETE if code changed but paired doc didn't.
+
+## Write-Back Checklist
+
+Run at END of every non-trivial task:
+
+```
+[ ] Entry in correct bucket (YYYY-MM-DD-slug.md)
+[ ] EVERY claim has source file (path:line-range)
+[ ] Status correct (verified requires proof)
+[ ] INDEX.md row added (newest on top)
+[ ] Related entries cross-linked
+[ ] Superseded any now-wrong entries
+[ ] Lock-step invariants satisfied
+[ ] Searched for duplicates first
+```
+
+## Maintenance Rules
+
+- **Reuse tags**: `grep -r "tags:" knowledge-db/` before creating new
+- **Search before creating**: update existing entry if near-duplicate
+- **Fix wrong entries**: set superseded + link replacement
+- **Keep INDEX current**: newest rows on top, all entries listed

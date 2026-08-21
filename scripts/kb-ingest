@@ -1,0 +1,426 @@
+#!/bin/bash
+# kb-ingest: Parse text/transcripts into KB entries
+# Alpha version - basic text parsing
+#
+# Usage:
+#   kb-ingest --input file.txt --bucket explorations
+#   kb-ingest --bucket errors < conversation.txt
+#   echo "text" | kb-ingest --auto
+
+set -e
+
+# Defaults
+KB_DIR="${KB_DIR:-knowledge-db}"
+BUCKET=""
+INPUT_FILE=""
+AUTO_BUCKET=false
+TITLE=""
+DRY_RUN=false
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+usage() {
+    cat << EOF
+kb-ingest: Parse text into Knowledge Database entries
+
+USAGE:
+    kb-ingest [OPTIONS]
+
+OPTIONS:
+    -i, --input FILE      Input file (or use stdin)
+    -b, --bucket BUCKET   Target bucket: explorations|solutions|errors|decisions
+    -a, --auto            Auto-detect bucket from content
+    -t, --title TITLE     Entry title (auto-generated if not provided)
+    -d, --dry-run         Show what would be created, don't write
+    -k, --kb-dir DIR      KB directory (default: knowledge-db)
+    -h, --help            Show this help
+
+EXAMPLES:
+    # From file, explicit bucket
+    kb-ingest --input conversation.txt --bucket explorations
+
+    # From stdin, auto-detect bucket
+    cat notes.md | kb-ingest --auto
+
+    # Dry run to preview
+    kb-ingest --input debug-session.txt --auto --dry-run
+EOF
+    exit 0
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -i|--input)
+            INPUT_FILE="$2"
+            shift 2
+            ;;
+        -b|--bucket)
+            BUCKET="$2"
+            shift 2
+            ;;
+        -a|--auto)
+            AUTO_BUCKET=true
+            shift
+            ;;
+        -t|--title)
+            TITLE="$2"
+            shift 2
+            ;;
+        -d|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -k|--kb-dir)
+            KB_DIR="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        *)
+            echo -e "${RED}Unknown option: $1${NC}"
+            usage
+            ;;
+    esac
+done
+
+# Read input
+if [[ -n "$INPUT_FILE" ]]; then
+    if [[ ! -f "$INPUT_FILE" ]]; then
+        echo -e "${RED}Error: File not found: $INPUT_FILE${NC}"
+        exit 1
+    fi
+    CONTENT=$(cat "$INPUT_FILE")
+else
+    # Read from stdin
+    if [[ -t 0 ]]; then
+        echo -e "${YELLOW}Reading from stdin (paste text, then Ctrl+D):${NC}"
+    fi
+    CONTENT=$(cat)
+fi
+
+if [[ -z "$CONTENT" ]]; then
+    echo -e "${RED}Error: No content provided${NC}"
+    exit 1
+fi
+
+# Auto-detect bucket if requested
+detect_bucket() {
+    local content="$1"
+    local score_error=0
+    local score_exploration=0
+    local score_solution=0
+    local score_decision=0
+
+    # Error signals
+    if echo "$content" | grep -qiE "(error|exception|stack trace|traceback|failed|crash|bug|fix)"; then
+        ((score_error += 3))
+    fi
+    if echo "$content" | grep -qiE "(TypeError|SyntaxError|ReferenceError|Cannot read|undefined is not|null pointer)"; then
+        ((score_error += 5))
+    fi
+    if echo "$content" | grep -qE "at .+:[0-9]+:[0-9]+"; then
+        ((score_error += 3))  # Stack trace pattern
+    fi
+
+    # Exploration signals
+    if echo "$content" | grep -qiE "(how does|what is|where is|understand|investigate|explore|found that|discovered)"; then
+        ((score_exploration += 3))
+    fi
+    if echo "$content" | grep -qiE "(works by|flow is|architecture|structure|pattern)"; then
+        ((score_exploration += 2))
+    fi
+
+    # Solution signals
+    if echo "$content" | grep -qiE "(implemented|built|created|added|refactored|changed|modified|updated)"; then
+        ((score_solution += 3))
+    fi
+    if echo "$content" | grep -qiE "(feature|functionality|component|module)"; then
+        ((score_solution += 2))
+    fi
+
+    # Decision signals
+    if echo "$content" | grep -qiE "(decided|chose|selected|picked|went with|trade-?off|alternative|option|vs\.|versus)"; then
+        ((score_decision += 4))
+    fi
+    if echo "$content" | grep -qiE "(pro:|con:|advantage|disadvantage|because|reason)"; then
+        ((score_decision += 2))
+    fi
+
+    # Find max
+    local max_score=$score_exploration
+    local detected="explorations"
+
+    if [[ $score_error -gt $max_score ]]; then
+        max_score=$score_error
+        detected="errors"
+    fi
+    if [[ $score_solution -gt $max_score ]]; then
+        max_score=$score_solution
+        detected="solutions"
+    fi
+    if [[ $score_decision -gt $max_score ]]; then
+        max_score=$score_decision
+        detected="decisions"
+    fi
+
+    echo "$detected"
+}
+
+# Extract potential title from content
+extract_title() {
+    local content="$1"
+
+    # Try to find a heading
+    local heading=$(echo "$content" | grep -m1 "^#" | sed 's/^#\+\s*//')
+    if [[ -n "$heading" ]]; then
+        echo "$heading" | head -c 60
+        return
+    fi
+
+    # Try first non-empty line
+    local first_line=$(echo "$content" | grep -m1 "^[^[:space:]]" | head -c 60)
+    if [[ -n "$first_line" ]]; then
+        echo "$first_line"
+        return
+    fi
+
+    echo "Untitled entry"
+}
+
+# Extract file references from content
+extract_sources() {
+    local content="$1"
+    # Match patterns like: src/foo.ts:42, ./path/file.js:10-20, path/to/file
+    echo "$content" | grep -oE "[a-zA-Z0-9_./-]+\.(ts|js|py|go|rs|java|rb|sh|md|json|yaml|yml|tsx|jsx)+(:[0-9]+(-[0-9]+)?)?" | sort -u | head -5
+}
+
+# Extract potential tags from content
+extract_tags() {
+    local content="$1"
+    local tags=()
+
+    # Area detection
+    if echo "$content" | grep -qiE "(auth|login|session|jwt|token|permission)"; then
+        tags+=("area:auth")
+    fi
+    if echo "$content" | grep -qiE "(api|endpoint|route|request|response|http)"; then
+        tags+=("area:api")
+    fi
+    if echo "$content" | grep -qiE "(database|db|query|sql|postgres|mongo|redis)"; then
+        tags+=("area:db")
+    fi
+    if echo "$content" | grep -qiE "(ui|component|react|vue|button|form|modal)"; then
+        tags+=("area:ui")
+    fi
+    if echo "$content" | grep -qiE "(test|spec|jest|vitest|pytest|unittest)"; then
+        tags+=("area:test")
+    fi
+
+    # Layer detection
+    if echo "$content" | grep -qiE "(controller|handler|route)"; then
+        tags+=("layer:controller")
+    fi
+    if echo "$content" | grep -qiE "(service|business logic|domain)"; then
+        tags+=("layer:service")
+    fi
+    if echo "$content" | grep -qiE "(model|schema|entity|type)"; then
+        tags+=("layer:model")
+    fi
+    if echo "$content" | grep -qiE "(middleware|interceptor|filter)"; then
+        tags+=("layer:middleware")
+    fi
+
+    # Output unique tags
+    printf '%s\n' "${tags[@]}" | sort -u | head -5 | tr '\n' ',' | sed 's/,$//'
+}
+
+# Generate summary from content
+generate_summary() {
+    local content="$1"
+
+    # Try to find explicit summary
+    local explicit=$(echo "$content" | grep -A2 -iE "^(summary|tldr|conclusion):" | tail -n +2 | head -2)
+    if [[ -n "$explicit" ]]; then
+        echo "$explicit"
+        return
+    fi
+
+    # Take first meaningful paragraph (skip headings, short lines)
+    echo "$content" | grep -E "^[A-Za-z].{30,}" | head -2
+}
+
+# Determine bucket
+if [[ "$AUTO_BUCKET" == true ]]; then
+    BUCKET=$(detect_bucket "$CONTENT")
+    echo -e "${BLUE}Auto-detected bucket: ${GREEN}$BUCKET${NC}"
+elif [[ -z "$BUCKET" ]]; then
+    echo -e "${RED}Error: Must specify --bucket or --auto${NC}"
+    exit 1
+fi
+
+# Validate bucket
+if [[ ! "$BUCKET" =~ ^(explorations|solutions|errors|decisions)$ ]]; then
+    echo -e "${RED}Error: Invalid bucket '$BUCKET'. Must be: explorations|solutions|errors|decisions${NC}"
+    exit 1
+fi
+
+# Check KB directory exists
+if [[ ! -d "$KB_DIR" ]]; then
+    echo -e "${RED}Error: KB directory not found: $KB_DIR${NC}"
+    echo -e "${YELLOW}Run ./scripts/init-knowledge-db.sh first${NC}"
+    exit 1
+fi
+
+# Extract metadata
+if [[ -z "$TITLE" ]]; then
+    TITLE=$(extract_title "$CONTENT")
+fi
+SOURCES=$(extract_sources "$CONTENT")
+TAGS=$(extract_tags "$CONTENT")
+SUMMARY=$(generate_summary "$CONTENT")
+DATE=$(date +%Y-%m-%d)
+SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g' | sed 's/^-//' | sed 's/-$//' | head -c 40)
+FILENAME="${DATE}-${SLUG}.md"
+FILEPATH="$KB_DIR/$BUCKET/$FILENAME"
+
+# Map bucket to type
+case $BUCKET in
+    explorations) TYPE="exploration" ;;
+    solutions) TYPE="solution" ;;
+    errors) TYPE="error" ;;
+    decisions) TYPE="decision" ;;
+esac
+
+# Build entry content
+build_entry() {
+    cat << EOF
+---
+title: $TITLE
+type: $TYPE
+status: tentative
+date: $DATE
+tags: [${TAGS}]
+sources:
+EOF
+
+    if [[ -n "$SOURCES" ]]; then
+        echo "$SOURCES" | while read -r src; do
+            echo "  - $src"
+        done
+    else
+        echo "  - # TODO: Add source files"
+    fi
+
+    cat << EOF
+related:
+  - # TODO: Link related entries
+---
+
+## Summary
+
+${SUMMARY:-<!-- TODO: Add 1-2 sentence summary -->}
+
+## Context / Question
+
+<!-- What triggered this investigation/work? -->
+$(echo "$CONTENT" | head -20)
+
+## Findings / What We Did
+
+<!--
+Extracted from input. Review and refine:
+- Ground each claim in source file (path:line)
+- Write conclusions, not search journey
+-->
+
+$CONTENT
+
+EOF
+
+    # Add error-specific sections
+    if [[ "$BUCKET" == "errors" ]]; then
+        cat << EOF
+
+## Symptom
+
+<!-- What error message / behavior was observed? -->
+
+## Root Cause
+
+<!-- Why did it happen? (cite source files) -->
+
+## Fix
+
+<!-- What changes fixed it? (file paths + code changes) -->
+
+## Prevention
+
+<!-- How to avoid this in the future? -->
+
+EOF
+    fi
+
+    cat << EOF
+## Verification
+
+<!--
+How was this proven?
+- Tests that pass
+- Output/behavior observed
+- Steps to reproduce
+
+Status is 'tentative' - upgrade to 'verified' once proven
+-->
+
+## Follow-ups / Open Questions
+
+<!-- What remains unknown? Delete if none. -->
+EOF
+}
+
+ENTRY_CONTENT=$(build_entry)
+
+# Output
+echo ""
+echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${GREEN}KB Entry Draft${NC}"
+echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+echo -e "Title:    ${BLUE}$TITLE${NC}"
+echo -e "Bucket:   ${BLUE}$BUCKET/${NC}"
+echo -e "File:     ${BLUE}$FILENAME${NC}"
+echo -e "Tags:     ${BLUE}[$TAGS]${NC}"
+echo -e "Sources:  ${BLUE}${SOURCES:-none detected}${NC}"
+echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${YELLOW}[DRY RUN] Would create: $FILEPATH${NC}"
+    echo ""
+    echo -e "${YELLOW}--- Content Preview ---${NC}"
+    echo "$ENTRY_CONTENT" | head -50
+    echo ""
+    echo -e "${YELLOW}--- (truncated) ---${NC}"
+else
+    # Check for existing file
+    if [[ -f "$FILEPATH" ]]; then
+        echo -e "${YELLOW}Warning: File already exists: $FILEPATH${NC}"
+        echo -e "Appending timestamp to filename..."
+        FILEPATH="$KB_DIR/$BUCKET/${DATE}-${SLUG}-$(date +%H%M%S).md"
+    fi
+
+    echo "$ENTRY_CONTENT" > "$FILEPATH"
+    echo -e "${GREEN}Created: $FILEPATH${NC}"
+    echo ""
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo "  1. Review and edit the entry"
+    echo "  2. Ground claims in source files"
+    echo "  3. Change status to 'verified' when proven"
+    echo "  4. Update $KB_DIR/INDEX.md"
+fi

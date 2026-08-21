@@ -32,9 +32,9 @@ Knowledge Database creates a structured memory that agents read *before* explori
 ┌─────────────────────────────────────────────────────────┐
 │                    EVERY TASK                           │
 ├─────────────────────────────────────────────────────────┤
-│  1. READ FIRST   →  Check knowledge-db/INDEX.md         │
+│  1. READ FIRST   →  Check INDEX.md + canonical docs     │
 │  2. DO THE WORK  →  Explore or implement                │
-│  3. WRITE BACK   →  Record findings, update index       │
+│  3. WRITE BACK   →  Run checklist, update index         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -50,6 +50,24 @@ Knowledge Database creates a structured memory that agents read *before* explori
 | Bug reintroduced | Debug from scratch | Entry shows exact fix |
 | New team member | "Ask Sarah, she knows" | Self-service docs |
 | Context across sessions | Lost | Permanent |
+
+---
+
+## Enforcement Mechanisms
+
+The KB isn't opt-in — it enforces **seven mechanisms** on every non-trivial task:
+
+| # | Mechanism | What It Does |
+|---|-----------|--------------|
+| 1 | **Always-On** | Mandatory on every task, not triggered by phrases |
+| 2 | **Routing to Canonical Docs** | INDEX.md points to external sources, not just entries |
+| 3 | **Lock-Step Invariants** | Paired artifacts (schema + doc) must change together |
+| 4 | **Source-of-Truth Hierarchy** | Explicit ranking when sources disagree |
+| 5 | **Verified ↔ Evidence** | `verified` requires actual proof in Verification block |
+| 6 | **Tiered Memory Scopes** | User / repo / session separation |
+| 7 | **Maintenance Discipline** | Dedup, tag reuse, fix wrong entries |
+
+See [CLAUDE.md](CLAUDE.md) for full enforcement rules.
 
 ---
 
@@ -70,24 +88,37 @@ git clone https://github.com/dcoferraz/knowledge-database.git
 ./scripts/init-knowledge-db.sh
 ```
 
-### Use
-
-Say any of:
-- *"bootstrap knowledge database"*
-- *"before exploring, check KB"*
-- *"record what I learned"*
-- *"log this bug and fix"*
-
 ### What Gets Created
 
 ```
 knowledge-db/
-├── INDEX.md           ← Search here first (catalog of all entries)
+├── INDEX.md           ← Search here first (Ready-Answer Table + catalog)
 ├── _TEMPLATE.md       ← Copy to create new entries
 ├── explorations/      ← "How does X work?"
 ├── solutions/         ← "How we built Y"
-├── errors/            ← "Bug Z: symptom → root cause → fix"
+├── errors/            ← "Bug Z: symptom → root cause → fix → prevention"
 └── decisions/         ← "Why we chose A over B"
+```
+
+---
+
+## CLI Tools
+
+```bash
+# Initialize KB structure
+./scripts/init-knowledge-db.sh
+
+# Ingest text/transcripts into KB entries
+./scripts/kb-ingest --input notes.txt --auto
+cat conversation.txt | ./scripts/kb-ingest --bucket errors
+
+# Discover codebase boundaries
+./scripts/kb-discover ./legacy-app
+./scripts/kb-discover ./src --summary
+
+# Lint KB for issues
+./scripts/kb-lint
+./scripts/kb-lint --fix
 ```
 
 ---
@@ -96,13 +127,18 @@ knowledge-db/
 
 ### 1. Agent Checks KB First
 
-Before exploring any topic, the agent searches `INDEX.md`:
+Before exploring any topic, agent searches `INDEX.md`:
 
 ```markdown
+## Ready-Answer Table
+| Topic | Canonical Source | Last Verified |
+|-------|------------------|---------------|
+| Auth flow | explorations/2026-08-15-auth-middleware.md | 2026-08-15 |
+
 ## Explorations
 | Date | Title | Status | Entry |
 |------|-------|--------|-------|
-| 2026-08-15 | Auth middleware chain | verified | [→](explorations/2026-08-15-auth-middleware.md) |
+| 2026-08-15 | Auth middleware chain | verified | [→](explorations/...) |
 ```
 
 If a **verified** entry exists → use it, skip investigation.
@@ -127,6 +163,10 @@ Auth flows through 3 middleware: session → jwt → rbac.
 
 ## Findings
 The chain is defined in `src/middleware/auth.ts:45`...
+
+## Verification
+$ npm test -- --grep "auth"
+PASS src/middleware/auth.test.ts (3 tests)
 ```
 
 ### 3. Errors Capture Prevention
@@ -151,26 +191,15 @@ All routes must validate session presence before accessing req.user
 
 ---
 
-## Entry Format
+## Status Rules
 
-```yaml
----
-title: Short human title
-type: exploration | solution | error | decision
-status: verified | tentative | superseded
-date: YYYY-MM-DD
-tags: [area:auth, layer:service]
-sources:
-  - path/to/file.ts:42-56
-related:
-  - errors/2026-08-10-session-bug.md
----
-```
+| Status | Meaning | Requirements |
+|--------|---------|--------------|
+| `verified` | Proven true | Verification block with ACTUAL PROOF |
+| `tentative` | Best understanding | Any unsourced claim |
+| `superseded` | Outdated | `related:` MUST link replacement |
 
-**Status meanings:**
-- `verified` — Proven true (tests pass, output confirmed)
-- `tentative` — Best understanding, needs confirmation
-- `superseded` — Outdated, links to replacement
+**No proof = no verified.** The Verification block must contain command + output, test result, or screenshot.
 
 ---
 
@@ -193,17 +222,23 @@ One entry per task. File under dominant intent, cross-link the rest.
 knowledge-database/
 ├── README.md                  ← You are here
 ├── LICENSE
-├── CLAUDE.md                  ← HARD RULE (copy to your project)
+├── CLAUDE.md                  ← HARD RULE + enforcement mechanisms
 ├── .claude-plugin/
 │   └── marketplace.json       ← Plugin marketplace metadata
 ├── knowledge-database/
 │   └── SKILL.md               ← Skill definition
 ├── scripts/
-│   └── init-knowledge-db.sh   ← Standalone bootstrap
-└── .kb-templates/
+│   ├── init-knowledge-db.sh   ← Initialize KB structure
+│   ├── kb-ingest              ← Parse text into KB entries
+│   ├── kb-discover            ← Scan codebase for boundaries
+│   └── kb-lint                ← Lint KB for issues
+├── .kb-templates/
+│   ├── README.md
+│   ├── INDEX.md
+│   └── _TEMPLATE.md
+└── roadmap/                   ← Future evolution plans
     ├── README.md
-    ├── INDEX.md
-    └── _TEMPLATE.md
+    └── phases/
 ```
 
 ---
@@ -219,11 +254,21 @@ knowledge-database/
 
 ---
 
+## Roadmap
+
+See [roadmap/](roadmap/) for planned evolution:
+
+- **Phase 1** (current): Local CLI tooling (`kb-ingest`, `kb-discover`, `kb-lint`)
+- **Phase 2**: Git hooks for automatic KB prompts
+- **Phase 3**: GitHub Action for team-shared KB
+
+---
+
 ## FAQ
 
 **Q: How is this different from just writing notes in CLAUDE.md?**
 
-Structured buckets + index + templates = searchable, maintainable, scalable. Notes become a mess at 20+ entries.
+Structured buckets + index + templates + enforcement = searchable, maintainable, scalable. Notes become a mess at 20+ entries.
 
 **Q: Won't this slow down simple tasks?**
 
@@ -233,6 +278,10 @@ The HARD RULE only applies to "non-trivial" tasks (multi-file investigation, deb
 
 Mark as `superseded`, link to replacement. History preserved, readers directed to current truth.
 
+**Q: What if I'm not sure if something is verified?**
+
+If in doubt, use `tentative`. Upgrade to `verified` only when you have actual proof in the Verification block.
+
 ---
 
 ## Contributing
@@ -240,7 +289,8 @@ Mark as `superseded`, link to replacement. History preserved, readers directed t
 PRs welcome. Key areas:
 - More agent integrations
 - Better templates for specific domains
-- Tooling for KB maintenance
+- Tooling improvements (kb-ingest, kb-discover, kb-lint)
+- Phase 2/3 implementation (hooks, GitHub Action)
 
 ---
 

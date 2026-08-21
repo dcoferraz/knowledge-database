@@ -2,26 +2,85 @@
 
 This repo implements a **durable memory pattern** for AI coding agents. Never investigate the same thing twice. Never re-introduce a fixed bug.
 
-## HARD RULE: Build the Knowledge Database on every task
+## HARD RULE: Mandatory on EVERY Non-Trivial Task
 
-This repo keeps durable memory in `knowledge-db/` so we never explore the same thing twice and never re-introduce a fixed bug. For EVERY non-trivial task (agent or human):
+**This is not opt-in.** Do not wait for phrases like "record what I learned". The loop is MANDATORY on every non-trivial task.
 
-1. **READ FIRST** — Search `knowledge-db/` (start with INDEX.md); reuse a verified entry.
-2. **DO THE WORK**.
-3. **WRITE BACK** — Copy `_TEMPLATE.md` into explorations|solutions|errors|decisions, ground every claim in a real source file, set status, update INDEX.md.
+"Non-trivial" = anything requiring search, reading multiple files, debugging, or decisions. Skip only pure one-liners (rename var, fix typo).
 
-`errors/` entries MUST record: Symptom -> Root cause -> Fix -> Prevention.
+### The Loop
 
-**Leaving a task without updating the knowledge database is incomplete work.**
+1. **READ FIRST** — Search `knowledge-db/INDEX.md` + canonical docs. If a verified entry or ready-answer doc answers it, USE IT and STOP.
+2. **DO THE WORK** — Explore or implement.
+3. **WRITE BACK** — Run the Write-Back Checklist below. Task is INCOMPLETE until checklist passes.
+
+---
+
+## The Seven Enforcement Mechanisms
+
+### 1. Always-On Enforcement
+
+- Loop is mandatory, not triggered by user phrases
+- On adoption: append HARD RULE to agent config (`.github/copilot-instructions.md`, `CLAUDE.md`, `.cursor/rules/`, `AGENTS.md`). Detect-before-append; add exactly once. Create file if absent.
+
+### 2. Routing to Canonical Docs
+
+- `INDEX.md` indexes BOTH KB entries AND external sources of truth (schemas, design docs, API refs)
+- Maintain a "Ready-Answer Table": topic → the one doc to read BEFORE re-investigating
+- Rule: if a canonical doc answers the question, read that instead of exploring
+
+### 3. Lock-Step Sync Invariants
+
+- Declare paired artifacts that MUST change together:
+  - Schema change → update schema snapshot doc
+  - API route change → update route reference
+  - Config change → update deployment docs
+- Before finishing: verify each invariant held. Code changed but paired doc didn't? Task is INCOMPLETE.
+
+### 4. Source-of-Truth Hierarchy + Hard Grounding
+
+Rank authorities explicitly:
+1. Real source assets (code, actual configs)
+2. Generated/ETL definitions
+3. Outbound feeds
+4. Migration/DDL docs
+
+When sources disagree: trust higher rank, note the stale one.
+
+**Ground EVERY claim** in a real source file (path:line-range). No unsourced assertions. Unsourced → `status: tentative`.
+
+### 5. Verified ↔ Evidence Coupling
+
+`status: verified` is ONLY allowed when entry contains a **Verification** block with actual proof:
+- Command run + output
+- Test name + result
+- Row count / parity check
+- Screenshot / log snippet
+
+No proof → `status: tentative`. Period.
+
+`status: superseded` → MUST link replacement in `related:`.
+
+### 6. Tiered Memory Scopes
+
+| Scope | Contents | Location |
+|-------|----------|----------|
+| **user** | Cross-project preferences, personal patterns | `~/.kb/user/` or agent config |
+| **repo** | Verified codebase facts, build/deploy gotchas, conventions | `knowledge-db/` |
+| **session** | Task-only working notes (discardable) | In-memory or temp file |
+
+Write build/runtime traps and fixes to **repo scope** so they're reused, not rediscovered.
+
+### 7. Maintenance + Dedup Discipline
+
+- **Reuse tags**: grep existing tags before creating new ones; vocabulary lives in INDEX.md
+- **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
+- **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
+- **Periodic lint**: every entry has sources, valid status, INDEX row; newest rows on top
 
 ---
 
 ## Quick Reference
-
-### When to Write
-
-"Non-trivial" = anything requiring search, reading multiple files, debugging, or decisions.
-Skip only pure one-liners (rename var, fix typo).
 
 ### Which Bucket?
 
@@ -38,21 +97,43 @@ Skip only pure one-liners (rename var, fix typo).
 
 ### Status Values
 
-- **verified** — Proven (tests pass, output confirmed)
-- **tentative** — Best understanding, not yet proven
-- **superseded** — Outdated, points to replacement
+| Status | Meaning | Requirements |
+|--------|---------|--------------|
+| `verified` | Proven true | Verification block with actual proof |
+| `tentative` | Best understanding, unproven | Any claim lacking source |
+| `superseded` | Outdated | `related:` links to replacement |
 
-### Content Rules
+### Error Entries
 
-1. Ground every claim in a source file (path:line-range)
-2. Unsourced = tentative
-3. Write the answer, not the journey
-4. `errors/` must have all four: Symptom, Root cause, Fix, Prevention
-5. Small + linked beats large + orphaned
+MUST record all four:
+1. **Symptom** — What error/behavior was observed?
+2. **Root Cause** — Why? (cite source files)
+3. **Fix** — What changes? (file paths + code)
+4. **Prevention** — How to avoid in future?
 
 ---
 
-## Setup (one time)
+## Write-Back Checklist
+
+Run at END of every non-trivial task. Task is INCOMPLETE until all pass:
+
+```
+[ ] Entry created/updated from _TEMPLATE.md in correct bucket (YYYY-MM-DD-slug.md)
+[ ] EVERY claim grounded in real source file (path:line-range)
+[ ] Status set correctly (verified REQUIRES proof in Verification block)
+[ ] INDEX.md row added/updated (newest on top)
+[ ] Related entries cross-linked
+[ ] Superseded any now-wrong entries (with link to replacement)
+[ ] Lock-step invariants satisfied (paired docs updated in same change)
+[ ] Reusable traps written to repo-scope (not just session notes)
+[ ] Searched for duplicates before creating new entry
+```
+
+**Leaving a task without satisfying this checklist is incomplete work.**
+
+---
+
+## Setup
 
 ```bash
 ./scripts/init-knowledge-db.sh
@@ -62,19 +143,15 @@ Creates `knowledge-db/` with templates and empty buckets.
 
 ---
 
-## READ Loop (start of task)
+## Tooling
 
-1. Open `knowledge-db/INDEX.md`
-2. Scan for relevant entries by title/tags
-3. `grep -r "keyword" knowledge-db/`
-4. **verified** entry answers it? Use it, stop.
-5. **tentative** exists? Build on it, upgrade when proven.
+```bash
+# Ingest text/transcripts into KB entries
+./scripts/kb-ingest --input notes.txt --auto
 
-## WRITE Loop (end of task)
+# Discover codebase boundaries
+./scripts/kb-discover ./target-app
 
-1. Pick bucket by intent
-2. `cp knowledge-db/_TEMPLATE.md knowledge-db/<bucket>/YYYY-MM-DD-slug.md`
-3. Fill front-matter (title, type, status, date, tags, sources, related)
-4. Write sections
-5. Add row to INDEX.md (newest on top)
-6. Cross-link related entries
+# Lint KB for issues (missing sources, INDEX sync, etc.)
+./scripts/kb-lint
+```

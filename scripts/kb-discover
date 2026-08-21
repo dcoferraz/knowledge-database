@@ -1,0 +1,485 @@
+#!/bin/bash
+# kb-discover: Scan codebase and generate exploration entries
+# Alpha version - basic directory analysis
+#
+# Usage:
+#   kb-discover ./target-app
+#   kb-discover ./legacy-app --output knowledge-db/explorations/
+#   kb-discover ./src --summary
+
+set -e
+
+# Defaults
+KB_DIR="${KB_DIR:-knowledge-db}"
+TARGET_DIR=""
+OUTPUT_DIR=""
+SUMMARY_ONLY=false
+FOCUS=""
+DRY_RUN=false
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+usage() {
+    cat << EOF
+kb-discover: Scan codebase and generate KB exploration entries
+
+USAGE:
+    kb-discover TARGET_DIR [OPTIONS]
+
+OPTIONS:
+    -o, --output DIR      Output directory for entries (default: KB_DIR/explorations)
+    -s, --summary         Print summary only, don't create entry
+    -f, --focus ASPECT    Focus on specific aspect: routes|models|services|config
+    -d, --dry-run         Show what would be created, don't write
+    -k, --kb-dir DIR      KB directory (default: knowledge-db)
+    -h, --help            Show this help
+
+EXAMPLES:
+    # Full discovery of a directory
+    kb-discover ./legacy-app
+
+    # Summary only (no file created)
+    kb-discover ./src --summary
+
+    # Focus on API routes
+    kb-discover ./backend --focus routes
+
+    # Output to specific location
+    kb-discover ./microservice --output ./docs/kb/
+EOF
+    exit 0
+}
+
+# Parse arguments
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -o|--output)
+            OUTPUT_DIR="$2"
+            shift 2
+            ;;
+        -s|--summary)
+            SUMMARY_ONLY=true
+            shift
+            ;;
+        -f|--focus)
+            FOCUS="$2"
+            shift 2
+            ;;
+        -d|--dry-run)
+            DRY_RUN=true
+            shift
+            ;;
+        -k|--kb-dir)
+            KB_DIR="$2"
+            shift 2
+            ;;
+        -h|--help)
+            usage
+            ;;
+        -*)
+            echo -e "${RED}Unknown option: $1${NC}"
+            usage
+            ;;
+        *)
+            if [[ -z "$TARGET_DIR" ]]; then
+                TARGET_DIR="$1"
+            else
+                echo -e "${RED}Unexpected argument: $1${NC}"
+                usage
+            fi
+            shift
+            ;;
+    esac
+done
+
+if [[ -z "$TARGET_DIR" ]]; then
+    echo -e "${RED}Error: TARGET_DIR required${NC}"
+    usage
+fi
+
+if [[ ! -d "$TARGET_DIR" ]]; then
+    echo -e "${RED}Error: Directory not found: $TARGET_DIR${NC}"
+    exit 1
+fi
+
+# Default output
+if [[ -z "$OUTPUT_DIR" ]]; then
+    OUTPUT_DIR="$KB_DIR/explorations"
+fi
+
+# Resolve to absolute path
+TARGET_DIR=$(cd "$TARGET_DIR" && pwd)
+TARGET_NAME=$(basename "$TARGET_DIR")
+
+echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}KB Discovery: $TARGET_NAME${NC}"
+echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+echo ""
+
+# --- Analysis Functions ---
+
+# Detect project type
+detect_project_type() {
+    local dir="$1"
+    local types=()
+
+    [[ -f "$dir/package.json" ]] && types+=("nodejs")
+    [[ -f "$dir/tsconfig.json" ]] && types+=("typescript")
+    [[ -f "$dir/Cargo.toml" ]] && types+=("rust")
+    [[ -f "$dir/go.mod" ]] && types+=("go")
+    [[ -f "$dir/requirements.txt" || -f "$dir/pyproject.toml" || -f "$dir/setup.py" ]] && types+=("python")
+    [[ -f "$dir/Gemfile" ]] && types+=("ruby")
+    [[ -f "$dir/pom.xml" || -f "$dir/build.gradle" ]] && types+=("java")
+    [[ -f "$dir/composer.json" ]] && types+=("php")
+    [[ -f "$dir/Dockerfile" ]] && types+=("docker")
+
+    if [[ ${#types[@]} -eq 0 ]]; then
+        echo "unknown"
+    else
+        printf '%s\n' "${types[@]}" | tr '\n' ',' | sed 's/,$//'
+    fi
+}
+
+# Find entry points
+find_entry_points() {
+    local dir="$1"
+    local entries=()
+
+    # Node.js
+    if [[ -f "$dir/package.json" ]]; then
+        local main=$(grep -o '"main"[[:space:]]*:[[:space:]]*"[^"]*"' "$dir/package.json" 2>/dev/null | sed 's/.*: *"//' | sed 's/"//')
+        [[ -n "$main" && -f "$dir/$main" ]] && entries+=("$main (package.json main)")
+
+        # Scripts
+        local scripts=$(grep -A20 '"scripts"' "$dir/package.json" 2>/dev/null | grep -oE '"(start|dev|build|serve)"' | tr -d '"' | head -5)
+        [[ -n "$scripts" ]] && entries+=("npm scripts: $scripts")
+    fi
+
+    # Common entry files
+    for f in index.ts index.js main.ts main.js app.ts app.js server.ts server.js src/index.ts src/main.ts src/app.ts; do
+        [[ -f "$dir/$f" ]] && entries+=("$f")
+    done
+
+    # Python
+    for f in main.py app.py __main__.py src/main.py; do
+        [[ -f "$dir/$f" ]] && entries+=("$f")
+    done
+
+    # Go
+    [[ -f "$dir/main.go" ]] && entries+=("main.go")
+    [[ -f "$dir/cmd/main.go" ]] && entries+=("cmd/main.go")
+
+    printf '%s\n' "${entries[@]}" | sort -u | head -10
+}
+
+# Find route definitions
+find_routes() {
+    local dir="$1"
+
+    # Express/Node routes
+    grep -rlE "(app|router)\.(get|post|put|delete|patch|use)\s*\(" "$dir" --include="*.ts" --include="*.js" 2>/dev/null | head -10
+
+    # FastAPI/Flask routes
+    grep -rlE "@(app|router)\.(get|post|put|delete|route)" "$dir" --include="*.py" 2>/dev/null | head -10
+
+    # Go routes (common patterns)
+    grep -rlE "(HandleFunc|Handle|Get|Post|Put|Delete)\s*\(" "$dir" --include="*.go" 2>/dev/null | head -10
+}
+
+# Find data models/types
+find_models() {
+    local dir="$1"
+
+    # TypeScript interfaces/types
+    grep -rlE "^(export\s+)?(interface|type)\s+[A-Z]" "$dir" --include="*.ts" --include="*.tsx" 2>/dev/null | head -10
+
+    # Python classes (likely models)
+    grep -rlE "^class\s+[A-Z].*:" "$dir" --include="*.py" 2>/dev/null | head -10
+
+    # Go structs
+    grep -rlE "^type\s+[A-Z].*struct" "$dir" --include="*.go" 2>/dev/null | head -10
+}
+
+# Find service/business logic
+find_services() {
+    local dir="$1"
+
+    # Directories named service/services
+    find "$dir" -type d -name "*service*" 2>/dev/null | head -5
+
+    # Files with Service in name
+    find "$dir" -type f \( -name "*Service*" -o -name "*service*" \) \( -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" \) 2>/dev/null | head -10
+}
+
+# Find config files
+find_config() {
+    local dir="$1"
+
+    find "$dir" -maxdepth 3 -type f \( \
+        -name "*.config.*" -o \
+        -name "*.env*" -o \
+        -name "config.*" -o \
+        -name "settings.*" -o \
+        -name "*.yaml" -o \
+        -name "*.yml" -o \
+        -name "*.toml" \
+    \) 2>/dev/null | grep -v node_modules | grep -v ".git" | head -15
+}
+
+# Find external integrations
+find_integrations() {
+    local dir="$1"
+    local integrations=()
+
+    # Database connections
+    if grep -rqE "(mongoose|sequelize|typeorm|prisma|knex|pg|mysql|sqlite)" "$dir" --include="*.ts" --include="*.js" --include="*.json" 2>/dev/null; then
+        integrations+=("Database (ORM/driver detected)")
+    fi
+
+    # Redis
+    if grep -rqE "(redis|ioredis)" "$dir" --include="*.ts" --include="*.js" --include="*.json" 2>/dev/null; then
+        integrations+=("Redis")
+    fi
+
+    # Message queues
+    if grep -rqE "(amqp|rabbitmq|kafka|bull|sqs)" "$dir" --include="*.ts" --include="*.js" --include="*.json" 2>/dev/null; then
+        integrations+=("Message Queue")
+    fi
+
+    # HTTP clients
+    if grep -rqE "(axios|fetch|got|request|httpClient)" "$dir" --include="*.ts" --include="*.js" 2>/dev/null; then
+        integrations+=("External HTTP APIs")
+    fi
+
+    # AWS
+    if grep -rqE "(aws-sdk|@aws-sdk)" "$dir" --include="*.ts" --include="*.js" --include="*.json" 2>/dev/null; then
+        integrations+=("AWS Services")
+    fi
+
+    printf '%s\n' "${integrations[@]}"
+}
+
+# Count lines and files
+count_stats() {
+    local dir="$1"
+
+    local total_files=$(find "$dir" -type f \( -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.rb" \) 2>/dev/null | grep -v node_modules | grep -v ".git" | wc -l | tr -d ' ')
+
+    local total_lines=$(find "$dir" -type f \( -name "*.ts" -o -name "*.js" -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.rb" \) 2>/dev/null | grep -v node_modules | grep -v ".git" | xargs wc -l 2>/dev/null | tail -1 | awk '{print $1}')
+
+    echo "Files: $total_files, Lines: ${total_lines:-0}"
+}
+
+# Directory structure (top 2 levels)
+get_structure() {
+    local dir="$1"
+    find "$dir" -maxdepth 2 -type d 2>/dev/null | grep -v node_modules | grep -v ".git" | grep -v __pycache__ | sed "s|$dir|.|" | sort | head -30
+}
+
+# --- Run Analysis ---
+
+echo -e "${BLUE}Analyzing: $TARGET_DIR${NC}"
+echo ""
+
+PROJECT_TYPE=$(detect_project_type "$TARGET_DIR")
+echo -e "${GREEN}Project type:${NC} $PROJECT_TYPE"
+
+STATS=$(count_stats "$TARGET_DIR")
+echo -e "${GREEN}Stats:${NC} $STATS"
+echo ""
+
+echo -e "${GREEN}Directory structure:${NC}"
+get_structure "$TARGET_DIR" | sed 's/^/  /'
+echo ""
+
+echo -e "${GREEN}Entry points:${NC}"
+ENTRY_POINTS=$(find_entry_points "$TARGET_DIR")
+if [[ -n "$ENTRY_POINTS" ]]; then
+    echo "$ENTRY_POINTS" | sed 's/^/  /'
+else
+    echo "  (none detected)"
+fi
+echo ""
+
+if [[ -z "$FOCUS" || "$FOCUS" == "routes" ]]; then
+    echo -e "${GREEN}Route definitions:${NC}"
+    ROUTES=$(find_routes "$TARGET_DIR")
+    if [[ -n "$ROUTES" ]]; then
+        echo "$ROUTES" | sed "s|$TARGET_DIR/||" | sed 's/^/  /'
+    else
+        echo "  (none detected)"
+    fi
+    echo ""
+fi
+
+if [[ -z "$FOCUS" || "$FOCUS" == "models" ]]; then
+    echo -e "${GREEN}Data models/types:${NC}"
+    MODELS=$(find_models "$TARGET_DIR")
+    if [[ -n "$MODELS" ]]; then
+        echo "$MODELS" | sed "s|$TARGET_DIR/||" | sed 's/^/  /'
+    else
+        echo "  (none detected)"
+    fi
+    echo ""
+fi
+
+if [[ -z "$FOCUS" || "$FOCUS" == "services" ]]; then
+    echo -e "${GREEN}Services/business logic:${NC}"
+    SERVICES=$(find_services "$TARGET_DIR")
+    if [[ -n "$SERVICES" ]]; then
+        echo "$SERVICES" | sed "s|$TARGET_DIR/||" | sed 's/^/  /'
+    else
+        echo "  (none detected)"
+    fi
+    echo ""
+fi
+
+if [[ -z "$FOCUS" || "$FOCUS" == "config" ]]; then
+    echo -e "${GREEN}Configuration:${NC}"
+    CONFIG=$(find_config "$TARGET_DIR")
+    if [[ -n "$CONFIG" ]]; then
+        echo "$CONFIG" | sed "s|$TARGET_DIR/||" | sed 's/^/  /'
+    else
+        echo "  (none detected)"
+    fi
+    echo ""
+fi
+
+echo -e "${GREEN}External integrations:${NC}"
+INTEGRATIONS=$(find_integrations "$TARGET_DIR")
+if [[ -n "$INTEGRATIONS" ]]; then
+    echo "$INTEGRATIONS" | sed 's/^/  /'
+else
+    echo "  (none detected)"
+fi
+echo ""
+
+# --- Summary Mode ---
+
+if [[ "$SUMMARY_ONLY" == true ]]; then
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    echo -e "${CYAN}Discovery complete (summary only)${NC}"
+    echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+    exit 0
+fi
+
+# --- Generate KB Entry ---
+
+DATE=$(date +%Y-%m-%d)
+SLUG=$(echo "$TARGET_NAME-boundaries" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/--*/-/g')
+FILENAME="${DATE}-${SLUG}.md"
+FILEPATH="$OUTPUT_DIR/$FILENAME"
+
+generate_entry() {
+    cat << EOF
+---
+title: ${TARGET_NAME} Codebase Boundaries
+type: exploration
+status: tentative
+date: $DATE
+tags: [area:architecture, layer:overview]
+sources:
+  - ${TARGET_DIR}
+related:
+  - # TODO: Link to specific module explorations
+---
+
+## Summary
+
+Discovery scan of \`${TARGET_NAME}\` codebase. Project type: ${PROJECT_TYPE}. ${STATS}.
+
+## Context / Question
+
+Automated discovery to understand codebase boundaries before migration/integration work.
+
+## Findings
+
+### Project Type
+
+${PROJECT_TYPE}
+
+### Directory Structure
+
+\`\`\`
+$(get_structure "$TARGET_DIR")
+\`\`\`
+
+### Entry Points
+
+$(if [[ -n "$ENTRY_POINTS" ]]; then echo "$ENTRY_POINTS" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+### Route Definitions
+
+$(if [[ -n "$ROUTES" ]]; then echo "$ROUTES" | sed "s|$TARGET_DIR/||" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+### Data Models
+
+$(if [[ -n "$MODELS" ]]; then echo "$MODELS" | sed "s|$TARGET_DIR/||" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+### Services / Business Logic
+
+$(if [[ -n "$SERVICES" ]]; then echo "$SERVICES" | sed "s|$TARGET_DIR/||" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+### Configuration Files
+
+$(if [[ -n "$CONFIG" ]]; then echo "$CONFIG" | sed "s|$TARGET_DIR/||" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+### External Integrations
+
+$(if [[ -n "$INTEGRATIONS" ]]; then echo "$INTEGRATIONS" | sed 's/^/- /'; else echo "- None detected"; fi)
+
+## Verification
+
+Auto-generated by \`kb-discover\`. Manual verification needed:
+- [ ] Entry points are correct
+- [ ] Module boundaries are accurate
+- [ ] Integration list is complete
+
+## Follow-ups / Open Questions
+
+- Deep dive into specific modules as needed
+- Document data flow between components
+- Map external API contracts
+EOF
+}
+
+ENTRY_CONTENT=$(generate_entry)
+
+echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+echo -e "${CYAN}KB Entry${NC}"
+echo -e "${CYAN}═══════════════════════════════════════════════════════════${NC}"
+echo -e "File: ${BLUE}$FILEPATH${NC}"
+echo ""
+
+if [[ "$DRY_RUN" == true ]]; then
+    echo -e "${YELLOW}[DRY RUN] Would create: $FILEPATH${NC}"
+    echo ""
+    echo -e "${YELLOW}--- Content Preview (first 60 lines) ---${NC}"
+    echo "$ENTRY_CONTENT" | head -60
+    echo ""
+    echo -e "${YELLOW}--- (truncated) ---${NC}"
+else
+    # Ensure output dir exists
+    mkdir -p "$OUTPUT_DIR"
+
+    # Check for existing
+    if [[ -f "$FILEPATH" ]]; then
+        echo -e "${YELLOW}Warning: File exists. Adding timestamp...${NC}"
+        FILEPATH="$OUTPUT_DIR/${DATE}-${SLUG}-$(date +%H%M%S).md"
+    fi
+
+    echo "$ENTRY_CONTENT" > "$FILEPATH"
+    echo -e "${GREEN}Created: $FILEPATH${NC}"
+    echo ""
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo "  1. Review and verify findings"
+    echo "  2. Add specific file:line references"
+    echo "  3. Change status to 'verified' when confirmed"
+    echo "  4. Update $KB_DIR/INDEX.md"
+fi
