@@ -129,11 +129,11 @@ Context across sessions?
 
 ## Enforcement Mechanisms
 
-Not opt-in — these **seven mechanisms** enforce on every non-trivial task:
+Not opt-in — these **eight mechanisms** enforce on every non-trivial task:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│                           THE SEVEN MECHANISMS                                 │
+│                           THE EIGHT MECHANISMS                                 │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                │
 │  1. ALWAYS-ON        Mandatory every task, not triggered by phrases            │
@@ -149,6 +149,8 @@ Not opt-in — these **seven mechanisms** enforce on every non-trivial task:
 │  6. SCOPES           user / repo / session separation                          │
 │                                                                                │
 │  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
+│                                                                                │
+│  8. CONSENT          Ask before marking verified entries as superseded         │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```

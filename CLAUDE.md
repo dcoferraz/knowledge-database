@@ -32,7 +32,7 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ---
 
-## The Seven Enforcement Mechanisms
+## The Eight Enforcement Mechanisms
 
 ### 1. Always-On Enforcement
 
@@ -93,6 +93,15 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
 - **Periodic lint**: every entry has sources, valid status, INDEX row; newest rows on top
+
+### 8. Supersede with Consent
+
+Before marking a `verified` entry as `superseded`, **ask the user for confirmation**. Verified entries represent proven knowledge - changing their status should be deliberate.
+
+Prompt example:
+> "Entry X appears outdated because [reason]. Mark as superseded and link to new entry Y?"
+
+**Opt-out:** Add `supersede_without_consent: true` to workspace CLAUDE.md to allow autonomous superseding.
 
 ---
 
