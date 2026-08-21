@@ -88,9 +88,10 @@ Bootstrap is safe to run multiple times. Never overwrites existing entries.
 | Investigate "how does X work" | YES | explorations/ |
 | Add feature (multi-file) | YES | solutions/ |
 | Choose between approaches | YES | decisions/ |
-| Fix typo / rename var | NO | - |
+| Rename with reasoning | YES | decisions/ |
+| Fix obvious typo | NO | - |
 
-**Rule**: Searched, read multiple files, debugged, or decided = record it.
+**Rule**: If there was reasoning, record it. Future you will ask "why?"
 
 #### Priority (Most Valuable First)
 

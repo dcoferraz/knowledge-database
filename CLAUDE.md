@@ -120,11 +120,11 @@ Review and confirm entry content.
 | Investigate "how does X work" | YES | explorations/ |
 | Add feature (multi-file) | YES | solutions/ |
 | Choose between approaches | YES | decisions/ |
-| Fix typo | NO | - |
-| Rename variable | NO | - |
-| Update single config value | NO | - |
+| Rename with reasoning ("why this name?") | YES | decisions/ |
+| Fix obvious typo ("teh" -> "the") | NO | - |
+| Mechanical find/replace (no judgment) | NO | - |
 
-**Rule of thumb**: If you searched, read multiple files, debugged, or made a decision = record it.
+**Rule of thumb**: If there was reasoning behind the change, record it. Future you will ask "why?"
 
 #### What's Most Valuable to Record
 
