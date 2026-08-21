@@ -6,25 +6,25 @@
 <div align="center">
 
 ```
-╔═══════════════════════════════════════════════════════════════════════════════╗
-║                                                                               ║
-║   ██╗  ██╗███╗   ██╗ ██████╗ ██╗    ██╗██╗     ███████╗██████╗  ██████╗ ███████╗║
-║   ██║ ██╔╝████╗  ██║██╔═══██╗██║    ██║██║     ██╔════╝██╔══██╗██╔════╝ ██╔════╝║
-║   █████╔╝ ██╔██╗ ██║██║   ██║██║ █╗ ██║██║     █████╗  ██║  ██║██║  ███╗█████╗  ║
-║   ██╔═██╗ ██║╚██╗██║██║   ██║██║███╗██║██║     ██╔══╝  ██║  ██║██║   ██║██╔══╝  ║
-║   ██║  ██╗██║ ╚████║╚██████╔╝╚███╔███╔╝███████╗███████╗██████╔╝╚██████╔╝███████╗║
-║   ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝║
-║                                                                               ║
-║   ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ ███████╗███████╗           ║
-║   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝           ║
-║   ██║  ██║███████║   ██║   ███████║██████╔╝███████║███████╗█████╗             ║
-║   ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║╚════██║██╔══╝             ║
-║   ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║███████║███████╗           ║
-║   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝           ║
-║                                                                               ║
-║                    🧠 Durable Memory for AI Coding Agents                      ║
-║                                                                               ║
-╚═══════════════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                  ║
+║   ██╗  ██╗███╗   ██╗ ██████╗ ██╗    ██╗██╗     ███████╗██████╗  ██████╗ ███████╗ ║
+║   ██║ ██╔╝████╗  ██║██╔═══██╗██║    ██║██║     ██╔════╝██╔══██╗██╔════╝ ██╔════╝ ║
+║   █████╔╝ ██╔██╗ ██║██║   ██║██║ █╗ ██║██║     █████╗  ██║  ██║██║  ███╗█████╗   ║
+║   ██╔═██╗ ██║╚██╗██║██║   ██║██║███╗██║██║     ██╔══╝  ██║  ██║██║   ██║██╔══╝   ║
+║   ██║  ██╗██║ ╚████║╚██████╔╝╚███╔███╔╝███████╗███████╗██████╔╝╚██████╔╝███████╗ ║
+║   ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝ ║
+║                                                                                  ║
+║   ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ ███████╗███████╗              ║
+║   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝              ║
+║   ██║  ██║███████║   ██║   ███████║██████╔╝███████║███████╗█████╗                ║
+║   ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║╚════██║██╔══╝                ║
+║   ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║███████║███████╗              ║
+║   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝              ║
+║                                                                                  ║
+║                      Durable Memory for AI Coding Agents                         ║
+║                                                                                  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
 ```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
@@ -39,7 +39,7 @@
 
 ---
 
-## 🎯 The Problem
+## The Problem
 
 Without persistent memory, every AI session starts from zero:
 
@@ -50,12 +50,12 @@ Without persistent memory, every AI session starts from zero:
 │  WEDNESDAY   Same bug you fixed last week?      →  Debug from scratch   │
 └─────────────────────────────────────────────────────────────────────────┘
                                     ⬇️
-              💸 You're paying tokens to rediscover the same things
+              You're paying tokens to rediscover the same things
 ```
 
 ---
 
-## 💡 The Solution
+## The Solution
 
 Knowledge Database creates structured memory that agents read *before* exploring:
 
@@ -79,7 +79,7 @@ flowchart LR
 
 ---
 
-## 📊 Before & After
+## Before & After
 
 <table>
 <tr>
@@ -126,28 +126,28 @@ Context across sessions?
 
 ---
 
-## 🛡️ Enforcement Mechanisms
+## Enforcement Mechanisms
 
 Not opt-in — these **seven mechanisms** enforce on every non-trivial task:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│                           THE SEVEN MECHANISMS                                  │
+│                           THE SEVEN MECHANISMS                                 │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                │
-│  1️⃣  ALWAYS-ON          Mandatory every task, not triggered by phrases        │
+│  1  ALWAYS-ON          Mandatory every task, not triggered by phrases          │
 │                                                                                │
-│  2️⃣  ROUTING            INDEX.md → canonical docs, not just entries           │
+│  2  ROUTING            INDEX.md → canonical docs, not just entries             │
 │                                                                                │
-│  3️⃣  LOCK-STEP          Schema change? Doc MUST change too.                   │
+│  3  LOCK-STEP          Schema change? Doc MUST change too.                     │
 │                                                                                │
-│  4️⃣  HIERARCHY          Code > generated > docs (explicit ranking)            │
+│  4  HIERARCHY          Code > generated > docs (explicit ranking)              │
 │                                                                                │
-│  5️⃣  EVIDENCE           verified status REQUIRES proof block                  │
+│  5  EVIDENCE           verified status REQUIRES proof block                    │
 │                                                                                │
-│  6️⃣  SCOPES             user / repo / session separation                      │
+│  6  SCOPES             user / repo / session separation                        │
 │                                                                                │
-│  7️⃣  MAINTENANCE        Dedup, tag reuse, fix wrong entries                   │
+│  7  MAINTENANCE        Dedup, tag reuse, fix wrong entries                     │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -156,7 +156,7 @@ See [CLAUDE.md](CLAUDE.md) for full enforcement rules.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Install (pick one)
 
@@ -187,7 +187,7 @@ knowledge-db/
 
 ---
 
-## 🔧 CLI Tools
+## CLI Tools
 
 ```bash
 # Initialize KB structure
@@ -217,7 +217,7 @@ cat conversation.txt | ./scripts/kb-ingest --bucket errors
 
 ## 📖 How It Works
 
-### 1️⃣ Agent Checks KB First
+### 1. Agent Checks KB First
 
 Before exploring, agent searches `INDEX.md`:
 
@@ -236,7 +236,7 @@ Before exploring, agent searches `INDEX.md`:
 
 **verified entry exists?** → Use it, skip investigation.
 
-### 2️⃣ New Findings Get Recorded
+### 2. New Findings Get Recorded
 
 After non-trivial work, agent creates an entry:
 
@@ -264,7 +264,7 @@ PASS src/middleware/auth.test.ts
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  🐛 ERROR ENTRY STRUCTURE                                           │
+│  ERROR ENTRY STRUCTURE                                              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ## Symptom                                                         │
@@ -292,9 +292,9 @@ PASS src/middleware/auth.test.ts
 ┌──────────────┬─────────────────────────┬─────────────────────────────────┐
 │ Status       │ Meaning                 │ Requirements                    │
 ├──────────────┼─────────────────────────┼─────────────────────────────────┤
-│ ✅ verified   │ Proven true             │ Verification block with PROOF   │
-│ 🔶 tentative  │ Best understanding      │ Any unsourced claim             │
-│ 🔄 superseded │ Outdated                │ related: MUST link replacement  │
+│  verified    │ Proven true             │ Verification block with PROOF   │
+│  tentative   │ Best understanding      │ Any unsourced claim             │
+│  superseded  │ Outdated                │ related: MUST link replacement  │
 └──────────────┴─────────────────────────┴─────────────────────────────────┘
 ```
 
@@ -306,18 +306,18 @@ PASS src/middleware/auth.test.ts
 
 ```mermaid
 flowchart TB
-    subgraph KB["🗄️ KNOWLEDGE DATABASE"]
+    subgraph KB["KNOWLEDGE DATABASE"]
         direction TB
-        E["🔍 explorations/\n'How does X work?'"]
-        S["🔨 solutions/\n'How we built Y'"]
-        R["🐛 errors/\n'What broke + fix'"]
-        D["⚖️ decisions/\n'Why we chose A'"]
+        E["explorations/\n'How does X work?'"]
+        S["solutions/\n'How we built Y'"]
+        R["errors/\n'What broke + fix'"]
+        D["decisions/\n'Why we chose A'"]
     end
 
-    Q1["❓ Understanding something"] --> E
-    Q2["🛠️ Building something"] --> S
-    Q3["💥 Something broke"] --> R
-    Q4["🤔 Choosing between options"] --> D
+    Q1["Understanding something"] --> E
+    Q2["Building something"] --> S
+    Q3["Something broke"] --> R
+    Q4["Choosing between options"] --> D
 
     style KB fill:#1a1a2e,stroke:#16213e
     style E fill:#0f3460,stroke:#16213e,color:#fff
