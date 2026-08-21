@@ -112,9 +112,30 @@ Creating KB entry for: [describe work]
 Review and confirm entry content.
 ```
 
-This is NOT optional. Non-trivial work = KB entry created. The only user input is reviewing the entry content, not deciding whether to create it.
+#### What Triggers Auto-Capture
 
-"Non-trivial" = search, multi-file reads, debugging, or decisions. One-liners (typo fix, rename) are trivial and skip this.
+| Task | Record? | Bucket |
+|------|---------|--------|
+| Debug failing test | YES | errors/ |
+| Investigate "how does X work" | YES | explorations/ |
+| Add feature (multi-file) | YES | solutions/ |
+| Choose between approaches | YES | decisions/ |
+| Fix typo | NO | - |
+| Rename variable | NO | - |
+| Update single config value | NO | - |
+
+**Rule of thumb**: If you searched, read multiple files, debugged, or made a decision = record it.
+
+#### What's Most Valuable to Record
+
+Priority order (highest value first):
+
+1. **Errors with fixes** - Prevents bug reintroduction. Include: symptom, root cause, fix, prevention.
+2. **"How X works" investigations** - Prevents re-exploration. Time saved = investigation time.
+3. **Decisions with rationale** - Prevents re-debating. Include: options considered, why chosen.
+4. **Multi-step solutions** - Prevents redoing work. Include: what was built, key files changed.
+
+**The pattern that compounds**: Every error recorded is a bug that can never be reintroduced. Every exploration recorded is an investigation that never happens twice.
 
 ### 9. Consent Before Superseding Verified
 

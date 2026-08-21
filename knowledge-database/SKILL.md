@@ -80,17 +80,24 @@ Bootstrap is safe to run multiple times. Never overwrites existing entries.
 
 **At the end of EVERY non-trivial task, CREATE a KB entry.**
 
-```
-Creating KB entry for: [describe work]
-  Bucket: [suggested bucket]/
-  Status: [verified if proven, tentative if not]
+#### What Triggers Auto-Capture
 
-Review and confirm entry content.
-```
+| Task | Record? | Bucket |
+|------|---------|--------|
+| Debug failing test | YES | errors/ |
+| Investigate "how does X work" | YES | explorations/ |
+| Add feature (multi-file) | YES | solutions/ |
+| Choose between approaches | YES | decisions/ |
+| Fix typo / rename var | NO | - |
 
-This is NOT optional. Non-trivial work = KB entry created. User reviews content, not whether to create.
+**Rule**: Searched, read multiple files, debugged, or decided = record it.
 
-"Non-trivial" = search, multi-file reads, debugging, or decisions. One-liners skip this.
+#### Priority (Most Valuable First)
+
+1. **Errors with fixes** - Prevents bug reintroduction
+2. **Investigations** - Prevents re-exploration
+3. **Decisions with rationale** - Prevents re-debating
+4. **Multi-step solutions** - Prevents redoing work
 
 ### Consent Before Superseding
 
