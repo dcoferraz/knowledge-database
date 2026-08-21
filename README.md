@@ -142,6 +142,26 @@ Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
 
 See [CLAUDE.md](CLAUDE.md) for full enforcement rules.
 
+### What Triggers Auto-Capture?
+
+| Task | Record? | Bucket |
+|------|---------|--------|
+| Debug failing test | YES | errors/ |
+| Investigate "how does X work" | YES | explorations/ |
+| Add feature (multi-file) | YES | solutions/ |
+| Choose between approaches | YES | decisions/ |
+| Rename with reasoning | YES | decisions/ |
+| Fix obvious typo | NO | - |
+
+**Rule**: If there was reasoning, record it. Future you will ask "why?"
+
+### What's Most Valuable?
+
+1. **Errors with fixes** - Prevents bug reintroduction
+2. **Investigations** - Prevents re-exploration
+3. **Decisions with rationale** - Prevents re-debating
+4. **Multi-step solutions** - Prevents redoing work
+
 ---
 
 ## Quick Start
