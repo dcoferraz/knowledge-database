@@ -32,7 +32,7 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ---
 
-## The Eight Enforcement Mechanisms
+## The Nine Enforcement Mechanisms
 
 > **Implementation Status**: These mechanisms are conventions enforced by agent behavior (reading this file). They are NOT automated (no hooks, CI gates, or runtime validation). See Phase 2 in roadmap/ for planned automation.
 
@@ -100,14 +100,30 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
 - **Periodic lint**: every entry has sources, valid status, INDEX row; newest rows on top
 
-### 8. Supersede with Consent
+### 8. Auto-Capture with User Prompts
 
-Before marking a `verified` entry as `superseded`, **ask the user for confirmation**. Verified entries represent proven knowledge - changing their status should be deliberate.
+**At the END of every non-trivial task, ALWAYS prompt the user:**
 
-Prompt example:
-> "Entry X appears outdated because [reason]. Mark as superseded and link to new entry Y?"
+```
+This session involved [describe work]. Create KB entry?
+  [Y] Create entry in [suggested bucket]/
+  [N] Skip (work was trivial)
+  [T] Create as tentative (lacking proof)
+```
 
-**Opt-out:** Add `supersede_without_consent: true` to workspace CLAUDE.md to allow autonomous superseding.
+Do NOT silently skip KB write-back. Do NOT assume. ALWAYS ask.
+
+### 9. Consent Before Status Changes
+
+**Before creating a TENTATIVE entry** (no verification proof):
+> "This entry lacks proof. Create as tentative? [Y/N]"
+
+**Before marking a VERIFIED entry as SUPERSEDED**:
+> "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
+
+Verified entries represent proven knowledge. Never change their status without explicit user consent.
+
+**Opt-out:** Add `kb_auto_consent: true` to workspace CLAUDE.md to allow autonomous entry creation and superseding.
 
 ---
 

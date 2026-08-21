@@ -111,11 +111,11 @@ Context across sessions?
 
 ## Enforcement Mechanisms
 
-Not opt-in — these **eight mechanisms** enforce on every non-trivial task:
+Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│                           THE EIGHT MECHANISMS                                 │
+│                           THE NINE MECHANISMS                                  │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                │
 │  1. ALWAYS-ON        Mandatory every task, not triggered by phrases            │
@@ -132,7 +132,9 @@ Not opt-in — these **eight mechanisms** enforce on every non-trivial task:
 │                                                                                │
 │  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
 │                                                                                │
-│  8. CONSENT          Ask before marking verified entries as superseded         │
+│  8. AUTO-CAPTURE     Prompt user at task end: "Create KB entry?"               │
+│                                                                                │
+│  9. CONSENT          Ask before tentative entries or superseding verified      │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```

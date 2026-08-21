@@ -76,6 +76,29 @@ Bootstrap is safe to run multiple times. Never overwrites existing entries.
 
 ## 3. WRITE Loop (end of task)
 
+### Auto-Capture Enforcement
+
+**At the end of EVERY non-trivial task, you MUST prompt the user:**
+
+```
+This session involved [describe work]. Create KB entry?
+- [Y] Create entry in [bucket]/
+- [N] Skip (work was trivial)
+- [T] Mark as tentative (lacking proof)
+```
+
+Do NOT silently skip. Do NOT assume user wants to skip. ALWAYS ask.
+
+### User Consent Requirements
+
+**Before creating a TENTATIVE entry:**
+> "This entry lacks verification proof. Create as tentative? [Y/N]"
+
+**Before marking a VERIFIED entry as SUPERSEDED:**
+> "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
+
+Never change verified entry status without explicit user consent.
+
 ### Pick Bucket by Intent
 
 | Intent | Bucket | Example |
@@ -146,7 +169,10 @@ This repo keeps durable memory in `knowledge-db/` so we never explore the same t
 2) **DO THE WORK**.
 3) **WRITE BACK** — copy _TEMPLATE.md into explorations|solutions|errors|decisions, ground every claim in a real source file, set status, update INDEX.md. errors/ entries must record Symptom -> Root cause -> Fix -> Prevention.
 
-Leaving a task without updating the knowledge database is incomplete work.
+**AUTO-CAPTURE**: At task end, ALWAYS prompt user: "Create KB entry? [Y/N/Tentative]"
+**CONSENT REQUIRED**: Before creating tentative entries or superseding verified entries, ask user.
+
+Leaving a task without prompting about KB update is incomplete work.
 ```
 
 ---
