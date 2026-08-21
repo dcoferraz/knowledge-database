@@ -5,6 +5,21 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-21
+
+### Added
+- **Incremental Capture** (Mechanism 10): Record findings as they occur, not batched at session end
+- **Entry Granularity guidance**: decisions/ = one entry per choice, not per session
+- **Session Resilience section**: Explicit guidance on protecting against session loss
+
+### Changed
+- Upgraded from 9 to 10 enforcement mechanisms
+- WRITE loop renamed "as insights occur" instead of "end of task"
+- HARD-RULE block now includes INCREMENTAL line
+
+### Fixed
+- Pattern violation where multiple decisions consolidated into single entry
+
 ## [0.2.2] - 2026-08-21
 
 ### Added
@@ -53,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.3.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.1.0...v0.2.0

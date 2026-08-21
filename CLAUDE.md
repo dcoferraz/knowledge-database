@@ -32,7 +32,7 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ---
 
-## The Nine Enforcement Mechanisms
+## The Ten Enforcement Mechanisms
 
 > **Implementation Status**: These mechanisms are conventions enforced by agent behavior (reading this file). They are NOT automated (no hooks, CI gates, or runtime validation). See Phase 2 in roadmap/ for planned automation.
 
@@ -102,15 +102,26 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 
 ### 8. Auto-Capture (Mandatory)
 
-**At the END of every non-trivial task, CREATE a KB entry.**
+**Non-trivial work = KB entry created.** This is not optional.
 
 ```
 Creating KB entry for: [describe work]
   Bucket: [suggested bucket]/
   Status: [verified if proven, tentative if not]
-
-Review and confirm entry content.
 ```
+
+#### Entry Granularity
+
+Different buckets have different granularity rules:
+
+| Bucket | Granularity | Example |
+|--------|-------------|---------|
+| solutions/ | One per feature/fix | "KB v2 security fixes" |
+| errors/ | One per bug | "YAML injection in kb-ingest" |
+| explorations/ | One per question | "How does auth middleware work?" |
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+
+**decisions/ rule**: If you debated A vs B, that's one entry. Multiple debates = multiple entries.
 
 #### What Triggers Auto-Capture
 
@@ -145,6 +156,38 @@ Priority order (highest value first):
 Verified entries represent proven knowledge. Never change their status without explicit user consent.
 
 **Opt-out:** Add `supersede_without_consent: true` to workspace CLAUDE.md to allow autonomous superseding.
+
+### 10. Incremental Capture (Session Resilience)
+
+**Record findings AS THEY OCCUR, not batched at session end.**
+
+Sessions can end unexpectedly:
+- Context window exhausted
+- User logs off mid-task
+- Network disconnection
+- System crash
+
+**Memory not committed to KB = memory lost.**
+
+#### Capture Timing
+
+| Event | Action |
+|-------|--------|
+| Made choice between A and B | Create decision entry NOW |
+| Discovered how something works | Create exploration entry NOW |
+| Fixed a bug | Create error entry NOW |
+| Completed a feature | Create solution entry NOW |
+
+**Do NOT wait** for "task complete" to batch-create entries. Each insight is captured when it occurs.
+
+#### Checkpoint Discipline
+
+During long sessions, after each significant finding:
+1. Note the finding (can be brief)
+2. Create or update KB entry immediately
+3. Continue work
+
+**Rule**: If session ended RIGHT NOW, would this insight survive? If no, record it.
 
 ---
 

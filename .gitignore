@@ -9,8 +9,8 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Generated KB folder (users create their own)
-knowledge-db/
+# Note: knowledge-db/ is TRACKED in this repo as worked examples
+# Users installing the skill have knowledge-db/ added to THEIR .gitignore
 
 # Claude Code
 .claude/

@@ -74,11 +74,37 @@ Bootstrap is safe to run multiple times. Never overwrites existing entries.
 
 ---
 
-## 3. WRITE Loop (end of task)
+## 3. WRITE Loop (as insights occur)
 
 ### Auto-Capture (Mandatory)
 
-**At the end of EVERY non-trivial task, CREATE a KB entry.**
+**Non-trivial work = KB entry created.** This is not optional.
+
+### Incremental Capture (Session Resilience)
+
+**Record findings AS THEY OCCUR, not batched at session end.**
+
+Sessions can end unexpectedly (context exhaustion, logout, crash). Memory not committed = memory lost.
+
+| Event | Action |
+|-------|--------|
+| Made choice between A and B | Create decision entry NOW |
+| Discovered how something works | Create exploration entry NOW |
+| Fixed a bug | Create error entry NOW |
+| Completed a feature | Create solution entry NOW |
+
+**Rule**: If session ended RIGHT NOW, would this insight survive? If no, record it.
+
+### Entry Granularity
+
+| Bucket | Granularity | Example |
+|--------|-------------|---------|
+| solutions/ | One per feature/fix | "KB v2 security fixes" |
+| errors/ | One per bug | "YAML injection in kb-ingest" |
+| explorations/ | One per question | "How does auth middleware work?" |
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+
+**decisions/ rule**: Multiple debates in session = multiple decision entries.
 
 #### What Triggers Auto-Capture
 
@@ -116,7 +142,7 @@ Never change verified entry status without explicit user consent.
 | Build/runtime/test failure | `errors/` | "TypeError in payment flow" |
 | Choosing between options | `decisions/` | "Why PostgreSQL over MongoDB" |
 
-One entry covers whole task. File under dominant intent, cross-link the rest.
+File under dominant intent, cross-link related entries. For decisions: one entry per choice made.
 
 ### Create Entry
 
@@ -177,10 +203,11 @@ This repo keeps durable memory in `knowledge-db/` so we never explore the same t
 2) **DO THE WORK**.
 3) **WRITE BACK** — copy _TEMPLATE.md into explorations|solutions|errors|decisions, ground every claim in a real source file, set status, update INDEX.md. errors/ entries must record Symptom -> Root cause -> Fix -> Prevention.
 
-**AUTO-CAPTURE**: Non-trivial task = KB entry created. This is mandatory, not a prompt.
+**AUTO-CAPTURE**: Non-trivial work = KB entry created. This is mandatory, not optional.
+**INCREMENTAL**: Record findings AS THEY OCCUR, not batched at session end. Session can end anytime.
 **CONSENT**: Only required before superseding verified entries.
 
-Leaving a non-trivial task without a KB entry is incomplete work.
+Leaving a task without KB entries is incomplete work.
 ```
 
 ---

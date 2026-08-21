@@ -9,7 +9,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-0.2.2-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.3.0-orange)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-blueviolet)](https://claude.ai/claude-code)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-compatible-green)](https://github.com/features/copilot)
@@ -112,11 +112,11 @@ Context across sessions?
 
 ## Enforcement Mechanisms
 
-Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
+Not opt-in — these **ten mechanisms** enforce on every non-trivial task:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
-│                           THE NINE MECHANISMS                                  │
+│                           THE TEN MECHANISMS                                   │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                │
 │  1. ALWAYS-ON        Mandatory every task, not triggered by phrases            │
@@ -133,9 +133,11 @@ Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
 │                                                                                │
 │  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
 │                                                                                │
-│  8. AUTO-CAPTURE     Non-trivial task = KB entry created (mandatory)           │
+│  8. AUTO-CAPTURE     Non-trivial work = KB entry created (mandatory)           │
 │                                                                                │
 │  9. CONSENT          Ask before superseding verified entries                   │
+│                                                                                │
+│ 10. INCREMENTAL      Record AS insights occur, not batched at session end      │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -161,6 +163,17 @@ See [CLAUDE.md](CLAUDE.md) for full enforcement rules.
 2. **Investigations** - Prevents re-exploration
 3. **Decisions with rationale** - Prevents re-debating
 4. **Multi-step solutions** - Prevents redoing work
+
+### Session Resilience
+
+Sessions end unexpectedly: context exhaustion, logout, crash. **Memory not committed = memory lost.**
+
+```
+BAD:  Work -> Work -> Work -> Session ends -> Lost everything
+GOOD: Work -> Record -> Work -> Record -> Session ends -> Nothing lost
+```
+
+**Rule**: If session ended RIGHT NOW, would insights survive? If no, record them.
 
 ---
 
