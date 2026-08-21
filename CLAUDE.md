@@ -113,17 +113,14 @@ This session involved [describe work]. Create KB entry?
 
 Do NOT silently skip KB write-back. Do NOT assume. ALWAYS ask.
 
-### 9. Consent Before Status Changes
+### 9. Consent Before Superseding Verified
 
-**Before creating a TENTATIVE entry** (no verification proof):
-> "This entry lacks proof. Create as tentative? [Y/N]"
-
-**Before marking a VERIFIED entry as SUPERSEDED**:
+**Before marking a VERIFIED entry as SUPERSEDED**, ask user:
 > "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
 
 Verified entries represent proven knowledge. Never change their status without explicit user consent.
 
-**Opt-out:** Add `kb_auto_consent: true` to workspace CLAUDE.md to allow autonomous entry creation and superseding.
+**Opt-out:** Add `supersede_without_consent: true` to workspace CLAUDE.md to allow autonomous superseding.
 
 ---
 

@@ -134,7 +134,7 @@ Not opt-in — these **nine mechanisms** enforce on every non-trivial task:
 │                                                                                │
 │  8. AUTO-CAPTURE     Prompt user at task end: "Create KB entry?"               │
 │                                                                                │
-│  9. CONSENT          Ask before tentative entries or superseding verified      │
+│  9. CONSENT          Ask before superseding verified entries                   │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```

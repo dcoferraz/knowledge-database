@@ -89,10 +89,7 @@ This session involved [describe work]. Create KB entry?
 
 Do NOT silently skip. Do NOT assume user wants to skip. ALWAYS ask.
 
-### User Consent Requirements
-
-**Before creating a TENTATIVE entry:**
-> "This entry lacks verification proof. Create as tentative? [Y/N]"
+### Consent Before Superseding
 
 **Before marking a VERIFIED entry as SUPERSEDED:**
 > "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
