@@ -5,6 +5,16 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-08-21
+
+### Added
+- Clear auto-capture trigger table (what records, what doesn't)
+- Priority guidance (errors > investigations > decisions > solutions)
+- "Rename with reasoning" now triggers recording (it's a decision)
+
+### Changed
+- Rule of thumb: "If there was reasoning, record it. Future you will ask why?"
+
 ## [0.2.1] - 2026-08-21
 
 ### Changed
@@ -43,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.2.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dcoferraz/knowledge-database/releases/tag/v0.1.0
