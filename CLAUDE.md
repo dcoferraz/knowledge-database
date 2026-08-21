@@ -2,6 +2,22 @@
 
 This repo implements a **durable memory pattern** for AI coding agents. Never investigate the same thing twice. Never re-introduce a fixed bug.
 
+---
+
+## Workspace Rules
+
+These rules apply to ALL work in this repository:
+
+### No Emojis
+
+Do not use emojis in any file. If visual distinction is needed, use text labels, ASCII art, or markdown formatting instead. Emojis add no value that a few words cannot provide better.
+
+### No AI Co-Author Attribution
+
+Do not add `Co-Authored-By` lines for AI assistants in commit messages. The human is the author. AI is a tool, like a compiler or linter.
+
+---
+
 ## HARD RULE: Mandatory on EVERY Non-Trivial Task
 
 **This is not opt-in.** Do not wait for phrases like "record what I learned". The loop is MANDATORY on every non-trivial task.
@@ -49,7 +65,7 @@ When sources disagree: trust higher rank, note the stale one.
 
 **Ground EVERY claim** in a real source file (path:line-range). No unsourced assertions. Unsourced → `status: tentative`.
 
-### 5. Verified ↔ Evidence Coupling
+### 5. Verified-Evidence Coupling
 
 `status: verified` is ONLY allowed when entry contains a **Verification** block with actual proof:
 - Command run + output

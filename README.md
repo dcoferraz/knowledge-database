@@ -33,7 +33,7 @@
 
 **Stop re-investigating bugs you already fixed. Stop re-exploring code you already understood.**
 
-[Quick Start](#-quick-start) • [How It Works](#-how-it-works) • [CLI Tools](#-cli-tools) • [Roadmap](#-roadmap)
+[Quick Start](#quick-start) | [How It Works](#how-it-works) | [CLI Tools](#cli-tools) | [Roadmap](#roadmap)
 
 </div>
 
@@ -49,7 +49,8 @@ Without persistent memory, every AI session starts from zero:
 │  TUESDAY    "How does auth middleware work?"    →  20 min (AGAIN)       │
 │  WEDNESDAY   Same bug you fixed last week?      →  Debug from scratch   │
 └─────────────────────────────────────────────────────────────────────────┘
-                                    ⬇️
+                                    |
+                                    v
               You're paying tokens to rediscover the same things
 ```
 
@@ -61,13 +62,13 @@ Knowledge Database creates structured memory that agents read *before* exploring
 
 ```mermaid
 flowchart LR
-    subgraph EVERY_TASK["📋 EVERY NON-TRIVIAL TASK"]
+    subgraph EVERY_TASK["EVERY NON-TRIVIAL TASK"]
         direction LR
-        A["1️⃣ READ FIRST"] --> B["2️⃣ DO THE WORK"] --> C["3️⃣ WRITE BACK"]
+        A["1. READ FIRST"] --> B["2. DO THE WORK"] --> C["3. WRITE BACK"]
     end
 
-    A -.- D[("📚 INDEX.md\n+ canonical docs")]
-    C -.- E[("📝 New entry\n+ update index")]
+    A -.- D[("INDEX.md\n+ canonical docs")]
+    C -.- E[("New entry\n+ update index")]
 
     style EVERY_TASK fill:#1a1a2e,stroke:#16213e,color:#fff
     style A fill:#0f3460,stroke:#16213e,color:#fff
@@ -83,24 +84,24 @@ flowchart LR
 
 <table>
 <tr>
-<th width="50%">❌ Without KB</th>
-<th width="50%">✅ With KB</th>
+<th width="50%">Without KB</th>
+<th width="50%">With KB</th>
 </tr>
 <tr>
 <td>
 
 ```
 Same question twice?
-→ 20 min each time
+  → 20 min each time
 
 Bug reintroduced?
-→ Debug from scratch
+  → Debug from scratch
 
 New team member?
-→ "Ask Sarah, she knows"
+  → "Ask Sarah, she knows"
 
 Context across sessions?
-→ Lost forever
+  → Lost forever
 ```
 
 </td>
@@ -108,16 +109,16 @@ Context across sessions?
 
 ```
 Same question twice?
-→ 30 sec (read entry)
+  → 30 sec (read entry)
 
 Bug reintroduced?
-→ Entry shows exact fix
+  → Entry shows exact fix
 
 New team member?
-→ Self-service docs
+  → Self-service docs
 
 Context across sessions?
-→ Permanent memory
+  → Permanent memory
 ```
 
 </td>
@@ -135,19 +136,19 @@ Not opt-in — these **seven mechanisms** enforce on every non-trivial task:
 │                           THE SEVEN MECHANISMS                                 │
 ├────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                │
-│  1  ALWAYS-ON          Mandatory every task, not triggered by phrases          │
+│  1. ALWAYS-ON        Mandatory every task, not triggered by phrases            │
 │                                                                                │
-│  2  ROUTING            INDEX.md → canonical docs, not just entries             │
+│  2. ROUTING          INDEX.md points to canonical docs, not just entries       │
 │                                                                                │
-│  3  LOCK-STEP          Schema change? Doc MUST change too.                     │
+│  3. LOCK-STEP        Schema change? Doc MUST change too.                       │
 │                                                                                │
-│  4  HIERARCHY          Code > generated > docs (explicit ranking)              │
+│  4. HIERARCHY        Code > generated > docs (explicit ranking)                │
 │                                                                                │
-│  5  EVIDENCE           verified status REQUIRES proof block                    │
+│  5. EVIDENCE         verified status REQUIRES proof block                      │
 │                                                                                │
-│  6  SCOPES             user / repo / session separation                        │
+│  6. SCOPES           user / repo / session separation                          │
 │                                                                                │
-│  7  MAINTENANCE        Dedup, tag reuse, fix wrong entries                     │
+│  7. MAINTENANCE      Dedup, tag reuse, fix wrong entries                       │
 │                                                                                │
 └────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -177,12 +178,12 @@ git clone https://github.com/dcoferraz/knowledge-database.git
 
 ```
 knowledge-db/
-├── 📋 INDEX.md           ← Search here first (Ready-Answer Table + catalog)
-├── 📄 _TEMPLATE.md       ← Copy to create new entries
-├── 🔍 explorations/      ← "How does X work?"
-├── 🔨 solutions/         ← "How we built Y"
-├── 🐛 errors/            ← "Bug Z: symptom → root cause → fix → prevention"
-└── ⚖️  decisions/         ← "Why we chose A over B"
+├── INDEX.md           Search here first (Ready-Answer Table + catalog)
+├── _TEMPLATE.md       Copy to create new entries
+├── explorations/      "How does X work?"
+├── solutions/         "How we built Y"
+├── errors/            "Bug Z: symptom → root cause → fix → prevention"
+└── decisions/         "Why we chose A over B"
 ```
 
 ---
@@ -209,15 +210,15 @@ cat conversation.txt | ./scripts/kb-ingest --bucket errors
 
 | Tool | Purpose | Example |
 |------|---------|---------|
-| `kb-ingest` | Parse text → KB entry | `cat notes.txt \| kb-ingest --auto` |
-| `kb-discover` | Scan codebase → exploration | `kb-discover ./legacy-app` |
+| `kb-ingest` | Parse text into KB entry | `cat notes.txt \| kb-ingest --auto` |
+| `kb-discover` | Scan codebase, generate exploration | `kb-discover ./legacy-app` |
 | `kb-lint` | Check KB health | `kb-lint --fix` |
 
 ---
 
-## 📖 How It Works
+## How It Works
 
-### 1. Agent Checks KB First
+### Step 1: Agent Checks KB First
 
 Before exploring, agent searches `INDEX.md`:
 
@@ -231,12 +232,12 @@ Before exploring, agent searches `INDEX.md`:
 ## Explorations
 | Date       | Title                  | Status   | Entry |
 |------------|------------------------|----------|-------|
-| 2026-08-15 | Auth middleware chain  | verified | [→]() |
+| 2026-08-15 | Auth middleware chain  | verified | [...] |
 ```
 
-**verified entry exists?** → Use it, skip investigation.
+**verified entry exists?** Use it, skip investigation.
 
-### 2. New Findings Get Recorded
+### Step 2: New Findings Get Recorded
 
 After non-trivial work, agent creates an entry:
 
@@ -244,21 +245,21 @@ After non-trivial work, agent creates an entry:
 ---
 title: Auth middleware chain
 type: exploration
-status: verified          # ← Requires proof!
+status: verified          # Requires proof!
 tags: [area:auth, layer:middleware]
 sources:
-  - src/middleware/auth.ts:42-89    # ← Ground EVERY claim
+  - src/middleware/auth.ts:42-89    # Ground EVERY claim
 ---
 
 ## Summary
-Auth flows through 3 middleware: session → jwt → rbac.
+Auth flows through 3 middleware: session, jwt, rbac.
 
-## Verification                      # ← Required for "verified"
+## Verification                      # Required for "verified"
 $ npm test -- --grep "auth"
 PASS src/middleware/auth.test.ts
 ```
 
-### 3️⃣ Errors Capture Prevention
+### Step 3: Errors Capture Prevention
 
 `errors/` entries require **all four sections**:
 
@@ -286,15 +287,15 @@ PASS src/middleware/auth.test.ts
 
 ---
 
-## 📊 Status Rules
+## Status Rules
 
 ```
 ┌──────────────┬─────────────────────────┬─────────────────────────────────┐
 │ Status       │ Meaning                 │ Requirements                    │
 ├──────────────┼─────────────────────────┼─────────────────────────────────┤
-│  verified    │ Proven true             │ Verification block with PROOF   │
-│  tentative   │ Best understanding      │ Any unsourced claim             │
-│  superseded  │ Outdated                │ related: MUST link replacement  │
+│ verified     │ Proven true             │ Verification block with PROOF   │
+│ tentative    │ Best understanding      │ Any unsourced claim             │
+│ superseded   │ Outdated                │ related: MUST link replacement  │
 └──────────────┴─────────────────────────┴─────────────────────────────────┘
 ```
 
@@ -302,7 +303,7 @@ PASS src/middleware/auth.test.ts
 
 ---
 
-## 📁 Four Buckets
+## Four Buckets
 
 ```mermaid
 flowchart TB
@@ -330,43 +331,43 @@ One entry per task. File under dominant intent, cross-link the rest.
 
 ---
 
-## 🏗️ Repository Structure
+## Repository Structure
 
 ```
 knowledge-database/
-├── 📖 README.md                  ← You are here
-├── 📜 LICENSE
-├── 📋 CLAUDE.md                  ← HARD RULE + enforcement mechanisms
-├── 📦 .claude-plugin/
-│   └── marketplace.json          ← Plugin marketplace metadata
-├── 🧠 knowledge-database/
-│   └── SKILL.md                  ← Skill definition
-├── ⚙️  scripts/
-│   ├── init-knowledge-db.sh      ← Initialize KB structure
-│   ├── kb-ingest                 ← Parse text into entries
-│   ├── kb-discover               ← Scan codebase
-│   └── kb-lint                   ← Lint KB for issues
-├── 📄 .kb-templates/
+├── README.md                  You are here
+├── LICENSE
+├── CLAUDE.md                  HARD RULE + enforcement mechanisms
+├── .claude-plugin/
+│   └── marketplace.json       Plugin marketplace metadata
+├── knowledge-database/
+│   └── SKILL.md               Skill definition
+├── scripts/
+│   ├── init-knowledge-db.sh   Initialize KB structure
+│   ├── kb-ingest              Parse text into entries
+│   ├── kb-discover            Scan codebase
+│   └── kb-lint                Lint KB for issues
+├── .kb-templates/
 │   ├── README.md
 │   ├── INDEX.md
 │   └── _TEMPLATE.md
-└── 🗺️  roadmap/                   ← Future evolution plans
+└── roadmap/                   Future evolution plans
 ```
 
 ---
 
-## 🔌 Compatibility
+## Compatibility
 
 | Agent | Install Method |
 |-------|----------------|
-| 🟣 Claude Code | Plugin marketplace or manual skill |
-| 🟢 GitHub Copilot | Copy CLAUDE.md → `.github/copilot-instructions.md` |
-| 🔵 Cursor | Copy CLAUDE.md → `.cursor/rules/` |
-| ⚪ Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
+| Claude Code | Plugin marketplace or manual skill |
+| GitHub Copilot | Copy CLAUDE.md to `.github/copilot-instructions.md` |
+| Cursor | Copy CLAUDE.md to `.cursor/rules/` |
+| Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
 See [roadmap/](roadmap/) for planned evolution:
 
@@ -375,14 +376,14 @@ Phase 1 ━━━━━━━━━━━●━━━━━━━━━━ Phase
      Local CLI Tools              Git Hooks              GitHub Action
      (current)                    (planned)              (future)
 
-     • kb-ingest                  • post-commit          • Auto-entry on PR
-     • kb-discover                • pre-push             • Shared team KB
-     • kb-lint                    • suggest entries      • Cross-repo search
+     - kb-ingest                  - post-commit          - Auto-entry on PR
+     - kb-discover                - pre-push             - Shared team KB
+     - kb-lint                    - suggest entries      - Cross-repo search
 ```
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 <details>
 <summary><b>How is this different from just writing notes in CLAUDE.md?</b></summary>
@@ -410,7 +411,7 @@ If in doubt, use `tentative`. Upgrade to `verified` only when you have actual pr
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 PRs welcome. Key areas:
 - More agent integrations
@@ -420,7 +421,7 @@ PRs welcome. Key areas:
 
 ---
 
-## 📜 License
+## License
 
 MIT
 
@@ -430,6 +431,6 @@ MIT
 
 **Built for agents that learn. By agents that learn.**
 
-⭐ Star this repo if it saved you from re-investigating something!
+Star this repo if it saved you from re-investigating something.
 
 </div>
