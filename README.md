@@ -1,4 +1,31 @@
-# Knowledge Database
+<!--
+  Want a custom header image? Try: https://github.com/jgalea/retrohead
+  Styles: Synthwave, VHS, Matrix, C64, ASCII terminal
+-->
+
+<div align="center">
+
+```
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║   ██╗  ██╗███╗   ██╗ ██████╗ ██╗    ██╗██╗     ███████╗██████╗  ██████╗ ███████╗║
+║   ██║ ██╔╝████╗  ██║██╔═══██╗██║    ██║██║     ██╔════╝██╔══██╗██╔════╝ ██╔════╝║
+║   █████╔╝ ██╔██╗ ██║██║   ██║██║ █╗ ██║██║     █████╗  ██║  ██║██║  ███╗█████╗  ║
+║   ██╔═██╗ ██║╚██╗██║██║   ██║██║███╗██║██║     ██╔══╝  ██║  ██║██║   ██║██╔══╝  ║
+║   ██║  ██╗██║ ╚████║╚██████╔╝╚███╔███╔╝███████╗███████╗██████╔╝╚██████╔╝███████╗║
+║   ╚═╝  ╚═╝╚═╝  ╚═══╝ ╚═════╝  ╚══╝╚══╝ ╚══════╝╚══════╝╚═════╝  ╚═════╝ ╚══════╝║
+║                                                                               ║
+║   ██████╗  █████╗ ████████╗ █████╗ ██████╗  █████╗ ███████╗███████╗           ║
+║   ██╔══██╗██╔══██╗╚══██╔══╝██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔════╝           ║
+║   ██║  ██║███████║   ██║   ███████║██████╔╝███████║███████╗█████╗             ║
+║   ██║  ██║██╔══██║   ██║   ██╔══██║██╔══██╗██╔══██║╚════██║██╔══╝             ║
+║   ██████╔╝██║  ██║   ██║   ██║  ██║██████╔╝██║  ██║███████║███████╗           ║
+║   ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═════╝ ╚═╝  ╚═╝╚══════╝╚══════╝           ║
+║                                                                               ║
+║                    🧠 Durable Memory for AI Coding Agents                      ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+```
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-blueviolet)](https://claude.ai/claude-code)
@@ -6,72 +33,130 @@
 
 **Stop re-investigating bugs you already fixed. Stop re-exploring code you already understood.**
 
-A durable memory system for AI coding agents that compounds knowledge across sessions.
+[Quick Start](#-quick-start) • [How It Works](#-how-it-works) • [CLI Tools](#-cli-tools) • [Roadmap](#-roadmap)
+
+</div>
 
 ---
 
-## The Problem
+## 🎯 The Problem
 
 Without persistent memory, every AI session starts from zero:
 
 ```
-Monday:    "How does the auth middleware work?" → 20 min investigation
-Tuesday:   "How does the auth middleware work?" → 20 min investigation (again)
-Wednesday: Same bug you fixed last week? Debug from scratch.
+┌─────────────────────────────────────────────────────────────────────────┐
+│  MONDAY     "How does auth middleware work?"    →  20 min investigation │
+│  TUESDAY    "How does auth middleware work?"    →  20 min (AGAIN)       │
+│  WEDNESDAY   Same bug you fixed last week?      →  Debug from scratch   │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    ⬇️
+              💸 You're paying tokens to rediscover the same things
 ```
-
-**You're paying tokens to rediscover the same things over and over.**
 
 ---
 
-## The Solution
+## 💡 The Solution
 
-Knowledge Database creates a structured memory that agents read *before* exploring:
+Knowledge Database creates structured memory that agents read *before* exploring:
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    EVERY TASK                           │
-├─────────────────────────────────────────────────────────┤
-│  1. READ FIRST   →  Check INDEX.md + canonical docs     │
-│  2. DO THE WORK  →  Explore or implement                │
-│  3. WRITE BACK   →  Run checklist, update index         │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+flowchart LR
+    subgraph EVERY_TASK["📋 EVERY NON-TRIVIAL TASK"]
+        direction LR
+        A["1️⃣ READ FIRST"] --> B["2️⃣ DO THE WORK"] --> C["3️⃣ WRITE BACK"]
+    end
+
+    A -.- D[("📚 INDEX.md\n+ canonical docs")]
+    C -.- E[("📝 New entry\n+ update index")]
+
+    style EVERY_TASK fill:#1a1a2e,stroke:#16213e,color:#fff
+    style A fill:#0f3460,stroke:#16213e,color:#fff
+    style B fill:#533483,stroke:#16213e,color:#fff
+    style C fill:#e94560,stroke:#16213e,color:#fff
 ```
 
 **Result:** Investigations compound. Bugs stay fixed. Onboarding is instant.
 
 ---
 
-## Before & After
+## 📊 Before & After
 
-| | Without KB | With KB |
-|---|---|---|
-| Same question twice | 20 min each time | 30 sec (read entry) |
-| Bug reintroduced | Debug from scratch | Entry shows exact fix |
-| New team member | "Ask Sarah, she knows" | Self-service docs |
-| Context across sessions | Lost | Permanent |
+<table>
+<tr>
+<th width="50%">❌ Without KB</th>
+<th width="50%">✅ With KB</th>
+</tr>
+<tr>
+<td>
+
+```
+Same question twice?
+→ 20 min each time
+
+Bug reintroduced?
+→ Debug from scratch
+
+New team member?
+→ "Ask Sarah, she knows"
+
+Context across sessions?
+→ Lost forever
+```
+
+</td>
+<td>
+
+```
+Same question twice?
+→ 30 sec (read entry)
+
+Bug reintroduced?
+→ Entry shows exact fix
+
+New team member?
+→ Self-service docs
+
+Context across sessions?
+→ Permanent memory
+```
+
+</td>
+</tr>
+</table>
 
 ---
 
-## Enforcement Mechanisms
+## 🛡️ Enforcement Mechanisms
 
-The KB isn't opt-in — it enforces **seven mechanisms** on every non-trivial task:
+Not opt-in — these **seven mechanisms** enforce on every non-trivial task:
 
-| # | Mechanism | What It Does |
-|---|-----------|--------------|
-| 1 | **Always-On** | Mandatory on every task, not triggered by phrases |
-| 2 | **Routing to Canonical Docs** | INDEX.md points to external sources, not just entries |
-| 3 | **Lock-Step Invariants** | Paired artifacts (schema + doc) must change together |
-| 4 | **Source-of-Truth Hierarchy** | Explicit ranking when sources disagree |
-| 5 | **Verified ↔ Evidence** | `verified` requires actual proof in Verification block |
-| 6 | **Tiered Memory Scopes** | User / repo / session separation |
-| 7 | **Maintenance Discipline** | Dedup, tag reuse, fix wrong entries |
+```
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                           THE SEVEN MECHANISMS                                  │
+├────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                │
+│  1️⃣  ALWAYS-ON          Mandatory every task, not triggered by phrases        │
+│                                                                                │
+│  2️⃣  ROUTING            INDEX.md → canonical docs, not just entries           │
+│                                                                                │
+│  3️⃣  LOCK-STEP          Schema change? Doc MUST change too.                   │
+│                                                                                │
+│  4️⃣  HIERARCHY          Code > generated > docs (explicit ranking)            │
+│                                                                                │
+│  5️⃣  EVIDENCE           verified status REQUIRES proof block                  │
+│                                                                                │
+│  6️⃣  SCOPES             user / repo / session separation                      │
+│                                                                                │
+│  7️⃣  MAINTENANCE        Dedup, tag reuse, fix wrong entries                   │
+│                                                                                │
+└────────────────────────────────────────────────────────────────────────────────┘
+```
 
 See [CLAUDE.md](CLAUDE.md) for full enforcement rules.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Install (pick one)
 
@@ -92,17 +177,17 @@ git clone https://github.com/dcoferraz/knowledge-database.git
 
 ```
 knowledge-db/
-├── INDEX.md           ← Search here first (Ready-Answer Table + catalog)
-├── _TEMPLATE.md       ← Copy to create new entries
-├── explorations/      ← "How does X work?"
-├── solutions/         ← "How we built Y"
-├── errors/            ← "Bug Z: symptom → root cause → fix → prevention"
-└── decisions/         ← "Why we chose A over B"
+├── 📋 INDEX.md           ← Search here first (Ready-Answer Table + catalog)
+├── 📄 _TEMPLATE.md       ← Copy to create new entries
+├── 🔍 explorations/      ← "How does X work?"
+├── 🔨 solutions/         ← "How we built Y"
+├── 🐛 errors/            ← "Bug Z: symptom → root cause → fix → prevention"
+└── ⚖️  decisions/         ← "Why we chose A over B"
 ```
 
 ---
 
-## CLI Tools
+## 🔧 CLI Tools
 
 ```bash
 # Initialize KB structure
@@ -118,173 +203,214 @@ cat conversation.txt | ./scripts/kb-ingest --bucket errors
 
 # Lint KB for issues
 ./scripts/kb-lint
-./scripts/kb-lint --fix
 ```
+
+### Tool Overview
+
+| Tool | Purpose | Example |
+|------|---------|---------|
+| `kb-ingest` | Parse text → KB entry | `cat notes.txt \| kb-ingest --auto` |
+| `kb-discover` | Scan codebase → exploration | `kb-discover ./legacy-app` |
+| `kb-lint` | Check KB health | `kb-lint --fix` |
 
 ---
 
-## How It Works
+## 📖 How It Works
 
-### 1. Agent Checks KB First
+### 1️⃣ Agent Checks KB First
 
-Before exploring any topic, agent searches `INDEX.md`:
+Before exploring, agent searches `INDEX.md`:
 
 ```markdown
 ## Ready-Answer Table
-| Topic | Canonical Source | Last Verified |
-|-------|------------------|---------------|
-| Auth flow | explorations/2026-08-15-auth-middleware.md | 2026-08-15 |
+| Topic      | Canonical Source                              |
+|------------|-----------------------------------------------|
+| Auth flow  | explorations/2026-08-15-auth-middleware.md    |
+| DB schema  | docs/schema.md                                |
 
 ## Explorations
-| Date | Title | Status | Entry |
-|------|-------|--------|-------|
-| 2026-08-15 | Auth middleware chain | verified | [→](explorations/...) |
+| Date       | Title                  | Status   | Entry |
+|------------|------------------------|----------|-------|
+| 2026-08-15 | Auth middleware chain  | verified | [→]() |
 ```
 
-If a **verified** entry exists → use it, skip investigation.
+**verified entry exists?** → Use it, skip investigation.
 
-### 2. New Findings Get Recorded
+### 2️⃣ New Findings Get Recorded
 
-After any non-trivial work, agent creates an entry:
+After non-trivial work, agent creates an entry:
 
 ```yaml
 ---
 title: Auth middleware chain
 type: exploration
-status: verified
-date: 2026-08-15
+status: verified          # ← Requires proof!
 tags: [area:auth, layer:middleware]
 sources:
-  - src/middleware/auth.ts:42-89
+  - src/middleware/auth.ts:42-89    # ← Ground EVERY claim
 ---
 
 ## Summary
 Auth flows through 3 middleware: session → jwt → rbac.
 
-## Findings
-The chain is defined in `src/middleware/auth.ts:45`...
-
-## Verification
+## Verification                      # ← Required for "verified"
 $ npm test -- --grep "auth"
-PASS src/middleware/auth.test.ts (3 tests)
+PASS src/middleware/auth.test.ts
 ```
 
-### 3. Errors Capture Prevention
+### 3️⃣ Errors Capture Prevention
 
-`errors/` entries require all four sections:
+`errors/` entries require **all four sections**:
 
-```markdown
-## Symptom
-TypeError: Cannot read property 'user' of undefined
-
-## Root Cause
-Session middleware skipped on /api/webhook routes (src/app.ts:23)
-
-## Fix
-Added explicit session check in webhook handler (src/routes/webhook.ts:15)
-
-## Prevention
-All routes must validate session presence before accessing req.user
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  🐛 ERROR ENTRY STRUCTURE                                           │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  ## Symptom                                                         │
+│  TypeError: Cannot read property 'user' of undefined                │
+│                                                                     │
+│  ## Root Cause                                                      │
+│  Session middleware skipped on /api/webhook (src/app.ts:23)         │
+│                                                                     │
+│  ## Fix                                                             │
+│  Added session check in webhook handler (src/routes/webhook.ts:15)  │
+│                                                                     │
+│  ## Prevention                                                      │
+│  All routes must validate session before accessing req.user         │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-**This bug will never be reintroduced** — the agent reads this before touching auth code.
+**This bug will never be reintroduced** — agent reads this before touching auth code.
 
 ---
 
-## Status Rules
+## 📊 Status Rules
 
-| Status | Meaning | Requirements |
-|--------|---------|--------------|
-| `verified` | Proven true | Verification block with ACTUAL PROOF |
-| `tentative` | Best understanding | Any unsourced claim |
-| `superseded` | Outdated | `related:` MUST link replacement |
+```
+┌──────────────┬─────────────────────────┬─────────────────────────────────┐
+│ Status       │ Meaning                 │ Requirements                    │
+├──────────────┼─────────────────────────┼─────────────────────────────────┤
+│ ✅ verified   │ Proven true             │ Verification block with PROOF   │
+│ 🔶 tentative  │ Best understanding      │ Any unsourced claim             │
+│ 🔄 superseded │ Outdated                │ related: MUST link replacement  │
+└──────────────┴─────────────────────────┴─────────────────────────────────┘
+```
 
-**No proof = no verified.** The Verification block must contain command + output, test result, or screenshot.
+**No proof = no verified.** The Verification block must contain: command + output, test result, or screenshot.
 
 ---
 
-## Why Four Buckets?
+## 📁 Four Buckets
 
-| Bucket | Question it answers | Example |
-|--------|---------------------|---------|
-| `explorations/` | "How does X work?" | Auth flow, data pipeline, API structure |
-| `solutions/` | "How did we build Y?" | Feature implementation, refactor approach |
-| `errors/` | "What broke and how to fix?" | Stack traces, root causes, fixes |
-| `decisions/` | "Why did we choose A?" | Tech choices, architecture tradeoffs |
+```mermaid
+flowchart TB
+    subgraph KB["🗄️ KNOWLEDGE DATABASE"]
+        direction TB
+        E["🔍 explorations/\n'How does X work?'"]
+        S["🔨 solutions/\n'How we built Y'"]
+        R["🐛 errors/\n'What broke + fix'"]
+        D["⚖️ decisions/\n'Why we chose A'"]
+    end
+
+    Q1["❓ Understanding something"] --> E
+    Q2["🛠️ Building something"] --> S
+    Q3["💥 Something broke"] --> R
+    Q4["🤔 Choosing between options"] --> D
+
+    style KB fill:#1a1a2e,stroke:#16213e
+    style E fill:#0f3460,stroke:#16213e,color:#fff
+    style S fill:#533483,stroke:#16213e,color:#fff
+    style R fill:#e94560,stroke:#16213e,color:#fff
+    style D fill:#f39c12,stroke:#16213e,color:#fff
+```
 
 One entry per task. File under dominant intent, cross-link the rest.
 
 ---
 
-## Repository Structure
+## 🏗️ Repository Structure
 
 ```
 knowledge-database/
-├── README.md                  ← You are here
-├── LICENSE
-├── CLAUDE.md                  ← HARD RULE + enforcement mechanisms
-├── .claude-plugin/
-│   └── marketplace.json       ← Plugin marketplace metadata
-├── knowledge-database/
-│   └── SKILL.md               ← Skill definition
-├── scripts/
-│   ├── init-knowledge-db.sh   ← Initialize KB structure
-│   ├── kb-ingest              ← Parse text into KB entries
-│   ├── kb-discover            ← Scan codebase for boundaries
-│   └── kb-lint                ← Lint KB for issues
-├── .kb-templates/
+├── 📖 README.md                  ← You are here
+├── 📜 LICENSE
+├── 📋 CLAUDE.md                  ← HARD RULE + enforcement mechanisms
+├── 📦 .claude-plugin/
+│   └── marketplace.json          ← Plugin marketplace metadata
+├── 🧠 knowledge-database/
+│   └── SKILL.md                  ← Skill definition
+├── ⚙️  scripts/
+│   ├── init-knowledge-db.sh      ← Initialize KB structure
+│   ├── kb-ingest                 ← Parse text into entries
+│   ├── kb-discover               ← Scan codebase
+│   └── kb-lint                   ← Lint KB for issues
+├── 📄 .kb-templates/
 │   ├── README.md
 │   ├── INDEX.md
 │   └── _TEMPLATE.md
-└── roadmap/                   ← Future evolution plans
-    ├── README.md
-    └── phases/
+└── 🗺️  roadmap/                   ← Future evolution plans
 ```
 
 ---
 
-## Compatibility
+## 🔌 Compatibility
 
 | Agent | Install Method |
 |-------|----------------|
-| Claude Code | Plugin marketplace or manual skill |
-| GitHub Copilot | Copy CLAUDE.md → `.github/copilot-instructions.md` |
-| Cursor | Copy CLAUDE.md → `.cursor/rules/` |
-| Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
+| 🟣 Claude Code | Plugin marketplace or manual skill |
+| 🟢 GitHub Copilot | Copy CLAUDE.md → `.github/copilot-instructions.md` |
+| 🔵 Cursor | Copy CLAUDE.md → `.cursor/rules/` |
+| ⚪ Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
 
 ---
 
-## Roadmap
+## 🗺️ Roadmap
 
 See [roadmap/](roadmap/) for planned evolution:
 
-- **Phase 1** (current): Local CLI tooling (`kb-ingest`, `kb-discover`, `kb-lint`)
-- **Phase 2**: Git hooks for automatic KB prompts
-- **Phase 3**: GitHub Action for team-shared KB
+```
+Phase 1 ━━━━━━━━━━━●━━━━━━━━━━ Phase 2 ━━━━━━━━━━━○━━━━━━━━━━ Phase 3
+     Local CLI Tools              Git Hooks              GitHub Action
+     (current)                    (planned)              (future)
+
+     • kb-ingest                  • post-commit          • Auto-entry on PR
+     • kb-discover                • pre-push             • Shared team KB
+     • kb-lint                    • suggest entries      • Cross-repo search
+```
 
 ---
 
-## FAQ
+## ❓ FAQ
 
-**Q: How is this different from just writing notes in CLAUDE.md?**
+<details>
+<summary><b>How is this different from just writing notes in CLAUDE.md?</b></summary>
 
 Structured buckets + index + templates + enforcement = searchable, maintainable, scalable. Notes become a mess at 20+ entries.
+</details>
 
-**Q: Won't this slow down simple tasks?**
+<details>
+<summary><b>Won't this slow down simple tasks?</b></summary>
 
 The HARD RULE only applies to "non-trivial" tasks (multi-file investigation, debugging, decisions). One-liners skip it.
+</details>
 
-**Q: What if an entry becomes outdated?**
+<details>
+<summary><b>What if an entry becomes outdated?</b></summary>
 
-Mark as `superseded`, link to replacement. History preserved, readers directed to current truth.
+Mark as `superseded`, link to replacement in `related:`. History preserved, readers directed to current truth.
+</details>
 
-**Q: What if I'm not sure if something is verified?**
+<details>
+<summary><b>What if I'm not sure if something is verified?</b></summary>
 
 If in doubt, use `tentative`. Upgrade to `verified` only when you have actual proof in the Verification block.
+</details>
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 PRs welcome. Key areas:
 - More agent integrations
@@ -294,6 +420,16 @@ PRs welcome. Key areas:
 
 ---
 
-## License
+## 📜 License
 
 MIT
+
+---
+
+<div align="center">
+
+**Built for agents that learn. By agents that learn.**
+
+⭐ Star this repo if it saved you from re-investigating something!
+
+</div>
