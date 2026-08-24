@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:c0fb3da8c45dc8af3954677e05c45167d2dcd75f7d154f82e0b17d873f3faa2b -->
+<!-- kb:fingerprint:ce3966cbdcb1780708efa36ea35625baff7880ae8052100c200483505796672c -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -2725,6 +2725,7 @@ $ knowledge-db/bin/kb index &amp;&amp; knowledge-db/bin/kb check; echo $?
 <p>are also config-driven.</p>
 <p>Mechanical scope (knowledge-db/bin/kb:912-957): every <code>## [x.y.z]</code> heading in the configured changelog must match <code>## !name [x.y.z]</code>; the SVG must exist, live under the declared dir, and no two versions may share one file (uniqueness is the checkable proxy for "random animal per release" — actual animal choice and randomness are unverifiable and stay guidance in the rule table).</p>
 <p>This repo enables it (knowledge-db/kb.config.json:92-95) and retroactively illustrated all 12 prior releases with hand-drawn flat SVGs (~500B each, 28px, no external assets) plus a toucan for v0.6.0.</p>
+<p>Extension (same day): all 13 GitHub release bodies also open with their animal, embedded via raw URLs pinned to the v0.6.0 tag (release notes cannot resolve relative repo paths). Release bodies are GitHub-side state <code>kb check</code> cannot gate, so this half is convention, documented in the KB015 rule row.</p>
 <div class="proof"><h3>Proof (verification evidence)</h3>
 <pre><code>$ knowledge-db/bin/kb check; echo "exit: $?"
 exit: 0    # 13 illustrated headings, all KB015 checks pass

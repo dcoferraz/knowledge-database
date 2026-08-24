@@ -47,6 +47,11 @@ This repo enables it (knowledge-db/kb.config.json:92-95) and retroactively
 illustrated all 12 prior releases with hand-drawn flat SVGs (~500B each,
 28px, no external assets) plus a toucan for v0.6.0.
 
+Extension (same day): all 13 GitHub release bodies also open with their
+animal, embedded via raw URLs pinned to the v0.6.0 tag (release notes cannot
+resolve relative repo paths). Release bodies are GitHub-side state `kb check`
+cannot gate, so this half is convention, documented in the KB015 rule row.
+
 ## Verification
 
 ```
