@@ -2,8 +2,8 @@
 """kb — zero-dependency knowledge-db CLI.
 
 Subcommands:
-  kb new <type> <slug>      Scaffold a valid entry (status: tentative), regenerate INDEX.md
-  kb index                  Regenerate INDEX.md entirely from entry front-matter
+  kb new <type> <slug>      Scaffold a valid entry (status: tentative), regenerate INDEX.md/.html
+  kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
   kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
 
 Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
@@ -12,7 +12,7 @@ Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
   KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
   KB004  verified requires captured proof    KB010  one trap per error entry
   KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
-         no template residue
+         no template residue                 KB012  INDEX.html fresh (fingerprint)
   KB006  required sections per bucket
 
 Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
@@ -20,6 +20,7 @@ documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists)
 """
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -30,7 +31,8 @@ from pathlib import Path
 MANUAL_START = "<!-- kb:manual:{name}:start -->"
 MANUAL_END = "<!-- kb:manual:{name}:end -->"
 
-KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "_TEMPLATE.md", "AGENT.md", "kb.config.json", "install.sh"}
+KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "INDEX.html", "_TEMPLATE.md", "AGENT.md",
+                    "kb.config.json", "install.sh"}
 KNOWN_ROOT_DIRS = {"bin"}
 REQUIRED_KEYS = ["title", "type", "status", "date", "tags", "sources"]
 OPTIONAL_KEYS = ["related", "last_verified", "decision_by"]
@@ -464,6 +466,349 @@ def generate_index(kb_dir, repo_root, config, entry_fronts):
     return "\n".join(out)
 
 
+# ---------------------------------------------------------------- HTML view
+# INDEX.html: self-contained, human-facing evidence browser generated alongside
+# INDEX.md. Inlines every entry, renders Verification proof, embeds the cited
+# source lines for each `sources:` item (best-effort context, captured at build
+# time), and links related/superseding entries as in-page anchors.
+# Freshness is enforced by KB012 via an embedded fingerprint of the KB content
+# (generated INDEX.md + entry files). Embedded code snippets are deliberately
+# NOT part of the fingerprint: they depend on files outside the KB, and a
+# byte-for-byte rule like KB007 would fail on every unrelated code edit.
+
+HTML_BUCKET_LABELS = {
+    "explorations": "What we know",
+    "solutions": "What we built",
+    "errors": "What broke + the fix",
+    "decisions": "Why we chose things",
+}
+
+SNIPPET_MAX_LINES = 60
+
+
+def kb_fingerprint(index_md_text, entry_pairs):
+    h = hashlib.sha256()
+    h.update(index_md_text.encode("utf-8"))
+    for rel, content in sorted(entry_pairs):
+        h.update(rel.encode("utf-8"))
+        h.update(b"\x00")
+        h.update(content.encode("utf-8"))
+    return h.hexdigest()
+
+
+def _esc(s):
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
+def _inline(s, entry_ids):
+    # input must already be HTML-escaped
+    s = re.sub(r"`([^`]+)`", r"<code>\1</code>", s)
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+
+    def link(m):
+        text, href = m.group(1), m.group(2)
+        if href in entry_ids:
+            return f'<a href="#{href}">{text}</a>'
+        if href.startswith(("http://", "https://", "#")):
+            return f'<a href="{href}">{text}</a>'
+        return text  # local file links are dead in a standalone page
+    return re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, s)
+
+
+def _md_to_html(text, entry_ids):
+    out, para, fence, table, ul = [], [], None, [], False
+
+    def flush_para():
+        if para:
+            out.append("<p>" + _inline(" ".join(para), entry_ids) + "</p>")
+            para.clear()
+
+    def flush_table():
+        if not table:
+            return
+        rows = [r for r in table if not re.match(r"^\s*\|[\s\-|:]+\|\s*$", r)]
+        out.append('<div class="tblwrap"><table>')
+        for i, row in enumerate(rows):
+            cells = [c.strip() for c in row.strip().strip("|").split("|")]
+            tag = "th" if i == 0 else "td"
+            out.append("<tr>" + "".join(f"<{tag}>{_inline(_esc(c), entry_ids)}</{tag}>" for c in cells) + "</tr>")
+        out.append("</table></div>")
+        table.clear()
+
+    def close_ul():
+        nonlocal ul
+        if ul:
+            out.append("</ul>")
+            ul = False
+
+    for raw in text.split("\n"):
+        if fence is not None:
+            if raw.strip().startswith("```"):
+                out.append("<pre><code>" + _esc("\n".join(fence)) + "</code></pre>")
+                fence = None
+            else:
+                fence.append(raw)
+            continue
+        if raw.strip().startswith("```"):
+            flush_para(); flush_table(); close_ul()
+            fence = []
+            continue
+        if re.match(r"^\s*\|", raw):
+            flush_para(); close_ul()
+            table.append(raw)
+            continue
+        flush_table()
+        h = re.match(r"^(#{3,4})\s+(.*)$", raw)
+        if h:
+            flush_para(); close_ul()
+            level = len(h.group(1))
+            out.append(f"<h{level}>{_inline(_esc(h.group(2)), entry_ids)}</h{level}>")
+            continue
+        li = re.match(r"^\s*(?:[-*]|\d+[.)])\s+(.*)$", raw)
+        if li:
+            flush_para()
+            if not ul:
+                out.append("<ul>")
+                ul = True
+            out.append("<li>" + _inline(_esc(li.group(1)), entry_ids) + "</li>")
+            continue
+        if raw.strip().startswith(">"):
+            flush_para(); close_ul()
+            out.append("<blockquote>" + _inline(_esc(raw.strip()[1:].strip()), entry_ids) + "</blockquote>")
+            continue
+        if not raw.strip():
+            flush_para(); close_ul()
+            continue
+        if raw.strip().startswith("<!--"):
+            continue
+        close_ul()
+        para.append(_esc(raw.strip()))
+    if fence is not None:
+        out.append("<pre><code>" + _esc("\n".join(fence)) + "</code></pre>")
+    flush_para(); flush_table(); close_ul()
+    return "\n".join(out)
+
+
+def _source_snippet(repo_root, src):
+    m = SOURCE_RE.match(src)
+    if not m:
+        return None
+    path = repo_root / m.group("path")
+    if not path.is_file():
+        return "(source file not found)"
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+    except OSError:
+        return "(source file unreadable)"
+    start = int(m.group("start"))
+    end = int(m.group("end") or m.group("start"))
+    end = min(end, start + SNIPPET_MAX_LINES - 1, len(lines))
+    if start > len(lines):
+        return "(cited lines beyond end of file)"
+    sel = lines[start - 1:end]
+    return "\n".join(f"{i:>5}  {l}" for i, l in enumerate(sel, start))
+
+
+HTML_CSS = """
+:root { --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --bg:#ffffff; --soft:#f6f8fa;
+        --ok:#1a7f37; --warn:#9a6700; --gone:#59636e; --accent:#0969da; }
+* { box-sizing:border-box; }
+body { margin:0; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+       color:var(--fg); background:var(--bg); }
+header.top { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+             padding:10px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; z-index:2; }
+header.top h1 { font-size:17px; margin:0; }
+header.top input { flex:1; min-width:200px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; }
+header.top select { padding:6px; border:1px solid var(--line); border-radius:6px; }
+.layout { display:grid; grid-template-columns:280px 1fr; gap:0; }
+nav.side { border-right:1px solid var(--line); padding:14px; height:calc(100vh - 54px);
+           overflow:auto; position:sticky; top:54px; }
+nav.side h2 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:16px 0 6px; }
+nav.side a { display:block; padding:3px 6px; color:var(--fg); text-decoration:none; border-radius:5px; font-size:13.5px; }
+nav.side a:hover { background:var(--soft); }
+main { padding:20px 28px 80px; max-width:900px; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.dot.verified{background:var(--ok);} .dot.tentative{background:var(--warn);} .dot.superseded{background:var(--gone);}
+article.entry { border:1px solid var(--line); border-radius:10px; padding:18px 22px; margin:0 0 22px; }
+article.entry.hide { display:none; }
+article.entry > h2 { margin:0 0 6px; font-size:19px; }
+.meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.badge { font-size:12px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+.badge.verified { color:var(--ok); border-color:var(--ok); }
+.badge.tentative { color:var(--warn); border-color:var(--warn); }
+.badge.superseded { color:var(--gone); border-color:var(--gone); text-decoration:line-through; }
+.banner { background:#fff8f6; border:1px solid #f0c8c0; border-radius:8px; padding:8px 12px; margin:8px 0 12px; font-size:14px; }
+.proof { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:4px 14px 10px; margin:10px 0; }
+.proof > h3 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+details.src { margin:4px 0; }
+details.src summary { cursor:pointer; font-family:ui-monospace,Menlo,monospace; font-size:13px; color:var(--accent); }
+pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+      overflow-x:auto; font-size:12.5px; line-height:1.45; }
+code { font-family:ui-monospace,Menlo,monospace; font-size:.92em; background:var(--soft);
+       padding:1px 4px; border-radius:4px; }
+pre code { background:none; padding:0; }
+.tblwrap { overflow-x:auto; }
+table { border-collapse:collapse; margin:8px 0; font-size:14px; }
+th,td { border:1px solid var(--line); padding:5px 10px; text-align:left; }
+th { background:var(--soft); }
+h3 { font-size:15.5px; margin:16px 0 6px; }
+h4 { font-size:14px; margin:12px 0 4px; }
+blockquote { margin:8px 0; padding:4px 12px; border-left:3px solid var(--line); color:var(--muted); }
+.tags { color:var(--muted); font-size:12.5px; }
+.bucket-blurb { color:var(--muted); margin:-6px 0 14px; }
+section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; margin-top:36px; }
+.empty { color:var(--muted); font-style:italic; }
+@media (max-width:900px){ .layout{grid-template-columns:1fr;} nav.side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);} }
+"""
+
+HTML_JS = """
+const q = document.getElementById('q');
+const st = document.getElementById('st');
+function apply() {
+  const v = q.value.toLowerCase();
+  const s = st.value;
+  document.querySelectorAll('article.entry').forEach(a => {
+    const okText = !v || a.textContent.toLowerCase().includes(v);
+    const okStatus = !s || a.dataset.status === s;
+    a.classList.toggle('hide', !(okText && okStatus));
+  });
+  document.querySelectorAll('section.bucket').forEach(sec => {
+    const any = sec.querySelectorAll('article.entry:not(.hide)').length > 0;
+    sec.style.display = any ? '' : 'none';
+  });
+}
+q.addEventListener('input', apply);
+st.addEventListener('change', apply);
+"""
+
+
+def generate_html(kb_dir, repo_root, config, entries, index_md_text):
+    entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
+    parsed_entries = []
+    for bucket, path in entries:
+        parsed = parse_entry(path)
+        parsed_entries.append((bucket, path, parsed))
+
+    def entry_titles():
+        t = {}
+        for bucket, path, parsed in parsed_entries:
+            t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
+        return t
+    titles = entry_titles()
+
+    ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)
+
+    out = []
+    out.append("<!DOCTYPE html>")
+    out.append('<html lang="en"><head><meta charset="utf-8">')
+    out.append('<meta name="viewport" content="width=device-width, initial-scale=1">')
+    out.append("<title>Knowledge Database</title>")
+    out.append("<style>" + HTML_CSS + "</style></head><body>")
+    out.append('<header class="top"><h1>Knowledge Database</h1>')
+    out.append('<input id="q" type="search" placeholder="Search titles, text, tags...">')
+    out.append('<select id="st"><option value="">all statuses</option>'
+               '<option value="verified">verified (proven)</option>'
+               '<option value="tentative">tentative (unconfirmed)</option>'
+               '<option value="superseded">superseded (replaced)</option></select>')
+    out.append("</header>")
+    out.append('<div class="layout"><nav class="side">')
+    for bucket in config.get("buckets", {}):
+        rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
+        rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
+        out.append(f"<h2>{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}</h2>")
+        if not rows:
+            out.append('<span class="empty">nothing yet</span>')
+        for b, p, pr in rows:
+            rel = f"{b}/{p.name}"
+            status = pr["front"].get("status", "")
+            out.append(f'<a href="#{rel}"><span class="dot {_esc(str(status))}"></span>'
+                       f"{_esc(str(pr['front'].get('title', p.name)))}</a>")
+    out.append("</nav><main>")
+
+    out.append("<h2>Start here: ready answers</h2>")
+    out.append('<p class="bucket-blurb">Topic &rarr; the one place to look first.</p>')
+    out.append(_md_to_html(ready, entry_ids))
+
+    out.append('<h2>How to read this page</h2>')
+    out.append('<p class="bucket-blurb"><span class="badge verified">verified</span> proven, with captured '
+               'evidence shown in the Proof box &nbsp;<span class="badge tentative">tentative</span> best '
+               'understanding, not yet proven &nbsp;<span class="badge superseded">superseded</span> outdated, '
+               'links to its replacement. Every claim cites real files: expand a source to see the exact lines '
+               'it is grounded in (captured when this page was generated).</p>')
+
+    for bucket, blurb in config.get("buckets", {}).items():
+        rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
+        rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
+        out.append(f'<section class="bucket"><h2>{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}'
+                   f' <span class="tags">({_esc(bucket)}/ &mdash; {_esc(blurb)})</span></h2>')
+        if not rows:
+            out.append('<p class="empty">Nothing recorded yet.</p>')
+        for b, p, pr in rows:
+            rel = f"{b}/{p.name}"
+            front = pr["front"]
+            status = str(front.get("status", ""))
+            out.append(f'<article class="entry" id="{_esc(rel)}" data-status="{_esc(status)}">')
+            out.append(f"<h2>{_esc(str(front.get('title', p.name)))}</h2>")
+            out.append('<div class="meta">')
+            out.append(f'<span class="badge {_esc(status)}">{_esc(status)}</span>')
+            out.append(f'<span class="badge">{_esc(str(front.get("date", "")))}</span>')
+            lv = front.get("last_verified")
+            if isinstance(lv, str) and lv:
+                out.append(f'<span class="badge">re-verified {_esc(lv)}</span>')
+            db = front.get("decision_by")
+            if isinstance(db, str) and db:
+                out.append(f'<span class="badge">decided by: {_esc(db)}</span>')
+            tags = front.get("tags", [])
+            if isinstance(tags, list) and tags:
+                out.append(f'<span class="tags">{_esc(", ".join(tags))}</span>')
+            out.append("</div>")
+
+            related = front.get("related", []) if isinstance(front.get("related"), list) else []
+            if status == "superseded" and related:
+                links = ", ".join(
+                    f'<a href="#{_esc(r)}">{_esc(str(titles.get(r, r)))}</a>' if r in entry_ids else _esc(r)
+                    for r in related)
+                out.append(f'<div class="banner">Outdated &mdash; replaced by: {links}</div>')
+
+            for name, text in pr["sections"].items():
+                if name == "Verification":
+                    out.append('<div class="proof"><h3>Proof (verification evidence)</h3>')
+                    out.append(_md_to_html(text, entry_ids))
+                    out.append("</div>")
+                else:
+                    out.append(f"<h3>{_esc(name)}</h3>")
+                    out.append(_md_to_html(text, entry_ids))
+
+            sources = front.get("sources", []) if isinstance(front.get("sources"), list) else []
+            if sources:
+                out.append('<div class="proof"><h3>Grounded in (cited source lines)</h3>')
+                for src in sources:
+                    snippet = _source_snippet(repo_root, src)
+                    if snippet is None:
+                        out.append(f'<div class="tags">{_esc(src)}</div>')
+                    else:
+                        out.append(f'<details class="src"><summary>{_esc(src)}</summary>'
+                                   f"<pre><code>{_esc(snippet)}</code></pre></details>")
+                out.append("</div>")
+
+            if status != "superseded" and related:
+                links = ", ".join(
+                    f'<a href="#{_esc(r)}">{_esc(str(titles.get(r, r)))}</a>' if r in entry_ids else _esc(r)
+                    for r in related)
+                out.append(f'<p class="tags">Related: {links}</p>')
+            out.append("</article>")
+        out.append("</section>")
+
+    out.append("</main></div>")
+    out.append("<script>" + HTML_JS + "</script>")
+    out.append("</body></html>")
+
+    entry_pairs = [(f"{b}/{p.name}", p.read_text(encoding="utf-8")) for b, p in entries]
+    fp = kb_fingerprint(index_md_text, entry_pairs)
+    out.insert(1, f"<!-- kb:fingerprint:{fp} -->")
+    return "\n".join(out) + "\n"
+
+
 # ---------------------------------------------------------------- git / diff
 
 def git_lines(repo_root, args):
@@ -527,6 +872,18 @@ def cmd_check(kb_dir, repo_root, config, args):
         findings.append(Finding("KB007", f"{kb_rel}/INDEX.md",
                                 "does not match generated output — run `kb index` (never hand-edit outside manual regions)"))
 
+    # KB012: INDEX.html (human-facing view) is fresh w.r.t. KB content
+    html_path = kb_dir / "INDEX.html"
+    if not html_path.is_file():
+        findings.append(Finding("KB012", f"{kb_rel}/INDEX.html", "missing — run `kb index`"))
+    else:
+        m = re.search(r"kb:fingerprint:([0-9a-f]{64})", html_path.read_text(encoding="utf-8"))
+        entry_pairs = [(f"{b}/{p.name}", p.read_text(encoding="utf-8")) for b, p in entries]
+        expected = kb_fingerprint(generated, entry_pairs)
+        if not m or m.group(1) != expected:
+            findings.append(Finding("KB012", f"{kb_rel}/INDEX.html",
+                                    "stale (fingerprint mismatch with entries/INDEX) — run `kb index`"))
+
     if args.staged or args.diff_base:
         changed = changed_paths(repo_root, args.staged, args.diff_base)
         if changed is None:
@@ -564,7 +921,9 @@ def cmd_index(kb_dir, repo_root, config, args):
         print(generated, end="")
     else:
         (kb_dir / "INDEX.md").write_text(generated, encoding="utf-8")
-        print(f"regenerated {kb_dir / 'INDEX.md'}", file=sys.stderr)
+        html = generate_html(kb_dir, repo_root, config, entries, generated)
+        (kb_dir / "INDEX.html").write_text(html, encoding="utf-8")
+        print(f"regenerated {kb_dir / 'INDEX.md'} and INDEX.html", file=sys.stderr)
     return 0
 
 

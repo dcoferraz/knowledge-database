@@ -59,6 +59,7 @@ _"What we did" — how changes/features/fixes were implemented_
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
 | 2026-08-24 | KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI | verified | [area:tooling, layer:cli, layer:enforcement, area:test] | solutions/2026-08-24-kb-enforcement-tooling.md |
+| 2026-08-24 | INDEX.html: self-contained evidence browser for non-technical readers | verified | [area:tooling, area:ui, layer:cli] | solutions/2026-08-24-index-html-evidence-browser.md |
 | 2026-08-24 | Forward agent hard rules on install: AGENT.md + install.sh layer 5 | verified | [area:tooling, layer:enforcement] | solutions/2026-08-24-agent-rules-forwarding.md |
 | 2026-08-21 | KB v2: Security, tests, mandatory auto-capture, releases | verified | [area:tooling, area:test, layer:cli, area:release] | solutions/2026-08-21-kb-v2-improvements.md |
 | 2026-08-20 | Test Suite for CLI Tools | verified | [area:tooling, area:test, layer:cli] | solutions/2026-08-20-test-suite-implementation.md |
@@ -83,9 +84,11 @@ _"Why we chose X" — design/architecture choices and trade-offs_
 |------|-------|--------|------|-------|
 | 2026-08-24 | Write-back as a diff-driven trigger (KB011), not an end-of-task checklist | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-writeback-trigger-not-checklist.md |
 | 2026-08-24 | Python 3 stdlib (not bash, not Node) for the kb enforcement CLI | verified | [area:tooling, layer:cli, tech:python] | decisions/2026-08-24-python-stdlib-for-kb-cli.md |
+| 2026-08-24 | KB012 freshness via content fingerprint, not KB007-style byte check | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md |
 | 2026-08-24 | KB is git-tracked by default; gitignore only via --local flag | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-kb-tracked-by-default.md |
 | 2026-08-24 | Enforce-or-delete: every hard rule gets an ID or leaves the README | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-enforce-or-delete-rule-ids.md |
 | 2026-08-24 | Derive INDEX.md from front-matter instead of hand-maintaining it | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-derive-index-from-front-matter.md |
+| 2026-08-24 | HTML view: build-time embedding, not runtime fetch or hosted docs | verified | [area:tooling, area:ui, layer:cli] | decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md |
 | 2026-08-24 | Never prompt: autonomous superseding with audit trail replaces consent | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-autonomous-superseding-no-prompts.md |
 | 2026-08-21 | Security hardening approach for CLI tools | verified | [area:tooling, layer:cli, area:security] | decisions/2026-08-21-security-hardening-approach.md |
 | 2026-08-21 | decisions/ bucket: one entry per choice | verified | [area:tooling, layer:enforcement] | decisions/2026-08-21-one-entry-per-choice.md |

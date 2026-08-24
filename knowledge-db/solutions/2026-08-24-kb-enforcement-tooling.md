@@ -9,7 +9,7 @@ sources:
   - knowledge-db/kb.config.json:1-36
   - knowledge-db/install.sh:1-30
   - tests/run-kb-tests.sh:1-30
-  - knowledge-db/README.md:55-69
+  - knowledge-db/README.md:56-71
   - CHANGELOG.md:8-40
 related:
   - decisions/2026-08-24-derive-index-from-front-matter.md
@@ -33,7 +33,7 @@ An agent deploying this pattern reported violations our conventions could not st
 - `knowledge-db/bin/kb:1-25` — CLI with `new` (scaffolds valid entries, status tentative), `index` (INDEX.md generated from front-matter, manual regions fenced), `check` (KB001-KB011, `--json`, `--staged`/`--diff-base`).
 - `knowledge-db/install.sh:1-30` — idempotent merging installer: agent Stop hook into committed `.claude/settings.json`, `.githooks/pre-commit` + `core.hooksPath`, `.github/workflows/kb-check.yml`; `--check` audits.
 - `tests/run-kb-tests.sh:1-30` — conformance suite: `tests/fixtures/pass/` must exit 0, each `tests/fixtures/fail/KBxxx/` must exit non-zero naming its ID; KB009/KB011 exercised in temp git repos with staged diffs.
-- Rule table: `knowledge-db/README.md:55-69`.
+- Rule table: `knowledge-db/README.md:56-71`.
 
 ## Verification
 

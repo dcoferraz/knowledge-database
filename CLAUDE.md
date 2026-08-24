@@ -99,7 +99,7 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Reuse tags**: grep existing tags before creating new ones; vocabulary lives in INDEX.md
 - **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
-- **Periodic lint**: run `knowledge-db/bin/kb check` (KB001-KB011); `bin/kb index` regenerates INDEX.md from front-matter — never hand-edit outside the `kb:manual` regions (KB007)
+- **Periodic lint**: run `knowledge-db/bin/kb check` (KB001-KB012); `bin/kb index` regenerates INDEX.md + INDEX.html from front-matter — never hand-edit outside the `kb:manual` regions (KB007)
 - **Archival at scale**: When INDEX.md exceeds ~100 entries, move older entries (6+ months) to `INDEX-archive-YYYY.md`. Keep INDEX.md focused on active knowledge.
 
 ### 8. Auto-Capture (Mandatory)
@@ -266,8 +266,8 @@ knowledge-db/install.sh          # wires enforcement: agent hook, git pre-commit
 ```bash
 # Enforcement CLI (zero-dependency, Python 3 stdlib) — the authoritative validator
 knowledge-db/bin/kb new <type> <slug>   # scaffold a valid entry, regen INDEX
-knowledge-db/bin/kb index               # regenerate INDEX.md from front-matter
-knowledge-db/bin/kb check               # validate (KB001-KB011); --staged/--diff-base for diff rules
+knowledge-db/bin/kb index               # regenerate INDEX.md + INDEX.html from front-matter
+knowledge-db/bin/kb check               # validate (KB001-KB012); --staged/--diff-base for diff rules
 knowledge-db/install.sh                 # wire agent hook + pre-commit + CI (idempotent); --check to audit
 
 # Legacy helpers (bash)

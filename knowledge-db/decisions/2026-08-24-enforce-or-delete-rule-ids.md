@@ -5,8 +5,8 @@ status: verified
 date: 2026-08-24
 tags: [area:tooling, layer:enforcement]
 sources:
-  - knowledge-db/README.md:55-69
-  - knowledge-db/README.md:105-113
+  - knowledge-db/README.md:56-71
+  - knowledge-db/README.md:107-115
 related:
   - solutions/2026-08-24-kb-enforcement-tooling.md
 ---
@@ -21,15 +21,15 @@ The old README and INDEX stated rules in prose that nothing checked (lock-step t
 
 ## Findings / What We Did
 
-Chose (B). Rules now live as IDs implemented in `kb check`, each with a conformance fixture; docs cite IDs instead of restating behavior, so prose cannot drift from enforcement. Judgment calls that cannot be mechanically checked (search-before-creating, one-entry-per-choice, source-of-truth hierarchy) moved under "## Guidance (not checked)" (knowledge-db/README.md:105-113) so their unenforced status is explicit rather than implied binding.
+Chose (B). Rules now live as IDs implemented in `kb check`, each with a conformance fixture; docs cite IDs instead of restating behavior, so prose cannot drift from enforcement. Judgment calls that cannot be mechanically checked (search-before-creating, one-entry-per-choice, source-of-truth hierarchy) moved under "## Guidance (not checked)" (knowledge-db/README.md:107-115) so their unenforced status is explicit rather than implied binding.
 
 ## Verification
 
-Rule table rows at README lines 59-69, guidance section labelled (captured 2026-08-24):
+Rule table rows at README lines 60-71, guidance section labelled (captured 2026-08-24):
 
 ```bash
 $ grep -n "^| KB001\|^| KB011\|^## Guidance" knowledge-db/README.md
-59:| KB001 | Every entry is `<bucket>/YYYY-MM-DD-<kebab-slug>.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
-69:| KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
-105:## Guidance (not checked)
+60:| KB001 | Every entry is `<bucket>/YYYY-MM-DD-<kebab-slug>.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+70:| KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
+107:## Guidance (not checked)
 ```

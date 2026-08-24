@@ -1,0 +1,13 @@
+---
+title: Add feature
+type: solution
+status: tentative
+date: 2026-01-11
+tags: [area:tooling]
+sources:
+  - src/app.txt:1-2
+---
+
+## Summary
+
+Fixture entry.

@@ -1,0 +1,2652 @@
+<!DOCTYPE html>
+<!-- kb:fingerprint:8f3bd15490117bcb73c78f08cc3e3175b383a4267513bdb190f6edd3a0172b7a -->
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Database</title>
+<style>
+:root { --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --bg:#ffffff; --soft:#f6f8fa;
+        --ok:#1a7f37; --warn:#9a6700; --gone:#59636e; --accent:#0969da; }
+* { box-sizing:border-box; }
+body { margin:0; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+       color:var(--fg); background:var(--bg); }
+header.top { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+             padding:10px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; z-index:2; }
+header.top h1 { font-size:17px; margin:0; }
+header.top input { flex:1; min-width:200px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; }
+header.top select { padding:6px; border:1px solid var(--line); border-radius:6px; }
+.layout { display:grid; grid-template-columns:280px 1fr; gap:0; }
+nav.side { border-right:1px solid var(--line); padding:14px; height:calc(100vh - 54px);
+           overflow:auto; position:sticky; top:54px; }
+nav.side h2 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:16px 0 6px; }
+nav.side a { display:block; padding:3px 6px; color:var(--fg); text-decoration:none; border-radius:5px; font-size:13.5px; }
+nav.side a:hover { background:var(--soft); }
+main { padding:20px 28px 80px; max-width:900px; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.dot.verified{background:var(--ok);} .dot.tentative{background:var(--warn);} .dot.superseded{background:var(--gone);}
+article.entry { border:1px solid var(--line); border-radius:10px; padding:18px 22px; margin:0 0 22px; }
+article.entry.hide { display:none; }
+article.entry > h2 { margin:0 0 6px; font-size:19px; }
+.meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.badge { font-size:12px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+.badge.verified { color:var(--ok); border-color:var(--ok); }
+.badge.tentative { color:var(--warn); border-color:var(--warn); }
+.badge.superseded { color:var(--gone); border-color:var(--gone); text-decoration:line-through; }
+.banner { background:#fff8f6; border:1px solid #f0c8c0; border-radius:8px; padding:8px 12px; margin:8px 0 12px; font-size:14px; }
+.proof { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:4px 14px 10px; margin:10px 0; }
+.proof > h3 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+details.src { margin:4px 0; }
+details.src summary { cursor:pointer; font-family:ui-monospace,Menlo,monospace; font-size:13px; color:var(--accent); }
+pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+      overflow-x:auto; font-size:12.5px; line-height:1.45; }
+code { font-family:ui-monospace,Menlo,monospace; font-size:.92em; background:var(--soft);
+       padding:1px 4px; border-radius:4px; }
+pre code { background:none; padding:0; }
+.tblwrap { overflow-x:auto; }
+table { border-collapse:collapse; margin:8px 0; font-size:14px; }
+th,td { border:1px solid var(--line); padding:5px 10px; text-align:left; }
+th { background:var(--soft); }
+h3 { font-size:15.5px; margin:16px 0 6px; }
+h4 { font-size:14px; margin:12px 0 4px; }
+blockquote { margin:8px 0; padding:4px 12px; border-left:3px solid var(--line); color:var(--muted); }
+.tags { color:var(--muted); font-size:12.5px; }
+.bucket-blurb { color:var(--muted); margin:-6px 0 14px; }
+section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; margin-top:36px; }
+.empty { color:var(--muted); font-style:italic; }
+@media (max-width:900px){ .layout{grid-template-columns:1fr;} nav.side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);} }
+</style></head><body>
+<header class="top"><h1>Knowledge Database</h1>
+<input id="q" type="search" placeholder="Search titles, text, tags...">
+<select id="st"><option value="">all statuses</option><option value="verified">verified (proven)</option><option value="tentative">tentative (unconfirmed)</option><option value="superseded">superseded (replaced)</option></select>
+</header>
+<div class="layout"><nav class="side">
+<h2>What we know</h2>
+<a href="#explorations/2026-08-20-cli-tool-architecture.md"><span class="dot verified"></span>CLI Tool Architecture</a>
+<h2>What we built</h2>
+<a href="#solutions/2026-08-24-kb-enforcement-tooling.md"><span class="dot verified"></span>KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>
+<a href="#solutions/2026-08-24-index-html-evidence-browser.md"><span class="dot verified"></span>INDEX.html: self-contained evidence browser for non-technical readers</a>
+<a href="#solutions/2026-08-24-agent-rules-forwarding.md"><span class="dot verified"></span>Forward agent hard rules on install: AGENT.md + install.sh layer 5</a>
+<a href="#solutions/2026-08-21-kb-v2-improvements.md"><span class="dot verified"></span>KB v2: Security, tests, mandatory auto-capture, releases</a>
+<a href="#solutions/2026-08-20-test-suite-implementation.md"><span class="dot verified"></span>Test Suite for CLI Tools</a>
+<h2>What broke + the fix</h2>
+<a href="#errors/2026-08-20-fix-flag-not-implemented.md"><span class="dot verified"></span>kb-lint --fix flag documented but not implemented</a>
+<h2>Why we chose things</h2>
+<a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md"><span class="dot verified"></span>Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a>
+<a href="#decisions/2026-08-24-python-stdlib-for-kb-cli.md"><span class="dot verified"></span>Python 3 stdlib (not bash, not Node) for the kb enforcement CLI</a>
+<a href="#decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md"><span class="dot verified"></span>KB012 freshness via content fingerprint, not KB007-style byte check</a>
+<a href="#decisions/2026-08-24-kb-tracked-by-default.md"><span class="dot verified"></span>KB is git-tracked by default; gitignore only via --local flag</a>
+<a href="#decisions/2026-08-24-enforce-or-delete-rule-ids.md"><span class="dot verified"></span>Enforce-or-delete: every hard rule gets an ID or leaves the README</a>
+<a href="#decisions/2026-08-24-derive-index-from-front-matter.md"><span class="dot verified"></span>Derive INDEX.md from front-matter instead of hand-maintaining it</a>
+<a href="#decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md"><span class="dot verified"></span>HTML view: build-time embedding, not runtime fetch or hosted docs</a>
+<a href="#decisions/2026-08-24-autonomous-superseding-no-prompts.md"><span class="dot verified"></span>Never prompt: autonomous superseding with audit trail replaces consent</a>
+<a href="#decisions/2026-08-21-security-hardening-approach.md"><span class="dot verified"></span>Security hardening approach for CLI tools</a>
+<a href="#decisions/2026-08-21-one-entry-per-choice.md"><span class="dot verified"></span>decisions/ bucket: one entry per choice</a>
+<a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md"><span class="dot verified"></span>Mandatory vs optional auto-capture</a>
+<a href="#decisions/2026-08-21-incremental-vs-batched-capture.md"><span class="dot verified"></span>Incremental capture vs batched at session end</a>
+<a href="#decisions/2026-08-21-consent-only-for-superseding.md"><span class="dot superseded"></span>Consent only for superseding verified entries</a>
+<a href="#decisions/2026-08-20-bash-for-cli-tools.md"><span class="dot verified"></span>Bash for Phase 1 CLI tools</a>
+</nav><main>
+<h2>Start here: ready answers</h2>
+<p class="bucket-blurb">Topic &rarr; the one place to look first.</p>
+<div class="tblwrap"><table>
+<tr><th>Topic</th><th>Canonical Source</th><th>Last Verified</th></tr>
+<tr><td>CLI tools</td><td>explorations/2026-08-20-cli-tool-architecture.md</td><td>2026-08-20</td></tr>
+<tr><td>KB enforcement rules (KB001-KB011)</td><td>knowledge-db/README.md</td><td>2026-08-24</td></tr>
+</table></div>
+<h2>How to read this page</h2>
+<p class="bucket-blurb"><span class="badge verified">verified</span> proven, with captured evidence shown in the Proof box &nbsp;<span class="badge tentative">tentative</span> best understanding, not yet proven &nbsp;<span class="badge superseded">superseded</span> outdated, links to its replacement. Every claim cites real files: expand a source to see the exact lines it is grounded in (captured when this page was generated).</p>
+<section class="bucket"><h2>What we know <span class="tags">(explorations/ &mdash; what is true)</span></h2>
+<article class="entry" id="explorations/2026-08-20-cli-tool-architecture.md" data-status="verified">
+<h2>CLI Tool Architecture</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-20</span>
+<span class="tags">area:tooling, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p>Four CLI tools form the KB tooling layer: init, ingest, discover, lint. All bash scripts with no external dependencies beyond standard Unix tools.</p>
+<h3>Context / Question</h3>
+<p>Understanding how the CLI tools work together and what each one does.</p>
+<h3>Findings / What We Did</h3>
+<h3>Tool Overview</h3>
+<div class="tblwrap"><table>
+<tr><th>Tool</th><th>Purpose</th><th>Input</th><th>Output</th></tr>
+<tr><td><code>init-knowledge-db.sh</code></td><td>Create KB structure</td><td>Target directory</td><td>INDEX.md + buckets</td></tr>
+<tr><td><code>kb-ingest</code></td><td>Parse text into entries</td><td>stdin or file</td><td>KB entry file</td></tr>
+<tr><td><code>kb-discover</code></td><td>Scan codebase</td><td>Directory path</td><td>Exploration entry</td></tr>
+<tr><td><code>kb-lint</code></td><td>Validate KB</td><td>KB directory</td><td>Error/warning report</td></tr>
+</table></div>
+<h3>init-knowledge-db.sh (scripts/init-knowledge-db.sh:10-35)</h3>
+<p>Creates the KB folder structure from templates in <code>.kb-templates/</code>:</p>
+<ul>
+<li>Copies INDEX.md, README.md, _TEMPLATE.md</li>
+<li>Creates four bucket directories</li>
+<li>Adds .gitkeep files to empty buckets</li>
+</ul>
+<p>Idempotent: running twice on same directory is safe.</p>
+<h3>kb-ingest (scripts/kb-ingest:20-100)</h3>
+<p>Parses unstructured text (meeting notes, transcripts, error logs) into KB entries:</p>
+<ul>
+<li><code>--auto</code> flag triggers bucket detection via keyword analysis</li>
+<li>Error signals: "Error:", "Exception:", "failed", "stack trace"</li>
+<li>Exploration signals: "How does", "What is", "Where is"</li>
+<li>Decision signals: "We chose", "decided to", "option"</li>
+</ul>
+<p>Uses heredoc templating to generate YAML front-matter.</p>
+<h3>kb-discover (scripts/kb-discover:30-150)</h3>
+<p>Scans a codebase directory and generates an exploration entry:</p>
+<ul>
+<li>Detects project type (package.json, go.mod, Cargo.toml, etc.)</li>
+<li>Finds entry points, routes, models, services</li>
+<li>Identifies external integrations (database, Redis, queues)</li>
+<li><code>--summary</code> flag outputs brief overview instead of full entry</li>
+</ul>
+<h3>kb-lint (scripts/kb-lint:60-250)</h3>
+<p>Validates KB health with 7 checks:</p>
+<ul>
+<li>Entries missing from INDEX.md</li>
+<li>Entries missing sources</li>
+<li>Invalid status values</li>
+<li>verified status without Verification block</li>
+<li>superseded status without related link</li>
+<li>Error entries missing required sections</li>
+<li>Tag hygiene (single-use tags = potential typos)</li>
+</ul>
+<p><code>--fix</code> flag auto-repairs:</p>
+<ul>
+<li>Missing INDEX.md rows (adds them)</li>
+<li>verified without proof (downgrades to tentative)</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ ./tests/run-tests.sh
+KB Tools Test Suite
+Testing init-knowledge-db.sh
+  creates KB structure... PASS
+  ...
+Testing kb-lint
+  --fix adds missing INDEX entry... PASS
+  --fix downgrades to tentative... PASS
+  ...
+Results: 23/23 passed
+All tests passed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/kb-ingest:1-50</summary><pre><code>    1  #!/bin/bash
+    2  # kb-ingest: Parse text/transcripts into KB entries
+    3  # Alpha version - basic text parsing
+    4  #
+    5  # Usage:
+    6  #   kb-ingest --input file.txt --bucket explorations
+    7  #   kb-ingest --bucket errors &lt; conversation.txt
+    8  #   echo "text" | kb-ingest --auto
+    9  
+   10  set -e
+   11  
+   12  # Defaults
+   13  KB_DIR="${KB_DIR:-knowledge-db}"
+   14  BUCKET=""
+   15  INPUT_FILE=""
+   16  AUTO_BUCKET=false
+   17  TITLE=""
+   18  DRY_RUN=false
+   19  
+   20  # Colors
+   21  RED='\033[0;31m'
+   22  GREEN='\033[0;32m'
+   23  YELLOW='\033[1;33m'
+   24  BLUE='\033[0;34m'
+   25  NC='\033[0m' # No Color
+   26  
+   27  # Sanitize string for YAML value (escape special chars)
+   28  sanitize_yaml() {
+   29      local input="$1"
+   30      # Remove newlines, escape colons if not in quotes, escape quotes
+   31      echo "$input" | tr '\n' ' ' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g"
+   32  }
+   33  
+   34  # Sanitize for safe filename
+   35  sanitize_filename() {
+   36      local input="$1"
+   37      # Remove any path traversal attempts and special chars
+   38      echo "$input" | tr -cd '[:alnum:][:space:]-_.' | tr '[:space:]' '-' | sed 's/--*/-/g'
+   39  }
+   40  
+   41  usage() {
+   42      cat &lt;&lt; EOF
+   43  kb-ingest: Parse text into Knowledge Database entries
+   44  
+   45  USAGE:
+   46      kb-ingest [OPTIONS]
+   47  
+   48  OPTIONS:
+   49      -i, --input FILE      Input file (or use stdin)
+   50      -b, --bucket BUCKET   Target bucket: explorations|solutions|errors|decisions</code></pre></details>
+<details class="src"><summary>scripts/kb-discover:1-60</summary><pre><code>    1  #!/bin/bash
+    2  # kb-discover: Scan codebase and generate exploration entries
+    3  # Alpha version - basic directory analysis
+    4  #
+    5  # Usage:
+    6  #   kb-discover ./target-app
+    7  #   kb-discover ./legacy-app --output knowledge-db/explorations/
+    8  #   kb-discover ./src --summary
+    9  
+   10  set -e
+   11  
+   12  # Defaults
+   13  KB_DIR="${KB_DIR:-knowledge-db}"
+   14  TARGET_DIR=""
+   15  OUTPUT_DIR=""
+   16  SUMMARY_ONLY=false
+   17  FOCUS=""
+   18  DRY_RUN=false
+   19  
+   20  # Colors
+   21  RED='\033[0;31m'
+   22  GREEN='\033[0;32m'
+   23  YELLOW='\033[1;33m'
+   24  BLUE='\033[0;34m'
+   25  CYAN='\033[0;36m'
+   26  NC='\033[0m'
+   27  
+   28  usage() {
+   29      cat &lt;&lt; EOF
+   30  kb-discover: Scan codebase and generate KB exploration entries
+   31  
+   32  USAGE:
+   33      kb-discover TARGET_DIR [OPTIONS]
+   34  
+   35  OPTIONS:
+   36      -o, --output DIR      Output directory for entries (default: KB_DIR/explorations)
+   37      -s, --summary         Print summary only, don't create entry
+   38      -f, --focus ASPECT    Focus on specific aspect: routes|models|services|config
+   39      -d, --dry-run         Show what would be created, don't write
+   40      -k, --kb-dir DIR      KB directory (default: knowledge-db)
+   41      -h, --help            Show this help
+   42  
+   43  EXAMPLES:
+   44      # Full discovery of a directory
+   45      kb-discover ./legacy-app
+   46  
+   47      # Summary only (no file created)
+   48      kb-discover ./src --summary
+   49  
+   50      # Focus on API routes
+   51      kb-discover ./backend --focus routes
+   52  
+   53      # Output to specific location
+   54      kb-discover ./microservice --output ./docs/kb/
+   55  EOF
+   56      exit 0
+   57  }
+   58  
+   59  # Parse arguments
+   60  while [[ $# -gt 0 ]]; do</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:1-70</summary><pre><code>    1  #!/bin/bash
+    2  # kb-lint: Lint Knowledge Database for issues
+    3  # Checks: missing sources, INDEX sync, status validity, duplicates, tag hygiene
+    4  #
+    5  # Usage:
+    6  #   kb-lint                    # Lint default knowledge-db/
+    7  #   kb-lint ./path/to/kb       # Lint specific KB
+    8  #   kb-lint --fix              # Auto-fix what can be fixed
+    9  
+   10  set -e
+   11  
+   12  KB_DIR="${1:-knowledge-db}"
+   13  FIX_MODE=false
+   14  
+   15  # Colors
+   16  RED='\033[0;31m'
+   17  GREEN='\033[0;32m'
+   18  YELLOW='\033[1;33m'
+   19  BLUE='\033[0;34m'
+   20  NC='\033[0m'
+   21  
+   22  # Counters
+   23  ERRORS=0
+   24  WARNINGS=0
+   25  FIXED=0
+   26  
+   27  # Sanitize string for safe use in sed replacement
+   28  # Escapes: / &amp; \ and newlines
+   29  sanitize_for_sed() {
+   30      local input="$1"
+   31      printf '%s' "$input" | sed 's/[&amp;/\]/\\&amp;/g' | tr -d '\n'
+   32  }
+   33  
+   34  # Sanitize for safe YAML/markdown (remove control chars, limit length)
+   35  sanitize_metadata() {
+   36      local input="$1"
+   37      local max_len="${2:-100}"
+   38      printf '%s' "$input" | tr -cd '[:print:]' | head -c "$max_len"
+   39  }
+   40  
+   41  # Parse args
+   42  for arg in "$@"; do
+   43      case $arg in
+   44          --fix)
+   45              FIX_MODE=true
+   46              shift
+   47              ;;
+   48          -h|--help)
+   49              echo "kb-lint: Lint Knowledge Database for issues"
+   50              echo ""
+   51              echo "Usage: kb-lint [KB_DIR] [--fix]"
+   52              echo ""
+   53              echo "Checks:"
+   54              echo "  - Entries missing sources"
+   55              echo "  - Entries not in INDEX.md"
+   56              echo "  - Invalid status values"
+   57              echo "  - verified status without Verification block"
+   58              echo "  - superseded status without related link"
+   59              echo "  - Potential duplicates"
+   60              echo "  - Unused/inconsistent tags"</code></pre></details>
+<details class="src"><summary>scripts/init-knowledge-db.sh:1-40</summary><pre><code>    1  #!/bin/bash
+    2  # Initialize Knowledge Database structure
+    3  # Safe to run multiple times - never overwrites existing files
+    4  #
+    5  # Usage: init-knowledge-db.sh [KB_DIR] [--local]
+    6  #   KB_DIR   target folder (default: knowledge-db)
+    7  #   --local  gitignore the KB (personal memory, not committed).
+    8  #            DEFAULT IS TRACKED: a committed KB is the point — shared memory,
+    9  #            and the write-back trigger (KB011) only works when KB files
+   10  #            appear in diffs.
+   11  
+   12  set -e
+   13  
+   14  KB_DIR="knowledge-db"
+   15  LOCAL_KB=false
+   16  for arg in "$@"; do
+   17      case "$arg" in
+   18          --local) LOCAL_KB=true ;;
+   19          *) KB_DIR="$arg" ;;
+   20      esac
+   21  done
+   22  
+   23  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+   24  REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+   25  TEMPLATES_DIR="$REPO_ROOT/.kb-templates"
+   26  SOURCE_KB="$REPO_ROOT/knowledge-db"
+   27  
+   28  echo "Initializing Knowledge Database in '$KB_DIR/'..."
+   29  
+   30  # Create folder structure
+   31  mkdir -p "$KB_DIR/explorations"
+   32  mkdir -p "$KB_DIR/solutions"
+   33  mkdir -p "$KB_DIR/errors"
+   34  mkdir -p "$KB_DIR/decisions"
+   35  mkdir -p "$KB_DIR/bin"
+   36  
+   37  # Add .gitkeep to empty folders
+   38  for dir in explorations solutions errors decisions; do
+   39      touch "$KB_DIR/$dir/.gitkeep"
+   40  done</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-20-bash-for-cli-tools.md">Bash for Phase 1 CLI tools</a></p>
+</article>
+</section>
+<section class="bucket"><h2>What we built <span class="tags">(solutions/ &mdash; what we did)</span></h2>
+<article class="entry" id="solutions/2026-08-24-kb-enforcement-tooling.md" data-status="verified">
+<h2>KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:cli, layer:enforcement, area:test</span>
+</div>
+<h3>Summary</h3>
+<p>External evaluator feedback showed the prose-enforced conventions drifted in real use (tag drift, fake "verified" proof, undeclared vocabulary). Built <code>knowledge-db/bin/kb</code> (Python 3 stdlib, zero deps) enforcing every hard rule as KB001-KB011, plus an idempotent <code>install.sh</code> wiring agent hook, git pre-commit, and CI.</p>
+<h3>Context / Question</h3>
+<p>An agent deploying this pattern reported violations our conventions could not stop: INDEX rows drifting from front-matter, <code>status: resolved</code> and <code>layer:process</code> invented values, <code># Should pass with no errors</code> used as verification proof, undeclared buckets, three shipped waves with no KB entry. Confirmed in this repo: 3 INDEX rows with tag drift, undeclared <code>area:release</code> tag, <code># Works without any dependency installation</code> as proof, and 4 decision entries <code>verified</code> with prose-only Verification.</p>
+<h3>Findings / What We Did</h3>
+<ul>
+<li><code>knowledge-db/kb.config.json:1-36</code> — all vocabularies (buckets, types, statuses, tags, staleness, required sections, lockstep pairs, write-back paths) in one config.</li>
+<li><code>knowledge-db/bin/kb:1-25</code> — CLI with <code>new</code> (scaffolds valid entries, status tentative), <code>index</code> (INDEX.md generated from front-matter, manual regions fenced), <code>check</code> (KB001-KB011, <code>--json</code>, <code>--staged</code>/<code>--diff-base</code>).</li>
+<li><code>knowledge-db/install.sh:1-30</code> — idempotent merging installer: agent Stop hook into committed <code>.claude/settings.json</code>, <code>.githooks/pre-commit</code> + <code>core.hooksPath</code>, <code>.github/workflows/kb-check.yml</code>; <code>--check</code> audits.</li>
+<li><code>tests/run-kb-tests.sh:1-30</code> — conformance suite: <code>tests/fixtures/pass/</code> must exit 0, each <code>tests/fixtures/fail/KBxxx/</code> must exit non-zero naming its ID; KB009/KB011 exercised in temp git repos with staged diffs.</li>
+<li>Rule table: <code>knowledge-db/README.md:56-71</code>.</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ knowledge-db/bin/kb check
+exit 0
+
+$ tests/run-kb-tests.sh
+Results: 14 passed, 0 failed
+All KB conformance tests passed
+
+$ tests/run-tests.sh
+Results: 23/23 passed
+All tests passed</code></pre>
+<p>install.sh run twice: second run reports all layers IN PLACE (no changes). Against a repo with pre-existing <code>.claude/settings.json</code> hooks and <code>.githooks/pre-commit</code>, both were preserved and the KB hook appended; a staged code change with no KB entry was blocked at commit (KB009 fired, commit exit 1).</p>
+</div>
+<h3>Follow-ups / Open Questions</h3>
+<ul>
+<li><code>scripts/kb-lint</code> is deprecated but still shipped; remove after one release.</li>
+<li><code>.kb-templates/</code> (used by <code>scripts/init-knowledge-db.sh</code>) still scaffolds the pre-v0.4.0 layout without kb.config.json/bin; new installs should copy <code>knowledge-db/</code> + run <code>install.sh</code>.</li>
+</ul>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:1-25</summary><pre><code>    1  #!/usr/bin/env python3
+    2  """kb — zero-dependency knowledge-db CLI.
+    3  
+    4  Subcommands:
+    5    kb new &lt;type&gt; &lt;slug&gt;      Scaffold a valid entry (status: tentative), regenerate INDEX.md/.html
+    6    kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
+    7    kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
+    8  
+    9  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
+   10    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
+   11    KB002  closed vocabularies (config)        KB008  verified entries go stale
+   12    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
+   13    KB004  verified requires captured proof    KB010  one trap per error entry
+   14    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
+   15           no template residue                 KB012  INDEX.html fresh (fingerprint)
+   16    KB006  required sections per bucket
+   17  
+   18  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
+   19  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
+   20  """
+   21  
+   22  import argparse
+   23  import hashlib
+   24  import json
+   25  import re</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:1-36</summary><pre><code>    1  {
+    2    "buckets": {
+    3      "explorations": "what is true",
+    4      "solutions": "what we did",
+    5      "errors": "what broke + the fix",
+    6      "decisions": "why we chose X"
+    7    },
+    8    "types": {
+    9      "exploration": "explorations",
+   10      "solution": "solutions",
+   11      "error": "errors",
+   12      "decision": "decisions"
+   13    },
+   14    "statuses": ["verified", "tentative", "superseded"],
+   15    "tags": {
+   16      "area": ["auth", "api", "ui", "db", "payments", "infra", "test", "tooling", "security", "release"],
+   17      "layer": ["controller", "service", "model", "middleware", "util", "cli", "enforcement"],
+   18      "scope": [],
+   19      "severity": ["critical", "high", "medium", "low"],
+   20      "tech": ["react", "node", "postgres", "bash", "python"]
+   21    },
+   22    "staleness_days": {
+   23      "verified": 90
+   24    },
+   25    "required_sections": {
+   26      "errors": ["Symptom", "Root Cause", "Fix", "Prevention"]
+   27    },
+   28    "lockstep": [
+   29      { "source": "knowledge-db/bin/kb", "doc": "tests/" },
+   30      { "source": "knowledge-db/kb.config.json", "doc": "knowledge-db/INDEX.md" }
+   31    ],
+   32    "writeback": {
+   33      "code": ["scripts/**", "hooks/**", "knowledge-db/bin/**"],
+   34      "exempt": []
+   35    }
+   36  }</code></pre></details>
+<details class="src"><summary>knowledge-db/install.sh:1-30</summary><pre><code>    1  #!/bin/bash
+    2  # knowledge-db enforcement installer. Idempotent and merging: re-runnable,
+    3  # never clobbers existing agent settings, hooks, or CI.
+    4  #
+    5  # Installs five layers:
+    6  #   1. KB scaffold           (knowledge-db/ with config, tool, buckets) — only if absent
+    7  #   2. Agent Stop hook       merged into committed .claude/settings.json (kb check)
+    8  #   3. Git pre-commit hook   .githooks/pre-commit + core.hooksPath (kb check --staged)
+    9  #   4. CI job                .github/workflows/kb-check.yml
+   10  #   5. Agent hard rules      HARD RULE block appended to host instructions file
+   11  #                            (CLAUDE.md / AGENTS.md / copilot-instructions.md; full
+   12  #                            rules live in &lt;KB&gt;/AGENT.md)
+   13  #
+   14  # Usage:
+   15  #   knowledge-db/install.sh           install/repair; prints changed vs already-in-place
+   16  #   knowledge-db/install.sh --check   report drift, change nothing; non-zero if any layer missing
+   17  #
+   18  # Zero third-party dependencies: bash + python3 (stdlib) + git.
+   19  
+   20  set -euo pipefail
+   21  
+   22  KB_DIR="$(cd "$(dirname "$0")" &amp;&amp; pwd)"
+   23  REPO_ROOT="$(cd "$KB_DIR/.." &amp;&amp; pwd)"
+   24  KB_NAME="$(basename "$KB_DIR")"
+   25  CHECK_ONLY=false
+   26  [[ "${1:-}" == "--check" ]] &amp;&amp; CHECK_ONLY=true
+   27  
+   28  SETTINGS="$REPO_ROOT/.claude/settings.json"
+   29  HOOK_CMD="\"\$CLAUDE_PROJECT_DIR/$KB_NAME/bin/kb\" check 1&gt;&amp;2 || exit 2"
+   30  PRECOMMIT="$REPO_ROOT/.githooks/pre-commit"</code></pre></details>
+<details class="src"><summary>tests/run-kb-tests.sh:1-30</summary><pre><code>    1  #!/bin/bash
+    2  # Conformance suite for knowledge-db/bin/kb.
+    3  #
+    4  # - tests/fixtures/pass/           must exit 0
+    5  # - tests/fixtures/fail/KBxxx/     must exit non-zero AND name that rule ID
+    6  #   (KB009 and KB011 are diff-mode rules: the fixture is copied into a temp
+    7  #   git repo, a source file is modified and staged, then `kb check --staged`)
+    8  #
+    9  # Zero dependencies beyond bash, git, python3.
+   10  
+   11  set -u
+   12  
+   13  REPO_ROOT="$(cd "$(dirname "$0")/.." &amp;&amp; pwd)"
+   14  KB="$REPO_ROOT/knowledge-db/bin/kb"
+   15  FIXTURES="$REPO_ROOT/tests/fixtures"
+   16  PASS_COUNT=0
+   17  FAIL_COUNT=0
+   18  
+   19  pass() { echo "  $1... PASS"; PASS_COUNT=$((PASS_COUNT + 1)); }
+   20  fail() { echo "  $1... FAIL: $2"; FAIL_COUNT=$((FAIL_COUNT + 1)); }
+   21  
+   22  echo "KB Conformance Suite"
+   23  echo
+   24  
+   25  echo "Testing pass fixture"
+   26  OUT=$("$KB" --kb-dir "$FIXTURES/pass/knowledge-db" check 2&gt;&amp;1)
+   27  if [[ $? -eq 0 ]]; then
+   28      pass "pass/ exits 0"
+   29  else
+   30      fail "pass/ exits 0" "$OUT"</code></pre></details>
+<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56  ## The Rules
+   57  
+   58  | ID | Rule |
+   59  |----|------|
+   60  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+   61  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
+   62  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
+   63  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
+   64  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
+   65  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
+   66  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |
+   67  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |
+   68  | KB009 | For each `lockstep` pair in the config: if the source-side path changed in the diff, the doc-side path must have changed too. Diff mode only (`--staged` / `--diff-base`). |
+   69  | KB010 | One trap per error entry. An error entry with duplicate Symptom / Root Cause / Fix / Prevention sections fails — split it so symptom-grep lands on one file. |
+   70  | KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
+   71  | KB012 | `INDEX.html` (self-contained human-facing view) is fresh: its embedded fingerprint matches the KB content (generated INDEX.md + entry files). Embedded source snippets are best-effort context and deliberately outside the fingerprint. |</code></pre></details>
+<details class="src"><summary>CHANGELOG.md:8-40</summary><pre><code>    8  ## [0.4.1] - 2026-08-24
+    9  
+   10  ### Added
+   11  - **`INDEX.html` — self-contained human-facing KB browser** for non-technical readers, generated by `kb index` alongside INDEX.md. Double-click to open; zero dependencies, no server, no external assets, works offline and survives email/Slack as a single file.
+   12    - Every entry inlined with plain-language bucket labels, search box, status filter
+   13    - **Proof navigation**: Verification evidence rendered per entry; every `sources:` citation expandable to the actual cited source lines (embedded at build time)
+   14    - Decisions show `decided by:` attribution; superseded entries carry a "replaced by" banner linking the replacement; related entries cross-link as in-page anchors
+   15  - **KB012**: `INDEX.html` freshness enforced via embedded fingerprint of KB content (generated INDEX.md + entry files). Embedded source snippets are deliberately outside the fingerprint — a KB007-style byte check would fail on every unrelated code edit. Conformance fixture included (suite now 16 tests).
+   16  
+   17  ## [0.4.0] - 2026-08-24
+   18  
+   19  Response to external evaluator feedback: conventions that were "enforced by
+   20  agent behavior" drifted in practice (INDEX tag drift, prose-only "verified"
+   21  proof, hypothetical output as evidence). v0.4.0 makes every hard rule
+   22  mechanically enforced or explicitly labelled guidance.
+   23  
+   24  ### Added
+   25  - **`knowledge-db/bin/kb`**: zero-dependency CLI (Python 3 stdlib) — `new` (scaffold valid entries, status tentative), `index` (INDEX.md is now GENERATED from front-matter), `check` (rules KB001-KB011, `--json`, `--staged`/`--diff-base` diff modes)
+   26  - **`knowledge-db/kb.config.json`**: single source of truth for buckets, statuses, tag vocabulary, staleness budgets, lockstep pairs, write-back paths — closed enums (KB002)
+   27  - **Rule IDs KB001-KB011**, each with a conformance fixture (`tests/fixtures/`, `tests/run-kb-tests.sh`: pass/ exits 0, each fail/KBxxx exits non-zero naming its ID)
+   28  - **`knowledge-db/install.sh`**: idempotent, merging installer for three enforcement layers — agent Stop hook in committed `.claude/settings.json`, `.githooks/pre-commit` + `core.hooksPath`, CI workflow; `--check` audits without changing anything
+   29  - **Staleness budget (KB008)**: `verified` older than 90 days fails until re-verified (`last_verified` field) or downgraded
+   30  - **Write-back trigger (KB011)**: replaces the end-of-task checklist as the hard gate — a diff touching production code but no `knowledge-db/**` file fails
+   31  - **Source rev pinning (KB003)**: `path:Lstart-Lend@rev` warns when the file changed since the rev
+   32  
+   33  ### Changed
+   34  - INDEX.md is build output (KB007: byte-for-byte match); hand-edits only inside `kb:manual` fenced regions
+   35  - knowledge-db/README.md rewritten enforce-or-delete: every hard rule cites its ID; unenforceable items moved to an explicit "Guidance (not checked)" section
+   36  - `.claude/settings.json` is now committed (personal overrides stay in gitignored `settings.local.json`)
+   37  
+   38  ### Fixed
+   39  - Tag drift between entry front-matter and INDEX rows (3 rows); undeclared `area:release` tag now declared in config
+   40  - Four decision entries claimed `verified` with prose-only Verification; now carry captured command output (KB004)</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-24-derive-index-from-front-matter.md">Derive INDEX.md from front-matter instead of hand-maintaining it</a>, <a href="#decisions/2026-08-24-python-stdlib-for-kb-cli.md">Python 3 stdlib (not bash, not Node) for the kb enforcement CLI</a>, <a href="#decisions/2026-08-24-enforce-or-delete-rule-ids.md">Enforce-or-delete: every hard rule gets an ID or leaves the README</a>, <a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md">Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a>, <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a></p>
+</article>
+<article class="entry" id="solutions/2026-08-24-index-html-evidence-browser.md" data-status="verified">
+<h2>INDEX.html: self-contained evidence browser for non-technical readers</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, area:ui, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p><code>kb index</code> now generates <code>INDEX.html</code> alongside INDEX.md: a single self-contained file a non-technical reader double-clicks to browse every entry, its Verification proof, and the actual source lines each claim is grounded in. Freshness enforced by KB012.</p>
+<h3>Context / Question</h3>
+<p>Product-facing users need to read the KB without git, markdown, or a server. Requirement: navigate the proof — the grounding of each statement (cited source lines), all decisions with who/why, supersession chains.</p>
+<h3>Findings / What We Did</h3>
+<ul>
+<li>Generator: knowledge-db/bin/kb:685-810 (<code>generate_html</code>) — inlines all entries, sidebar nav by bucket with plain-language labels, client-side search + status filter, no external assets (offline-safe, shareable as one file).</li>
+<li>Proof navigation: each <code>sources:</code> item is an expandable block showing the cited lines, read at build time (knowledge-db/bin/kb:592-610, <code>_source_snippet</code>, capped at 60 lines); Verification sections render in a highlighted "Proof" box; superseded entries get a "replaced by" banner; decisions show <code>decided by:</code>.</li>
+<li>Freshness rule KB012: knowledge-db/bin/kb:875-886, rule table row knowledge-db/README.md:71. Fixture <code>tests/fixtures/fail/KB012/</code> (tampered fingerprint).</li>
+<li>Markdown renderer is a ~100-line subset (headings, fences, tables, lists, bold, code, links) — we control the entry format, so full CommonMark is unnecessary; all content HTML-escaped.</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ knowledge-db/bin/kb index
+regenerated .../knowledge-db/INDEX.md and INDEX.html
+$ knowledge-db/bin/kb check; echo CHECK=$?
+CHECK=0
+$ tests/run-kb-tests.sh
+Results: 16 passed, 0 failed</code></pre>
+<p>Structural check of generated page (2026-08-24): fingerprint present, 18 entry articles, 56 expandable source snippets, 18 proof boxes, 1 superseded banner, 0 external URL references (fully self-contained). All key tags balanced (article/details/section/table/pre/ul). KB012 fixture: <code>kb check</code> exits 1 naming KB012.</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:685-810</summary><pre><code>  685  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
+  686      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
+  687      parsed_entries = []
+  688      for bucket, path in entries:
+  689          parsed = parse_entry(path)
+  690          parsed_entries.append((bucket, path, parsed))
+  691  
+  692      def entry_titles():
+  693          t = {}
+  694          for bucket, path, parsed in parsed_entries:
+  695              t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
+  696          return t
+  697      titles = entry_titles()
+  698  
+  699      ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)
+  700  
+  701      out = []
+  702      out.append("&lt;!DOCTYPE html&gt;")
+  703      out.append('&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;')
+  704      out.append('&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;')
+  705      out.append("&lt;title&gt;Knowledge Database&lt;/title&gt;")
+  706      out.append("&lt;style&gt;" + HTML_CSS + "&lt;/style&gt;&lt;/head&gt;&lt;body&gt;")
+  707      out.append('&lt;header class="top"&gt;&lt;h1&gt;Knowledge Database&lt;/h1&gt;')
+  708      out.append('&lt;input id="q" type="search" placeholder="Search titles, text, tags..."&gt;')
+  709      out.append('&lt;select id="st"&gt;&lt;option value=""&gt;all statuses&lt;/option&gt;'
+  710                 '&lt;option value="verified"&gt;verified (proven)&lt;/option&gt;'
+  711                 '&lt;option value="tentative"&gt;tentative (unconfirmed)&lt;/option&gt;'
+  712                 '&lt;option value="superseded"&gt;superseded (replaced)&lt;/option&gt;&lt;/select&gt;')
+  713      out.append("&lt;/header&gt;")
+  714      out.append('&lt;div class="layout"&gt;&lt;nav class="side"&gt;')
+  715      for bucket in config.get("buckets", {}):
+  716          rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
+  717          rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
+  718          out.append(f"&lt;h2&gt;{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}&lt;/h2&gt;")
+  719          if not rows:
+  720              out.append('&lt;span class="empty"&gt;nothing yet&lt;/span&gt;')
+  721          for b, p, pr in rows:
+  722              rel = f"{b}/{p.name}"
+  723              status = pr["front"].get("status", "")
+  724              out.append(f'&lt;a href="#{rel}"&gt;&lt;span class="dot {_esc(str(status))}"&gt;&lt;/span&gt;'
+  725                         f"{_esc(str(pr['front'].get('title', p.name)))}&lt;/a&gt;")
+  726      out.append("&lt;/nav&gt;&lt;main&gt;")
+  727  
+  728      out.append("&lt;h2&gt;Start here: ready answers&lt;/h2&gt;")
+  729      out.append('&lt;p class="bucket-blurb"&gt;Topic &amp;rarr; the one place to look first.&lt;/p&gt;')
+  730      out.append(_md_to_html(ready, entry_ids))
+  731  
+  732      out.append('&lt;h2&gt;How to read this page&lt;/h2&gt;')
+  733      out.append('&lt;p class="bucket-blurb"&gt;&lt;span class="badge verified"&gt;verified&lt;/span&gt; proven, with captured '
+  734                 'evidence shown in the Proof box &amp;nbsp;&lt;span class="badge tentative"&gt;tentative&lt;/span&gt; best '
+  735                 'understanding, not yet proven &amp;nbsp;&lt;span class="badge superseded"&gt;superseded&lt;/span&gt; outdated, '
+  736                 'links to its replacement. Every claim cites real files: expand a source to see the exact lines '
+  737                 'it is grounded in (captured when this page was generated).&lt;/p&gt;')
+  738  
+  739      for bucket, blurb in config.get("buckets", {}).items():
+  740          rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
+  741          rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
+  742          out.append(f'&lt;section class="bucket"&gt;&lt;h2&gt;{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}'
+  743                     f' &lt;span class="tags"&gt;({_esc(bucket)}/ &amp;mdash; {_esc(blurb)})&lt;/span&gt;&lt;/h2&gt;')
+  744          if not rows:</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:592-610</summary><pre><code>  592  def _source_snippet(repo_root, src):
+  593      m = SOURCE_RE.match(src)
+  594      if not m:
+  595          return None
+  596      path = repo_root / m.group("path")
+  597      if not path.is_file():
+  598          return "(source file not found)"
+  599      try:
+  600          lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+  601      except OSError:
+  602          return "(source file unreadable)"
+  603      start = int(m.group("start"))
+  604      end = int(m.group("end") or m.group("start"))
+  605      end = min(end, start + SNIPPET_MAX_LINES - 1, len(lines))
+  606      if start &gt; len(lines):
+  607          return "(cited lines beyond end of file)"
+  608      sel = lines[start - 1:end]
+  609      return "\n".join(f"{i:&gt;5}  {l}" for i, l in enumerate(sel, start))
+  610  </code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      # KB012: INDEX.html (human-facing view) is fresh w.r.t. KB content
+  876      html_path = kb_dir / "INDEX.html"
+  877      if not html_path.is_file():
+  878          findings.append(Finding("KB012", f"{kb_rel}/INDEX.html", "missing — run `kb index`"))
+  879      else:
+  880          m = re.search(r"kb:fingerprint:([0-9a-f]{64})", html_path.read_text(encoding="utf-8"))
+  881          entry_pairs = [(f"{b}/{p.name}", p.read_text(encoding="utf-8")) for b, p in entries]
+  882          expected = kb_fingerprint(generated, entry_pairs)
+  883          if not m or m.group(1) != expected:
+  884              findings.append(Finding("KB012", f"{kb_rel}/INDEX.html",
+  885                                      "stale (fingerprint mismatch with entries/INDEX) — run `kb index`"))
+  886  </code></pre></details>
+<details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  | KB012 | `INDEX.html` (self-contained human-facing view) is fresh: its embedded fingerprint matches the KB content (generated INDEX.md + entry files). Embedded source snippets are best-effort context and deliberately outside the fingerprint. |</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md">HTML view: build-time embedding, not runtime fetch or hosted docs</a>, <a href="#decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md">KB012 freshness via content fingerprint, not KB007-style byte check</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
+</article>
+<article class="entry" id="solutions/2026-08-24-agent-rules-forwarding.md" data-status="verified">
+<h2>Forward agent hard rules on install: AGENT.md + install.sh layer 5</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>Installing the KB on a target project now forwards the agent hard rules through every install path: <code>knowledge-db/AGENT.md</code> (portable rules: always-read-first, empty-KB bootstrap suggestions, never-prompt) travels with the KB folder, and <code>install.sh</code> layer 5 appends a marker-guarded HARD RULE block to the host instructions file (CLAUDE.md / AGENTS.md / copilot-instructions.md, creating CLAUDE.md if none).</p>
+<h3>Context / Question</h3>
+<p>Audit found the hard rules were NOT reliably forwarded: only the plugin/SKILL.md path appended a HARD-RULE block (agent-driven, easy to skip); <code>scripts/init-knowledge-db.sh</code> forwarded nothing agent-facing and did not copy the v0.4.0 enforcement (kb.config.json, bin/kb, install.sh); install.sh wired hooks but no agent instructions. Maintainer requirements: agents ALWAYS check the KB; empty KB triggers a suggestion (exploration OR manual document/context input); never prompt the user; never withhold saving.</p>
+<h3>Findings / What We Did</h3>
+<ul>
+<li>knowledge-db/AGENT.md:1-54 — portable hard rules, 4 sections: ALWAYS READ FIRST, EMPTY KB (suggest kb-discover exploration OR manual docs via kb-ingest, then continue — never block), NEVER PROMPT NEVER WITHHOLD, WRITE BACK.</li>
+<li>knowledge-db/install.sh:174-217 — layer 5: detects host file (CLAUDE.md &gt; AGENTS.md &gt; .github/copilot-instructions.md, creates CLAUDE.md if none), appends <code>&lt;!-- kb:agent-rules:start --&gt;</code>-guarded block; <code>--check</code> asserts the marker.</li>
+<li>scripts/init-knowledge-db.sh:42-68 — now copies AGENT.md + kb.config.json (generic template) + bin/kb + install.sh, and generates INDEX.md via <code>kb index</code> instead of copying a stale template.</li>
+<li>knowledge-database/SKILL.md:37-72 — bootstrap copies the full skeleton and delegates rule-forwarding to install.sh; READ loop is "ALWAYS — start of EVERY task" with the empty-KB step.</li>
+<li>.kb-templates/ synced (README, _TEMPLATE, AGENT.md, generic kb.config.json); stale INDEX.md template removed.</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Fresh temp git repo end-to-end (captured 2026-08-24):</p>
+<pre><code>$ scripts/init-knowledge-db.sh &amp;&amp; knowledge-db/bin/kb check; echo CHECK=$?
+CHECK=0
+$ knowledge-db/install.sh
+CHANGED    agent Stop hook merged into .claude/settings.json
+CHANGED    pre-commit hook written to .githooks/pre-commit
+CHANGED    git core.hooksPath set to .githooks
+CHANGED    CI job written to .github/workflows/kb-check.yml
+CHANGED    agent hard rules appended to CLAUDE.md
+IN PLACE   KB scaffold (knowledge-db/)
+$ grep -c "kb:agent-rules:start" CLAUDE.md
+1
+$ CI=1 knowledge-db/install.sh --check; echo AUDIT=$?
+AUDIT=0</code></pre>
+<p>Second install run: all six layers IN PLACE (idempotent). This repo dogfoods layer 5: same block appended to its own CLAUDE.md.</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/AGENT.md:1-54</summary><pre><code>    1  # Knowledge Database — Agent Hard Rules
+    2  
+    3  Portable rules for ANY agent working in a repo with a `knowledge-db/`. This file
+    4  travels with the KB folder and is referenced from the host instructions file
+    5  (CLAUDE.md / AGENTS.md / copilot-instructions) by `install.sh`.
+    6  
+    7  ## 1. ALWAYS READ FIRST
+    8  
+    9  Start EVERY task by checking the KB — no exceptions, no trigger phrases needed:
+   10  
+   11  1. Open `knowledge-db/INDEX.md` (Ready-Answer Table first, then entry catalog).
+   12  2. Grep for keywords: `grep -r "&lt;keyword&gt;" knowledge-db/`
+   13  3. A `verified` entry that answers the question: USE IT, stop exploring.
+   14  4. A `tentative` entry: build on it; upgrade to verified when proven.
+   15  
+   16  ## 2. EMPTY KB: bootstrap, don't skip
+   17  
+   18  If the KB has no entries (or none relevant), do NOT silently proceed. Tell the
+   19  user the KB is empty for this topic and offer both bootstrap paths:
+   20  
+   21  - **Exploration**: propose scanning the codebase now (`scripts/kb-discover &lt;dir&gt;`
+   22    or a manual investigation) and recording the findings as exploration entries.
+   23  - **Manual input**: invite the user to share existing docs, specs, transcripts, or
+   24    context — ingest with `scripts/kb-ingest` or write entries from it directly.
+   25  
+   26  Then continue the task; bootstrapping suggestions must not block the work.
+   27  
+   28  ## 3. NEVER PROMPT, NEVER WITHHOLD
+   29  
+   30  Capturing knowledge is autonomous. Never ask permission to create, update, or
+   31  supersede a KB entry, and never skip recording something important because it
+   32  feels interruptive:
+   33  
+   34  - Create/update entries the moment an insight occurs (incremental capture —
+   35    a session can end at any time; memory not written to the KB is memory lost).
+   36  - Superseding a `verified` entry: do it autonomously WITH an audit trail —
+   37    state the reason in the new entry, link the replacement in `related:` (KB005),
+   38    never delete the old entry.
+   39  - The only user-facing move is informing, not asking: mention in your summary
+   40    what was recorded or superseded.
+   41  
+   42  ## 4. WRITE BACK (non-trivial work = KB entry)
+   43  
+   44  Non-trivial = anything requiring search, multi-file reads, debugging, or decisions.
+   45  
+   46  - Scaffold with `knowledge-db/bin/kb new &lt;type&gt; &lt;slug&gt;` (starts `tentative`).
+   47  - Ground every claim in a real source: `path:Lstart-Lend` (KB003).
+   48  - `verified` only with captured command output in `## Verification` (KB004).
+   49  - `errors/` entries: Symptom, Root Cause, Fix, Prevention (KB006). One trap per entry (KB010).
+   50  - Regenerate the index: `knowledge-db/bin/kb index` — never hand-edit INDEX.md
+   51    outside the `kb:manual` regions (KB007).
+   52  - Validate before finishing: `knowledge-db/bin/kb check` must exit 0.
+   53  
+   54  The full rule table (KB001-KB011) lives in `knowledge-db/README.md`.</code></pre></details>
+<details class="src"><summary>knowledge-db/install.sh:174-217</summary><pre><code>  174  find_host_file() {
+  175      for f in "CLAUDE.md" "AGENTS.md" ".github/copilot-instructions.md"; do
+  176          if [[ -f "$REPO_ROOT/$f" ]]; then
+  177              echo "$REPO_ROOT/$f"
+  178              return
+  179          fi
+  180      done
+  181      echo "$REPO_ROOT/CLAUDE.md"
+  182  }
+  183  
+  184  HOST_FILE="$(find_host_file)"
+  185  HOST_REL="${HOST_FILE#"$REPO_ROOT"/}"
+  186  MARKER="&lt;!-- kb:agent-rules:start --&gt;"
+  187  
+  188  if [[ ! -f "$KB_DIR/AGENT.md" ]]; then
+  189      if $CHECK_ONLY; then
+  190          note_missing "agent hard rules ($KB_NAME/AGENT.md)"
+  191      fi
+  192  elif [[ -f "$HOST_FILE" ]] &amp;&amp; grep -qF "$MARKER" "$HOST_FILE"; then
+  193      note_ok "agent hard rules ($HOST_REL references $KB_NAME/AGENT.md)"
+  194  elif $CHECK_ONLY; then
+  195      note_missing "agent hard rules (HARD RULE block absent from $HOST_REL)"
+  196  else
+  197      mkdir -p "$(dirname "$HOST_FILE")"
+  198      cat &gt;&gt; "$HOST_FILE" &lt;&lt;EOF
+  199  
+  200  $MARKER
+  201  ## HARD RULE: Knowledge Database
+  202  
+  203  This repo keeps durable memory in \`$KB_NAME/\`. For EVERY task:
+  204  
+  205  1. **ALWAYS READ FIRST** — check \`$KB_NAME/INDEX.md\` before exploring; reuse verified entries.
+  206  2. **EMPTY KB** — if no (relevant) entries exist, say so and suggest either a codebase
+  207     exploration to seed it, or manual document/context input to ingest. Then continue the task.
+  208  3. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,
+  209     as insights occur. Superseding a verified entry needs a stated reason and a \`related:\`
+  210     link to the replacement — never permission.
+  211  4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
+  212     with KB entries. \`$KB_NAME/bin/kb check\` must exit 0.
+  213  
+  214  Full rules: \`$KB_NAME/AGENT.md\`. Rule table (KB001-KB011): \`$KB_NAME/README.md\`.
+  215  &lt;!-- kb:agent-rules:end --&gt;
+  216  EOF
+  217      note_changed "agent hard rules appended to $HOST_REL"</code></pre></details>
+<details class="src"><summary>scripts/init-knowledge-db.sh:42-68</summary><pre><code>   42  # Copy templates (don't overwrite existing)
+   43  for file in README.md _TEMPLATE.md AGENT.md kb.config.json; do
+   44      if [ ! -f "$KB_DIR/$file" ]; then
+   45          cp "$TEMPLATES_DIR/$file" "$KB_DIR/$file"
+   46          echo "  Created $KB_DIR/$file"
+   47      else
+   48          echo "  Skipped $KB_DIR/$file (already exists)"
+   49      fi
+   50  done
+   51  
+   52  # Copy enforcement tooling (generic, same for every repo)
+   53  for file in bin/kb install.sh; do
+   54      if [ ! -f "$KB_DIR/$file" ]; then
+   55          cp "$SOURCE_KB/$file" "$KB_DIR/$file"
+   56          chmod +x "$KB_DIR/$file"
+   57          echo "  Created $KB_DIR/$file"
+   58      else
+   59          echo "  Skipped $KB_DIR/$file (already exists)"
+   60      fi
+   61  done
+   62  
+   63  # Generate INDEX.md from front-matter (INDEX is build output, rule KB007)
+   64  if [ ! -f "$KB_DIR/INDEX.md" ]; then
+   65      "$KB_DIR/bin/kb" --kb-dir "$KB_DIR" index
+   66      echo "  Generated $KB_DIR/INDEX.md"
+   67  else
+   68      echo "  Skipped $KB_DIR/INDEX.md (already exists)"</code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:37-72</summary><pre><code>   37  ## 1. BOOTSTRAP (run once per repo, idempotent)
+   38  
+   39  ```
+   40  IF knowledge-db/ missing:
+   41    1. Create folder structure (copy the FULL knowledge-db/ skeleton, including
+   42       the enforcement tooling — not just templates):
+   43       knowledge-db/
+   44         README.md        (rule table KB001-KB011)
+   45         AGENT.md         (portable agent hard rules)
+   46         INDEX.md         (generated: run bin/kb index after copying)
+   47         _TEMPLATE.md
+   48         kb.config.json   (closed vocabularies — single source of truth)
+   49         bin/kb           (zero-dep CLI: new / index / check)
+   50         install.sh       (idempotent enforcement installer)
+   51         explorations/.gitkeep
+   52         solutions/.gitkeep
+   53         errors/.gitkeep
+   54         decisions/.gitkeep
+   55  
+   56    2. Run knowledge-db/install.sh — it wires ALL enforcement layers, including
+   57       appending the HARD-RULE block to the host instructions file
+   58       (CLAUDE.md / AGENTS.md / .github/copilot-instructions.md; creates
+   59       CLAUDE.md if none exists). Idempotent, marker-guarded, never clobbers.
+   60  
+   61    3. If install.sh cannot run (no bash/python3), append the HARD-RULE block
+   62       below to the host instructions file manually (check before append).
+   63  ```
+   64  
+   65  Bootstrap is safe to run multiple times. Never overwrites existing entries.
+   66  
+   67  ---
+   68  
+   69  ## 2. READ Loop (ALWAYS — start of EVERY task)
+   70  
+   71  1. Open `knowledge-db/INDEX.md` (Ready-Answer Table first, then entry catalog)
+   72  2. Grep folder for keywords: `grep -r "keyword" knowledge-db/`</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>, <a href="#decisions/2026-08-24-autonomous-superseding-no-prompts.md">Never prompt: autonomous superseding with audit trail replaces consent</a>, <a href="#decisions/2026-08-24-kb-tracked-by-default.md">KB is git-tracked by default; gitignore only via --local flag</a></p>
+</article>
+<article class="entry" id="solutions/2026-08-21-kb-v2-improvements.md" data-status="verified">
+<h2>KB v2: Security, tests, mandatory auto-capture, releases</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-21</span>
+<span class="tags">area:tooling, area:test, layer:cli, area:release</span>
+</div>
+<h3>Summary</h3>
+<p>Major evolution of Knowledge Database: security fixes, test suite, mandatory auto-capture (not optional), trigger guidance, and first three releases (v0.2.0, v0.2.1, v0.2.2).</p>
+<h3>Context / Question</h3>
+<p>Code review by sub-agents identified critical issues:</p>
+<ul>
+<li>YAML injection in kb-ingest (unsanitized title/tags)</li>
+<li>sed injection in kb-lint --fix (unsanitized metadata)</li>
+<li>No test coverage</li>
+<li>Missing solutions/ example</li>
+<li>No .gitignore handling on init</li>
+</ul>
+<p>User feedback refined auto-capture:</p>
+<ul>
+<li>Should be mandatory, not optional prompt</li>
+<li>Consent only for superseding verified entries</li>
+<li>Need clear examples of what triggers capture</li>
+<li>Need priority guidance for what's most valuable</li>
+</ul>
+<h3>Findings / What We Did</h3>
+<h3>Security Fixes</h3>
+<p><strong>kb-ingest YAML injection</strong> (scripts/kb-ingest:27-40):</p>
+<ul>
+<li>Added <code>sanitize_yaml()</code> function to escape special YAML characters</li>
+<li>Quotes titles in generated YAML frontmatter</li>
+<li>Validates slugs to prevent path traversal</li>
+</ul>
+<p><strong>kb-lint sed injection</strong> (scripts/kb-lint:26-35):</p>
+<ul>
+<li>Added <code>sanitize_for_sed()</code> and <code>sanitize_metadata()</code> functions</li>
+<li>Replaced sed with awk for INDEX.md row insertion</li>
+<li>Validates date format before use</li>
+</ul>
+<h3>Test Suite</h3>
+<p>Created tests/run-tests.sh with 23 test cases:</p>
+<ul>
+<li>init-knowledge-db.sh: 8 tests (structure, idempotency)</li>
+<li>kb-lint: 9 tests (detection, --fix behavior)</li>
+<li>kb-ingest: 4 tests (bucket detection, explicit bucket)</li>
+<li>kb-discover: 2 tests (help, directory scan)</li>
+</ul>
+<h3>Auto-Capture (Mandatory)</h3>
+<p>Mechanism 8 evolved through user feedback:</p>
+<ul>
+<li>v0.2.0: Optional prompt (Y/N/T)</li>
+<li>v0.2.1: Mandatory - non-trivial work = KB entry created</li>
+<li>User reviews content, not whether to create</li>
+</ul>
+<p><strong>Trigger table</strong> (README.md:147-156):</p>
+<div class="tblwrap"><table>
+<tr><th>Task</th><th>Record?</th><th>Bucket</th></tr>
+<tr><td>Debug failing test</td><td>YES</td><td>errors/</td></tr>
+<tr><td>Investigate "how does X work"</td><td>YES</td><td>explorations/</td></tr>
+<tr><td>Add feature (multi-file)</td><td>YES</td><td>solutions/</td></tr>
+<tr><td>Choose between approaches</td><td>YES</td><td>decisions/</td></tr>
+<tr><td>Rename with reasoning</td><td>YES</td><td>decisions/</td></tr>
+<tr><td>Fix obvious typo</td><td>NO</td><td>-</td></tr>
+</table></div>
+<p><strong>Rule</strong>: If there was reasoning, record it. Future you will ask "why?"</p>
+<p><strong>Priority</strong> (most valuable first):</p>
+<ul>
+<li>Errors with fixes - Prevents bug reintroduction</li>
+<li>Investigations - Prevents re-exploration</li>
+<li>Decisions with rationale - Prevents re-debating</li>
+<li>Multi-step solutions - Prevents redoing work</li>
+</ul>
+<h3>Consent Mechanism</h3>
+<p>Mechanism 9: Only ask before superseding verified entries.</p>
+<blockquote>"Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"</blockquote>
+<p>No consent needed for tentative entries or creating new entries.</p>
+<h3>Init Script Improvements</h3>
+<p>scripts/init-knowledge-db.sh now auto-updates .gitignore:</p>
+<ul>
+<li>Detects if running in git repo</li>
+<li>Adds <code>knowledge-db/</code> to .gitignore</li>
+<li>Detect-before-append (idempotent)</li>
+</ul>
+<h3>Release Workflow</h3>
+<p>Created CHANGELOG.md following Keep a Changelog format.</p>
+<p>Released:</p>
+<ul>
+<li>v0.2.0: Security fixes, tests, auto-capture</li>
+<li>v0.2.1: Mandatory auto-capture</li>
+<li>v0.2.2: Trigger table, priority guidance</li>
+</ul>
+<p>All releases tagged and published to GitHub with notes.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ ./tests/run-tests.sh
+Results: 23/23 passed
+All tests passed
+
+$ ./scripts/kb-lint knowledge-db
+Errors: 0
+
+$ git tag
+v0.1.0
+v0.2.0
+v0.2.1
+v0.2.2</code></pre>
+<p>All changes committed and pushed to main.</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/kb-lint:26-35</summary><pre><code>   26  
+   27  # Sanitize string for safe use in sed replacement
+   28  # Escapes: / &amp; \ and newlines
+   29  sanitize_for_sed() {
+   30      local input="$1"
+   31      printf '%s' "$input" | sed 's/[&amp;/\]/\\&amp;/g' | tr -d '\n'
+   32  }
+   33  
+   34  # Sanitize for safe YAML/markdown (remove control chars, limit length)
+   35  sanitize_metadata() {</code></pre></details>
+<details class="src"><summary>scripts/kb-ingest:27-40</summary><pre><code>   27  # Sanitize string for YAML value (escape special chars)
+   28  sanitize_yaml() {
+   29      local input="$1"
+   30      # Remove newlines, escape colons if not in quotes, escape quotes
+   31      echo "$input" | tr '\n' ' ' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g"
+   32  }
+   33  
+   34  # Sanitize for safe filename
+   35  sanitize_filename() {
+   36      local input="$1"
+   37      # Remove any path traversal attempts and special chars
+   38      echo "$input" | tr -cd '[:alnum:][:space:]-_.' | tr '[:space:]' '-' | sed 's/--*/-/g'
+   39  }
+   40  </code></pre></details>
+<details class="src"><summary>scripts/init-knowledge-db.sh:35-60</summary><pre><code>   35  mkdir -p "$KB_DIR/bin"
+   36  
+   37  # Add .gitkeep to empty folders
+   38  for dir in explorations solutions errors decisions; do
+   39      touch "$KB_DIR/$dir/.gitkeep"
+   40  done
+   41  
+   42  # Copy templates (don't overwrite existing)
+   43  for file in README.md _TEMPLATE.md AGENT.md kb.config.json; do
+   44      if [ ! -f "$KB_DIR/$file" ]; then
+   45          cp "$TEMPLATES_DIR/$file" "$KB_DIR/$file"
+   46          echo "  Created $KB_DIR/$file"
+   47      else
+   48          echo "  Skipped $KB_DIR/$file (already exists)"
+   49      fi
+   50  done
+   51  
+   52  # Copy enforcement tooling (generic, same for every repo)
+   53  for file in bin/kb install.sh; do
+   54      if [ ! -f "$KB_DIR/$file" ]; then
+   55          cp "$SOURCE_KB/$file" "$KB_DIR/$file"
+   56          chmod +x "$KB_DIR/$file"
+   57          echo "  Created $KB_DIR/$file"
+   58      else
+   59          echo "  Skipped $KB_DIR/$file (already exists)"
+   60      fi</code></pre></details>
+<details class="src"><summary>tests/run-tests.sh:1-150</summary><pre><code>    1  #!/bin/bash
+    2  # Test runner for KB tools
+    3  # Usage: ./tests/run-tests.sh
+    4  
+    5  # Note: No set -e, we handle failures ourselves
+    6  
+    7  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+    8  ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+    9  
+   10  # Colors
+   11  RED='\033[0;31m'
+   12  GREEN='\033[0;32m'
+   13  BLUE='\033[0;34m'
+   14  NC='\033[0m'
+   15  
+   16  PASSED=0
+   17  FAILED=0
+   18  TOTAL=0
+   19  
+   20  # Test helper
+   21  run_test() {
+   22      local name="$1"
+   23      local cmd="$2"
+   24      TOTAL=$((TOTAL + 1))
+   25  
+   26      echo -n "  $name... "
+   27      if eval "$cmd" &gt; /dev/null 2&gt;&amp;1; then
+   28          echo -e "${GREEN}PASS${NC}"
+   29          PASSED=$((PASSED + 1))
+   30      else
+   31          echo -e "${RED}FAIL${NC}"
+   32          FAILED=$((FAILED + 1))
+   33          # Show output on failure
+   34          echo "    Command: $cmd"
+   35          eval "$cmd" 2&gt;&amp;1 | sed 's/^/    /' || true
+   36      fi
+   37  }
+   38  
+   39  # Test that expects failure (non-zero exit)
+   40  run_test_fails() {
+   41      local name="$1"
+   42      local cmd="$2"
+   43      TOTAL=$((TOTAL + 1))
+   44  
+   45      echo -n "  $name... "
+   46      if eval "$cmd" &gt; /dev/null 2&gt;&amp;1; then
+   47          echo -e "${RED}FAIL (expected non-zero exit)${NC}"
+   48          FAILED=$((FAILED + 1))
+   49      else
+   50          echo -e "${GREEN}PASS${NC}"
+   51          PASSED=$((PASSED + 1))
+   52      fi
+   53  }
+   54  
+   55  # Setup temp directory
+   56  TEMP_DIR=$(mktemp -d)
+   57  trap "rm -rf $TEMP_DIR" EXIT
+   58  
+   59  echo -e "${BLUE}======================================${NC}"
+   60  echo -e "${BLUE}KB Tools Test Suite${NC}"</code></pre></details>
+<details class="src"><summary>CLAUDE.md:103-127</summary><pre><code>  103  - **Archival at scale**: When INDEX.md exceeds ~100 entries, move older entries (6+ months) to `INDEX-archive-YYYY.md`. Keep INDEX.md focused on active knowledge.
+  104  
+  105  ### 8. Auto-Capture (Mandatory)
+  106  
+  107  **Non-trivial work = KB entry created.** This is not optional.
+  108  
+  109  ```
+  110  Creating KB entry for: [describe work]
+  111    Bucket: [suggested bucket]/
+  112    Status: [verified if proven, tentative if not]
+  113  ```
+  114  
+  115  #### Entry Granularity
+  116  
+  117  Different buckets have different granularity rules:
+  118  
+  119  | Bucket | Granularity | Example |
+  120  |--------|-------------|---------|
+  121  | solutions/ | One per feature/fix | "KB v2 security fixes" |
+  122  | errors/ | One per bug | "YAML injection in kb-ingest" |
+  123  | explorations/ | One per question | "How does auth middleware work?" |
+  124  | decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+  125  
+  126  **decisions/ rule**: If you debated A vs B, that's one entry. Multiple debates = multiple entries.
+  127  </code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:79-100</summary><pre><code>   79     entries). Suggest, then continue the task — never block on it.
+   80  
+   81  ---
+   82  
+   83  ## 3. WRITE Loop (as insights occur)
+   84  
+   85  ### Auto-Capture (Mandatory)
+   86  
+   87  **Non-trivial work = KB entry created.** This is not optional.
+   88  
+   89  ### Incremental Capture (Session Resilience)
+   90  
+   91  **Record findings AS THEY OCCUR, not batched at session end.**
+   92  
+   93  Sessions can end unexpectedly (context exhaustion, logout, crash). Memory not committed = memory lost.
+   94  
+   95  | Event | Action |
+   96  |-------|--------|
+   97  | Made choice between A and B | Create decision entry NOW |
+   98  | Discovered how something works | Create exploration entry NOW |
+   99  | Fixed a bug | Create error entry NOW |
+  100  | Completed a feature | Create solution entry NOW |</code></pre></details>
+<details class="src"><summary>README.md:147-164</summary><pre><code>  147  ### What Triggers Auto-Capture?
+  148  
+  149  | Task | Record? | Bucket |
+  150  |------|---------|--------|
+  151  | Debug failing test | YES | errors/ |
+  152  | Investigate "how does X work" | YES | explorations/ |
+  153  | Add feature (multi-file) | YES | solutions/ |
+  154  | Choose between approaches | YES | decisions/ |
+  155  | Rename with reasoning | YES | decisions/ |
+  156  | Fix obvious typo | NO | - |
+  157  
+  158  **Rule**: If there was reasoning, record it. Future you will ask "why?"
+  159  
+  160  ### What's Most Valuable?
+  161  
+  162  1. **Errors with fixes** - Prevents bug reintroduction
+  163  2. **Investigations** - Prevents re-exploration
+  164  3. **Decisions with rationale** - Prevents re-debating</code></pre></details>
+<details class="src"><summary>CHANGELOG.md:1-60</summary><pre><code>    1  # Changelog
+    2  
+    3  All notable changes to Knowledge Database will be documented in this file.
+    4  
+    5  The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+    6  and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+    7  
+    8  ## [0.4.1] - 2026-08-24
+    9  
+   10  ### Added
+   11  - **`INDEX.html` — self-contained human-facing KB browser** for non-technical readers, generated by `kb index` alongside INDEX.md. Double-click to open; zero dependencies, no server, no external assets, works offline and survives email/Slack as a single file.
+   12    - Every entry inlined with plain-language bucket labels, search box, status filter
+   13    - **Proof navigation**: Verification evidence rendered per entry; every `sources:` citation expandable to the actual cited source lines (embedded at build time)
+   14    - Decisions show `decided by:` attribution; superseded entries carry a "replaced by" banner linking the replacement; related entries cross-link as in-page anchors
+   15  - **KB012**: `INDEX.html` freshness enforced via embedded fingerprint of KB content (generated INDEX.md + entry files). Embedded source snippets are deliberately outside the fingerprint — a KB007-style byte check would fail on every unrelated code edit. Conformance fixture included (suite now 16 tests).
+   16  
+   17  ## [0.4.0] - 2026-08-24
+   18  
+   19  Response to external evaluator feedback: conventions that were "enforced by
+   20  agent behavior" drifted in practice (INDEX tag drift, prose-only "verified"
+   21  proof, hypothetical output as evidence). v0.4.0 makes every hard rule
+   22  mechanically enforced or explicitly labelled guidance.
+   23  
+   24  ### Added
+   25  - **`knowledge-db/bin/kb`**: zero-dependency CLI (Python 3 stdlib) — `new` (scaffold valid entries, status tentative), `index` (INDEX.md is now GENERATED from front-matter), `check` (rules KB001-KB011, `--json`, `--staged`/`--diff-base` diff modes)
+   26  - **`knowledge-db/kb.config.json`**: single source of truth for buckets, statuses, tag vocabulary, staleness budgets, lockstep pairs, write-back paths — closed enums (KB002)
+   27  - **Rule IDs KB001-KB011**, each with a conformance fixture (`tests/fixtures/`, `tests/run-kb-tests.sh`: pass/ exits 0, each fail/KBxxx exits non-zero naming its ID)
+   28  - **`knowledge-db/install.sh`**: idempotent, merging installer for three enforcement layers — agent Stop hook in committed `.claude/settings.json`, `.githooks/pre-commit` + `core.hooksPath`, CI workflow; `--check` audits without changing anything
+   29  - **Staleness budget (KB008)**: `verified` older than 90 days fails until re-verified (`last_verified` field) or downgraded
+   30  - **Write-back trigger (KB011)**: replaces the end-of-task checklist as the hard gate — a diff touching production code but no `knowledge-db/**` file fails
+   31  - **Source rev pinning (KB003)**: `path:Lstart-Lend@rev` warns when the file changed since the rev
+   32  
+   33  ### Changed
+   34  - INDEX.md is build output (KB007: byte-for-byte match); hand-edits only inside `kb:manual` fenced regions
+   35  - knowledge-db/README.md rewritten enforce-or-delete: every hard rule cites its ID; unenforceable items moved to an explicit "Guidance (not checked)" section
+   36  - `.claude/settings.json` is now committed (personal overrides stay in gitignored `settings.local.json`)
+   37  
+   38  ### Fixed
+   39  - Tag drift between entry front-matter and INDEX rows (3 rows); undeclared `area:release` tag now declared in config
+   40  - Four decision entries claimed `verified` with prose-only Verification; now carry captured command output (KB004)
+   41  - Hypothetical marker `# Works without any dependency installation` used as proof in bash-for-cli-tools decision; replaced with real evidence
+   42  
+   43  ### Added (agent-rules forwarding)
+   44  - **`knowledge-db/AGENT.md`**: portable agent hard rules that travel with the KB folder — ALWAYS read first, EMPTY KB (suggest exploration or manual document/context input, then continue), NEVER PROMPT / NEVER WITHHOLD, write back
+   45  - **install.sh layer 5**: appends a marker-guarded HARD RULE block to the host instructions file (CLAUDE.md / AGENTS.md / copilot-instructions.md; creates CLAUDE.md if none); `--check` asserts it
+   46  - `scripts/init-knowledge-db.sh` now ships the full enforcement (AGENT.md, kb.config.json, bin/kb, install.sh) and generates INDEX.md via `kb index`
+   47  
+   48  ### Changed (behavior)
+   49  - **Mechanism 9 flipped**: autonomous superseding with audit trail replaces consent prompts. Agents never prompt about KB operations; superseding a verified entry requires reason + `related:` link (KB005), not permission. Opt-in `supersede_with_consent: true` restores prompting.
+   50  - **KB tracked by default**: `init-knowledge-db.sh` no longer gitignores the KB (`--local` opts in) — a gitignored KB breaks KB011 diff enforcement and loses knowledge across clones
+   51  
+   52  ### Deprecated
+   53  - `scripts/kb-lint` — superseded by `bin/kb check` (kept for compatibility)
+   54  
+   55  ## [0.3.1] - 2026-08-21
+   56  
+   57  ### Fixed
+   58  - **Security**: Command injection via unsanitized directory path in kb-discover
+   59  - **Security**: Path traversal in kb-ingest --kb-dir flag
+   60  - **Security**: Temp file race condition in kb-lint (now uses mktemp)</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a>, <a href="#errors/2026-08-20-fix-flag-not-implemented.md">kb-lint --fix flag documented but not implemented</a>, <a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md">Mandatory vs optional auto-capture</a>, <a href="#decisions/2026-08-21-consent-only-for-superseding.md">Consent only for superseding verified entries</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a>, <a href="#decisions/2026-08-21-one-entry-per-choice.md">decisions/ bucket: one entry per choice</a></p>
+</article>
+<article class="entry" id="solutions/2026-08-20-test-suite-implementation.md" data-status="verified">
+<h2>Test Suite for CLI Tools</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-20</span>
+<span class="tags">area:tooling, area:test, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p>Added shell-based test suite covering all four CLI tools (init, lint, ingest, discover) with 23 test cases. No external dependencies - uses bash functions and temp directories.</p>
+<h3>Context / Question</h3>
+<p>Code review identified critical gap: CLI tools had zero test coverage. Needed tests before fixing security issues to prevent regressions.</p>
+<h3>Findings / What We Did</h3>
+<h3>Approach Decision</h3>
+<p>Considered three options:</p>
+<ul>
+<li><strong>bats-core</strong> - Full bash testing framework. Rejected: adds dependency.</li>
+<li><strong>shunit2</strong> - Another bash framework. Rejected: same reason.</li>
+<li><strong>Custom runner</strong> - Simple bash functions. Chosen: zero deps, sufficient for scope.</li>
+</ul>
+<h3>Test Runner Architecture (tests/run-tests.sh:15-50)</h3>
+<p>Two helper functions handle all assertions:</p>
+<pre><code>run_test() {
+    # Runs command, expects success (exit 0)
+    if eval "$cmd" &gt; /dev/null 2&gt;&amp;1; then
+        PASSED=$((PASSED + 1))
+    else
+        FAILED=$((FAILED + 1))
+    fi
+}
+
+run_test_fails() {
+    # Runs command, expects failure (exit non-zero)
+    # Used for: missing KB, invalid args, lint errors
+}</code></pre>
+<h3>Test Isolation</h3>
+<p>Each test group uses fresh temp directory:</p>
+<pre><code>TEMP_DIR=$(mktemp -d)
+trap "rm -rf $TEMP_DIR" EXIT</code></pre>
+<p>Tests share state within groups (by design - tests later in sequence verify fixes from earlier tests).</p>
+<h3>Coverage Matrix</h3>
+<div class="tblwrap"><table>
+<tr><th>Tool</th><th>Happy Path</th><th>Error Cases</th><th>Edge Cases</th></tr>
+<tr><td>init-knowledge-db.sh</td><td>7 tests</td><td>0</td><td>1 (idempotent)</td></tr>
+<tr><td>kb-lint</td><td>5 tests</td><td>2</td><td>2 (--fix)</td></tr>
+<tr><td>kb-ingest</td><td>3 tests</td><td>0</td><td>1 (auto-detect)</td></tr>
+<tr><td>kb-discover</td><td>2 tests</td><td>0</td><td>0</td></tr>
+</table></div>
+<h3>Key Test Patterns</h3>
+<p><strong>Structure verification</strong> (init):</p>
+<pre><code>run_test "creates INDEX.md" "test -f $TEMP_DIR/test-kb/INDEX.md"</code></pre>
+<p><strong>Behavior verification</strong> (lint --fix):</p>
+<pre><code># Create entry not in INDEX
+cat &gt; "$TEMP_DIR/kb/explorations/test.md" &lt;&lt; 'EOF'
+...
+EOF
+run_test_fails "detects missing" "$ROOT_DIR/scripts/kb-lint $TEMP_DIR/kb"
+run_test "--fix repairs" "$ROOT_DIR/scripts/kb-lint $TEMP_DIR/kb --fix"
+run_test "now in INDEX" "grep -q 'test.md' $TEMP_DIR/kb/INDEX.md"</code></pre>
+<p><strong>Auto-detection verification</strong> (ingest):</p>
+<pre><code>run_test "detects error bucket" \
+    "echo 'Error: failed' | kb-ingest --auto --dry-run | grep -q 'errors/'"</code></pre>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ ./tests/run-tests.sh
+KB Tools Test Suite
+...
+Results: 23/23 passed
+All tests passed</code></pre>
+<p>Tests run in ~3 seconds on macOS. No flakiness observed across 10 consecutive runs.</p>
+</div>
+<h3>Follow-ups / Open Questions</h3>
+<ul>
+<li><strong>Missing edge case tests</strong>: Unicode filenames, very large files, symlinks</li>
+<li><strong>No concurrency tests</strong>: Two simultaneous kb-lint --fix runs could corrupt INDEX</li>
+<li><strong>CI integration</strong>: Should add to GitHub Actions when repo goes public</li>
+</ul>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>tests/run-tests.sh:1-150</summary><pre><code>    1  #!/bin/bash
+    2  # Test runner for KB tools
+    3  # Usage: ./tests/run-tests.sh
+    4  
+    5  # Note: No set -e, we handle failures ourselves
+    6  
+    7  SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &amp;&amp; pwd)"
+    8  ROOT_DIR="$(dirname "$SCRIPT_DIR")"
+    9  
+   10  # Colors
+   11  RED='\033[0;31m'
+   12  GREEN='\033[0;32m'
+   13  BLUE='\033[0;34m'
+   14  NC='\033[0m'
+   15  
+   16  PASSED=0
+   17  FAILED=0
+   18  TOTAL=0
+   19  
+   20  # Test helper
+   21  run_test() {
+   22      local name="$1"
+   23      local cmd="$2"
+   24      TOTAL=$((TOTAL + 1))
+   25  
+   26      echo -n "  $name... "
+   27      if eval "$cmd" &gt; /dev/null 2&gt;&amp;1; then
+   28          echo -e "${GREEN}PASS${NC}"
+   29          PASSED=$((PASSED + 1))
+   30      else
+   31          echo -e "${RED}FAIL${NC}"
+   32          FAILED=$((FAILED + 1))
+   33          # Show output on failure
+   34          echo "    Command: $cmd"
+   35          eval "$cmd" 2&gt;&amp;1 | sed 's/^/    /' || true
+   36      fi
+   37  }
+   38  
+   39  # Test that expects failure (non-zero exit)
+   40  run_test_fails() {
+   41      local name="$1"
+   42      local cmd="$2"
+   43      TOTAL=$((TOTAL + 1))
+   44  
+   45      echo -n "  $name... "
+   46      if eval "$cmd" &gt; /dev/null 2&gt;&amp;1; then
+   47          echo -e "${RED}FAIL (expected non-zero exit)${NC}"
+   48          FAILED=$((FAILED + 1))
+   49      else
+   50          echo -e "${GREEN}PASS${NC}"
+   51          PASSED=$((PASSED + 1))
+   52      fi
+   53  }
+   54  
+   55  # Setup temp directory
+   56  TEMP_DIR=$(mktemp -d)
+   57  trap "rm -rf $TEMP_DIR" EXIT
+   58  
+   59  echo -e "${BLUE}======================================${NC}"
+   60  echo -e "${BLUE}KB Tools Test Suite${NC}"</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:1-50</summary><pre><code>    1  #!/bin/bash
+    2  # kb-lint: Lint Knowledge Database for issues
+    3  # Checks: missing sources, INDEX sync, status validity, duplicates, tag hygiene
+    4  #
+    5  # Usage:
+    6  #   kb-lint                    # Lint default knowledge-db/
+    7  #   kb-lint ./path/to/kb       # Lint specific KB
+    8  #   kb-lint --fix              # Auto-fix what can be fixed
+    9  
+   10  set -e
+   11  
+   12  KB_DIR="${1:-knowledge-db}"
+   13  FIX_MODE=false
+   14  
+   15  # Colors
+   16  RED='\033[0;31m'
+   17  GREEN='\033[0;32m'
+   18  YELLOW='\033[1;33m'
+   19  BLUE='\033[0;34m'
+   20  NC='\033[0m'
+   21  
+   22  # Counters
+   23  ERRORS=0
+   24  WARNINGS=0
+   25  FIXED=0
+   26  
+   27  # Sanitize string for safe use in sed replacement
+   28  # Escapes: / &amp; \ and newlines
+   29  sanitize_for_sed() {
+   30      local input="$1"
+   31      printf '%s' "$input" | sed 's/[&amp;/\]/\\&amp;/g' | tr -d '\n'
+   32  }
+   33  
+   34  # Sanitize for safe YAML/markdown (remove control chars, limit length)
+   35  sanitize_metadata() {
+   36      local input="$1"
+   37      local max_len="${2:-100}"
+   38      printf '%s' "$input" | tr -cd '[:print:]' | head -c "$max_len"
+   39  }
+   40  
+   41  # Parse args
+   42  for arg in "$@"; do
+   43      case $arg in
+   44          --fix)
+   45              FIX_MODE=true
+   46              shift
+   47              ;;
+   48          -h|--help)
+   49              echo "kb-lint: Lint Knowledge Database for issues"
+   50              echo ""</code></pre></details>
+<details class="src"><summary>scripts/kb-ingest:1-100</summary><pre><code>    1  #!/bin/bash
+    2  # kb-ingest: Parse text/transcripts into KB entries
+    3  # Alpha version - basic text parsing
+    4  #
+    5  # Usage:
+    6  #   kb-ingest --input file.txt --bucket explorations
+    7  #   kb-ingest --bucket errors &lt; conversation.txt
+    8  #   echo "text" | kb-ingest --auto
+    9  
+   10  set -e
+   11  
+   12  # Defaults
+   13  KB_DIR="${KB_DIR:-knowledge-db}"
+   14  BUCKET=""
+   15  INPUT_FILE=""
+   16  AUTO_BUCKET=false
+   17  TITLE=""
+   18  DRY_RUN=false
+   19  
+   20  # Colors
+   21  RED='\033[0;31m'
+   22  GREEN='\033[0;32m'
+   23  YELLOW='\033[1;33m'
+   24  BLUE='\033[0;34m'
+   25  NC='\033[0m' # No Color
+   26  
+   27  # Sanitize string for YAML value (escape special chars)
+   28  sanitize_yaml() {
+   29      local input="$1"
+   30      # Remove newlines, escape colons if not in quotes, escape quotes
+   31      echo "$input" | tr '\n' ' ' | sed 's/"/\\"/g' | sed "s/'/\\\\'/g"
+   32  }
+   33  
+   34  # Sanitize for safe filename
+   35  sanitize_filename() {
+   36      local input="$1"
+   37      # Remove any path traversal attempts and special chars
+   38      echo "$input" | tr -cd '[:alnum:][:space:]-_.' | tr '[:space:]' '-' | sed 's/--*/-/g'
+   39  }
+   40  
+   41  usage() {
+   42      cat &lt;&lt; EOF
+   43  kb-ingest: Parse text into Knowledge Database entries
+   44  
+   45  USAGE:
+   46      kb-ingest [OPTIONS]
+   47  
+   48  OPTIONS:
+   49      -i, --input FILE      Input file (or use stdin)
+   50      -b, --bucket BUCKET   Target bucket: explorations|solutions|errors|decisions
+   51      -a, --auto            Auto-detect bucket from content
+   52      -t, --title TITLE     Entry title (auto-generated if not provided)
+   53      -d, --dry-run         Show what would be created, don't write
+   54      -k, --kb-dir DIR      KB directory (default: knowledge-db)
+   55      -h, --help            Show this help
+   56  
+   57  EXAMPLES:
+   58      # From file, explicit bucket
+   59      kb-ingest --input conversation.txt --bucket explorations
+   60  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a>, <a href="#errors/2026-08-20-fix-flag-not-implemented.md">kb-lint --fix flag documented but not implemented</a></p>
+</article>
+</section>
+<section class="bucket"><h2>What broke + the fix <span class="tags">(errors/ &mdash; what broke + the fix)</span></h2>
+<article class="entry" id="errors/2026-08-20-fix-flag-not-implemented.md" data-status="verified">
+<h2>kb-lint --fix flag documented but not implemented</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-20</span>
+<span class="tags">area:tooling, layer:cli, severity:high</span>
+</div>
+<h3>Summary</h3>
+<p>The <code>--fix</code> flag was documented in README.md and parsed by kb-lint, but had no actual implementation. Fixed by adding auto-repair logic for INDEX sync and status validation.</p>
+<h3>Symptom</h3>
+<p>User runs <code>kb-lint --fix</code> expecting automatic repairs. Script runs but makes no changes. No error or warning indicates the feature is incomplete.</p>
+<pre><code>$ ./scripts/kb-lint knowledge-db --fix
+# Reports errors but doesn't fix them</code></pre>
+<h3>Root Cause</h3>
+<p>Flag parsing existed (scripts/kb-lint:30-34):</p>
+<pre><code>case $arg in
+    --fix)
+        FIX_MODE=true
+        shift
+        ;;</code></pre>
+<p>But <code>FIX_MODE</code> was never used in any check logic. Variable set but ignored.</p>
+<p>README.md:217 documented the flag:</p>
+<pre><code>| `kb-lint` | Check KB health | `kb-lint --fix` |</code></pre>
+<p>Classic "documented before implemented" bug.</p>
+<h3>Fix</h3>
+<p>Added --fix implementation in scripts/kb-lint for two fixable issues:</p>
+<ul>
+<li><strong>Missing INDEX.md rows</strong> (scripts/kb-lint:76-95): Extract metadata from entry, build row, insert into correct section using sed.</li>
+</ul>
+<ul>
+<li><strong>verified without proof</strong> (scripts/kb-lint:134-145): Downgrade status to tentative when Verification section missing or empty.</li>
+</ul>
+<p>Also added:</p>
+<ul>
+<li>FIXED counter to summary output</li>
+<li>"Tip: Run with --fix" hint when errors found</li>
+</ul>
+<h3>Prevention</h3>
+<ul>
+<li><strong>Test what you document</strong>: Added test cases for --fix behavior in tests/run-tests.sh</li>
+<li><strong>Code review checklist</strong>: "Does documented behavior have corresponding implementation?"</li>
+<li><strong>Grep for unused variables</strong>: <code>FIX_MODE</code> was set but never read</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ ./tests/run-tests.sh
+Testing kb-lint
+  --fix adds missing INDEX entry... PASS
+  --fix downgrades to tentative... PASS
+  status now tentative... PASS</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/kb-lint:8</summary><pre><code>    8  #   kb-lint --fix              # Auto-fix what can be fixed</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:30-34</summary><pre><code>   30      local input="$1"
+   31      printf '%s' "$input" | sed 's/[&amp;/\]/\\&amp;/g' | tr -d '\n'
+   32  }
+   33  
+   34  # Sanitize for safe YAML/markdown (remove control chars, limit length)</code></pre></details>
+<details class="src"><summary>README.md:217</summary><pre><code>  217  ├── errors/            "Bug Z: symptom → root cause → fix → prevention"</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a></p>
+</article>
+</section>
+<section class="bucket"><h2>Why we chose things <span class="tags">(decisions/ &mdash; why we chose X)</span></h2>
+<article class="entry" id="decisions/2026-08-24-writeback-trigger-not-checklist.md" data-status="verified">
+<h2>Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>The write-back gate is now automatic: KB011 fails any staged/PR diff that touches <code>writeback.code</code> paths without touching <code>knowledge-db/**</code>, naming the bucket the entry probably belongs in. The 8-item manual checklist is demoted to a walkthrough of what the rules already check.</p>
+<h3>Context / Question</h3>
+<p>The evaluator's deployment shipped three waves of work with no KB entry despite the mandatory checklist — end-of-task rituals get skipped precisely when they matter (tired, late, "just one more commit"). Options: (A) keep the checklist and strengthen the prose, (B) one diff-driven rule that fires mechanically at commit and CI time.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). Implementation: knowledge-db/bin/kb:488-510 (<code>check_diff_rules</code>); code paths declared in knowledge-db/kb.config.json:32-35. Runs in <code>kb check --staged</code> (pre-commit) and <code>kb check --diff-base</code> (CI PR job). One rule replaces the eight-item ritual as the hard gate; the checklist text survives in CLAUDE.md only as explanation.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Conformance fixture: temp git repo, <code>src/</code> change staged with no KB entry (captured 2026-08-24):</p>
+<pre><code>$ tests/run-kb-tests.sh
+  KB009 detected (staged diff)... PASS
+  KB011 detected (staged diff)... PASS
+Results: 14 passed, 0 failed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:488-510</summary><pre><code>  488  
+  489  def kb_fingerprint(index_md_text, entry_pairs):
+  490      h = hashlib.sha256()
+  491      h.update(index_md_text.encode("utf-8"))
+  492      for rel, content in sorted(entry_pairs):
+  493          h.update(rel.encode("utf-8"))
+  494          h.update(b"\x00")
+  495          h.update(content.encode("utf-8"))
+  496      return h.hexdigest()
+  497  
+  498  
+  499  def _esc(s):
+  500      return s.replace("&amp;", "&amp;amp;").replace("&lt;", "&amp;lt;").replace("&gt;", "&amp;gt;")
+  501  
+  502  
+  503  def _inline(s, entry_ids):
+  504      # input must already be HTML-escaped
+  505      s = re.sub(r"`([^`]+)`", r"&lt;code&gt;\1&lt;/code&gt;", s)
+  506      s = re.sub(r"\*\*(.+?)\*\*", r"&lt;strong&gt;\1&lt;/strong&gt;", s)
+  507  
+  508      def link(m):
+  509          text, href = m.group(1), m.group(2)
+  510          if href in entry_ids:</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:32-35</summary><pre><code>   32    "writeback": {
+   33      "code": ["scripts/**", "hooks/**", "knowledge-db/bin/**"],
+   34      "exempt": []
+   35    }</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-python-stdlib-for-kb-cli.md" data-status="verified">
+<h2>Python 3 stdlib (not bash, not Node) for the kb enforcement CLI</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:cli, tech:python</span>
+</div>
+<h3>Summary</h3>
+<p><code>bin/kb</code> is a single-file Python 3 stdlib script: no package manager, no lockfile, no YAML dependency (parses the flat front-matter schema directly). Node was the alternative for repos with a package.json; this repo has none, so Python 3 is the runtime every target machine already has.</p>
+<h3>Context / Question</h3>
+<p>The 2026-08-20 decision chose bash for Phase 1 helpers (ingest/discover/lint). The enforcement CLI needs JSON config parsing, byte-exact text generation, and structured rule reporting — bash string handling was already the source of portability bugs (sed -i macOS/Linux) and cannot parse kb.config.json without jq (a dependency). Options: extend bash, Node single-file, Python 3 stdlib.</p>
+<h3>Findings / What We Did</h3>
+<p>Python 3 stdlib: <code>json</code> module for config and <code>--json</code> reports, <code>re</code> for the source grammar, <code>subprocess</code> for git diff rules, no third-party imports (knowledge-db/bin/kb:22-28). The rule from the design: Node zero-dep if the repo has a package.json, else Python 3 stdlib — that is the only genuine per-repo choice. This does NOT supersede the bash decision: kb-ingest/kb-discover remain bash; kb-lint is deprecated in favor of <code>kb check</code>.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Complete import list is stdlib-only (captured 2026-08-24):</p>
+<pre><code>$ sed -n '22,28p' knowledge-db/bin/kb
+import argparse
+import json
+import re
+import subprocess
+import sys
+from datetime import date, datetime, timedelta
+from pathlib import Path
+$ tests/run-kb-tests.sh
+Results: 14 passed, 0 failed
+All KB conformance tests passed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:1-40</summary><pre><code>    1  #!/usr/bin/env python3
+    2  """kb — zero-dependency knowledge-db CLI.
+    3  
+    4  Subcommands:
+    5    kb new &lt;type&gt; &lt;slug&gt;      Scaffold a valid entry (status: tentative), regenerate INDEX.md/.html
+    6    kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
+    7    kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
+    8  
+    9  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
+   10    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
+   11    KB002  closed vocabularies (config)        KB008  verified entries go stale
+   12    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
+   13    KB004  verified requires captured proof    KB010  one trap per error entry
+   14    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
+   15           no template residue                 KB012  INDEX.html fresh (fingerprint)
+   16    KB006  required sections per bucket
+   17  
+   18  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
+   19  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
+   20  """
+   21  
+   22  import argparse
+   23  import hashlib
+   24  import json
+   25  import re
+   26  import subprocess
+   27  import sys
+   28  from datetime import date, datetime, timedelta
+   29  from pathlib import Path
+   30  
+   31  MANUAL_START = "&lt;!-- kb:manual:{name}:start --&gt;"
+   32  MANUAL_END = "&lt;!-- kb:manual:{name}:end --&gt;"
+   33  
+   34  KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "INDEX.html", "_TEMPLATE.md", "AGENT.md",
+   35                      "kb.config.json", "install.sh"}
+   36  KNOWN_ROOT_DIRS = {"bin"}
+   37  REQUIRED_KEYS = ["title", "type", "status", "date", "tags", "sources"]
+   38  OPTIONAL_KEYS = ["related", "last_verified", "decision_by"]
+   39  SOURCE_RE = re.compile(r"^(?P&lt;path&gt;[^:\s][^:]*):(?P&lt;start&gt;\d+)(-(?P&lt;end&gt;\d+))?(@(?P&lt;rev&gt;[0-9a-fA-F]{6,40}))?$")
+   40  FILENAME_RE = re.compile(r"^(?P&lt;date&gt;\d{4}-\d{2}-\d{2})-(?P&lt;slug&gt;[a-z0-9][a-z0-9-]*)\.md$")</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:1-36</summary><pre><code>    1  {
+    2    "buckets": {
+    3      "explorations": "what is true",
+    4      "solutions": "what we did",
+    5      "errors": "what broke + the fix",
+    6      "decisions": "why we chose X"
+    7    },
+    8    "types": {
+    9      "exploration": "explorations",
+   10      "solution": "solutions",
+   11      "error": "errors",
+   12      "decision": "decisions"
+   13    },
+   14    "statuses": ["verified", "tentative", "superseded"],
+   15    "tags": {
+   16      "area": ["auth", "api", "ui", "db", "payments", "infra", "test", "tooling", "security", "release"],
+   17      "layer": ["controller", "service", "model", "middleware", "util", "cli", "enforcement"],
+   18      "scope": [],
+   19      "severity": ["critical", "high", "medium", "low"],
+   20      "tech": ["react", "node", "postgres", "bash", "python"]
+   21    },
+   22    "staleness_days": {
+   23      "verified": 90
+   24    },
+   25    "required_sections": {
+   26      "errors": ["Symptom", "Root Cause", "Fix", "Prevention"]
+   27    },
+   28    "lockstep": [
+   29      { "source": "knowledge-db/bin/kb", "doc": "tests/" },
+   30      { "source": "knowledge-db/kb.config.json", "doc": "knowledge-db/INDEX.md" }
+   31    ],
+   32    "writeback": {
+   33      "code": ["scripts/**", "hooks/**", "knowledge-db/bin/**"],
+   34      "exempt": []
+   35    }
+   36  }</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-20-bash-for-cli-tools.md">Bash for Phase 1 CLI tools</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md" data-status="verified">
+<h2>KB012 freshness via content fingerprint, not KB007-style byte check</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>INDEX.html freshness is enforced by comparing an embedded SHA-256 fingerprint of the KB content (generated INDEX.md + entry file contents) against a recomputation — not by regenerating the page and byte-comparing like KB007 does for INDEX.md.</p>
+<h3>Context / Question</h3>
+<p>INDEX.md derives only from entries + config, so byte-for-byte comparison (KB007) is exact and cheap. INDEX.html additionally embeds cited source lines read from files OUTSIDE the KB. A byte check would make <code>kb check</code> fail whenever any cited source file changes — every unrelated code edit would demand an INDEX.html regen, making the rule noisy enough that people bypass it. Options: (A) byte check including snippets, (B) fingerprint over KB content only, snippets excluded.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). Fingerprint inputs: generated INDEX.md text + sorted (relpath, content) of every entry (knowledge-db/bin/kb:489-497). Check: knowledge-db/bin/kb:875-886. Consequences accepted and documented: embedded snippets are best-effort context captured at generation time and may lag the live code — the KB003 <code>@rev</code> warning is the mechanism for detecting cited-range rot, not KB012. Entry or INDEX changes are always caught (both are fingerprint inputs), which is the freshness that matters for readers.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ knowledge-db/bin/kb --kb-dir tests/fixtures/fail/KB012/knowledge-db check
+KB012 knowledge-db/INDEX.html: stale (fingerprint mismatch with entries/INDEX) — run `kb index`
+kb check: 1 finding(s)
+$ tests/run-kb-tests.sh
+Results: 16 passed, 0 failed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:489-497</summary><pre><code>  489  def kb_fingerprint(index_md_text, entry_pairs):
+  490      h = hashlib.sha256()
+  491      h.update(index_md_text.encode("utf-8"))
+  492      for rel, content in sorted(entry_pairs):
+  493          h.update(rel.encode("utf-8"))
+  494          h.update(b"\x00")
+  495          h.update(content.encode("utf-8"))
+  496      return h.hexdigest()
+  497  </code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      # KB012: INDEX.html (human-facing view) is fresh w.r.t. KB content
+  876      html_path = kb_dir / "INDEX.html"
+  877      if not html_path.is_file():
+  878          findings.append(Finding("KB012", f"{kb_rel}/INDEX.html", "missing — run `kb index`"))
+  879      else:
+  880          m = re.search(r"kb:fingerprint:([0-9a-f]{64})", html_path.read_text(encoding="utf-8"))
+  881          entry_pairs = [(f"{b}/{p.name}", p.read_text(encoding="utf-8")) for b, p in entries]
+  882          expected = kb_fingerprint(generated, entry_pairs)
+  883          if not m or m.group(1) != expected:
+  884              findings.append(Finding("KB012", f"{kb_rel}/INDEX.html",
+  885                                      "stale (fingerprint mismatch with entries/INDEX) — run `kb index`"))
+  886  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-index-html-evidence-browser.md">INDEX.html: self-contained evidence browser for non-technical readers</a>, <a href="#decisions/2026-08-24-derive-index-from-front-matter.md">Derive INDEX.md from front-matter instead of hand-maintaining it</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-kb-tracked-by-default.md" data-status="verified">
+<h2>KB is git-tracked by default; gitignore only via --local flag</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p><code>init-knowledge-db.sh</code> no longer gitignores the KB by default; <code>--local</code> opts into an untracked personal KB. A committed KB is required for the write-back trigger to function and for knowledge to survive clones.</p>
+<h3>Context / Question</h3>
+<p>The old init script always appended <code>knowledge-db/</code> to the target repo's .gitignore ("local memory, not committed"). Two problems: (1) KB011 compares diffs — a gitignored KB never appears in any diff, so the write-back trigger can never pass and would flag every code change forever; (2) an untracked KB dies with the working copy, contradicting "never keep from saving important information" — the durable-memory premise. Options: (A) keep gitignore default, (B) tracked default with <code>--local</code> opt-out.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). Tracked default: scripts/init-knowledge-db.sh:5-19 (flag parsing, rationale comment); gitignore now runs only under <code>$LOCAL_KB</code> (scripts/init-knowledge-db.sh:103-105). Teams wanting personal scratch memory still get it with <code>--local</code>, accepting that KB011 diff enforcement will not see their entries.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Fresh temp repo, default init, then install (captured 2026-08-24):</p>
+<pre><code>$ scripts/init-knowledge-db.sh &amp;&amp; knowledge-db/bin/kb check; echo CHECK=$?
+CHECK=0
+$ cat .gitignore
+no .gitignore (KB tracked)</code></pre>
+<p>Legacy suite unaffected: <code>tests/run-tests.sh</code> -&gt; "Results: 23/23 passed".</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/init-knowledge-db.sh:5-19</summary><pre><code>    5  # Usage: init-knowledge-db.sh [KB_DIR] [--local]
+    6  #   KB_DIR   target folder (default: knowledge-db)
+    7  #   --local  gitignore the KB (personal memory, not committed).
+    8  #            DEFAULT IS TRACKED: a committed KB is the point — shared memory,
+    9  #            and the write-back trigger (KB011) only works when KB files
+   10  #            appear in diffs.
+   11  
+   12  set -e
+   13  
+   14  KB_DIR="knowledge-db"
+   15  LOCAL_KB=false
+   16  for arg in "$@"; do
+   17      case "$arg" in
+   18          --local) LOCAL_KB=true ;;
+   19          *) KB_DIR="$arg" ;;</code></pre></details>
+<details class="src"><summary>scripts/init-knowledge-db.sh:71-105</summary><pre><code>   71  # Optional: gitignore the KB (only with --local; tracked is the default)
+   72  update_gitignore() {
+   73      local kb_name
+   74      kb_name=$(basename "$KB_DIR")
+   75      local gitignore_path
+   76  
+   77      # Find the repo root (where .git is)
+   78      local dir
+   79      dir=$(cd "$(dirname "$KB_DIR")" 2&gt;/dev/null &amp;&amp; pwd)
+   80      while [[ "$dir" != "/" ]]; do
+   81          if [[ -d "$dir/.git" ]]; then
+   82              gitignore_path="$dir/.gitignore"
+   83              break
+   84          fi
+   85          dir=$(dirname "$dir")
+   86      done
+   87  
+   88      if [[ -n "$gitignore_path" ]]; then
+   89          local ignore_entry="$kb_name/"
+   90  
+   91          # Check if already in .gitignore (detect-before-append)
+   92          if [[ -f "$gitignore_path" ]] &amp;&amp; grep -qxF "$ignore_entry" "$gitignore_path" 2&gt;/dev/null; then
+   93              echo "  .gitignore already contains $ignore_entry"
+   94          else
+   95              echo "" &gt;&gt; "$gitignore_path"
+   96              echo "# Knowledge Database (local memory, not committed)" &gt;&gt; "$gitignore_path"
+   97              echo "$ignore_entry" &gt;&gt; "$gitignore_path"
+   98              echo "  Added $ignore_entry to .gitignore (--local)"
+   99          fi
+  100      fi
+  101  }
+  102  
+  103  if $LOCAL_KB &amp;&amp; [[ ! "$KB_DIR" = /* ]]; then
+  104      update_gitignore
+  105  fi</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-agent-rules-forwarding.md">Forward agent hard rules on install: AGENT.md + install.sh layer 5</a>, <a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md">Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-enforce-or-delete-rule-ids.md" data-status="verified">
+<h2>Enforce-or-delete: every hard rule gets an ID or leaves the README</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>Every hard rule in knowledge-db/README.md is one of KB001-KB011 and cites its ID; anything unenforceable was deleted or moved to an explicitly labelled "Guidance (not checked)" section. No placeholder or aspirational tables remain.</p>
+<h3>Context / Question</h3>
+<p>The old README and INDEX stated rules in prose that nothing checked (lock-step table shipped empty, "no bare paths" said once and never verified). Evaluator observation: an unenforced rule teaches every future reader that the document is decorative — the empty lock-step table trained agents to ignore it. Options: (A) keep aspirational rules and add tooling gradually, (B) delete or demote any rule without a rule ID.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). Rules now live as IDs implemented in <code>kb check</code>, each with a conformance fixture; docs cite IDs instead of restating behavior, so prose cannot drift from enforcement. Judgment calls that cannot be mechanically checked (search-before-creating, one-entry-per-choice, source-of-truth hierarchy) moved under "## Guidance (not checked)" (knowledge-db/README.md:107-115) so their unenforced status is explicit rather than implied binding.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Rule table rows at README lines 60-71, guidance section labelled (captured 2026-08-24):</p>
+<pre><code>$ grep -n "^| KB001\|^| KB011\|^## Guidance" knowledge-db/README.md
+60:| KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+70:| KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
+107:## Guidance (not checked)</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56  ## The Rules
+   57  
+   58  | ID | Rule |
+   59  |----|------|
+   60  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+   61  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
+   62  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
+   63  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
+   64  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
+   65  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
+   66  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |
+   67  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |
+   68  | KB009 | For each `lockstep` pair in the config: if the source-side path changed in the diff, the doc-side path must have changed too. Diff mode only (`--staged` / `--diff-base`). |
+   69  | KB010 | One trap per error entry. An error entry with duplicate Symptom / Root Cause / Fix / Prevention sections fails — split it so symptom-grep lands on one file. |
+   70  | KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
+   71  | KB012 | `INDEX.html` (self-contained human-facing view) is fresh: its embedded fingerprint matches the KB content (generated INDEX.md + entry files). Embedded source snippets are best-effort context and deliberately outside the fingerprint. |</code></pre></details>
+<details class="src"><summary>knowledge-db/README.md:107-115</summary><pre><code>  107  ## Guidance (not checked)
+  108  
+  109  These improve the KB but have no rule ID because they cannot be mechanically enforced:
+  110  
+  111  - **Search before creating**: update a near-duplicate instead of adding a new entry.
+  112  - **One entry per CHOICE** in `decisions/`: if you would search for it separately, split it.
+  113  - **Write conclusions, not search journeys**: the entry is for the next reader.
+  114  - **Source-of-truth hierarchy** when sources disagree: real code &gt; generated definitions &gt; outbound feeds &gt; docs. Note the stale one.
+  115  - **Ready-Answer Table**: when an entry becomes the canonical answer for a topic, add a row (inside the `kb:manual` region of INDEX.md).</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-derive-index-from-front-matter.md" data-status="verified">
+<h2>Derive INDEX.md from front-matter instead of hand-maintaining it</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>INDEX.md is build output regenerated by <code>kb index</code> from entry front-matter; <code>kb check</code> (KB007) fails unless the file matches the generated output byte-for-byte. Hand-maintained content survives only inside <code>kb:manual</code> fenced regions (Ready-Answer Table, external docs).</p>
+<h3>Context / Question</h3>
+<p>INDEX.md hand-maintained beside front-matter = two sources of truth. In practice it drifted: 3 rows in this repo listed fewer tags than their entries, and evaluator deployments showed missing rows and stale dates. Options: (A) lint that INDEX matches entries and report diffs, (B) derive INDEX entirely from front-matter.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). A checker that reports drift still asks a human/agent to reconcile two documents; a generator makes drift unrepresentable and kills four violation classes at once (missing rows, tag drift, stale dates, dangling links) at zero maintenance cost. The old <code>kb-lint --fix</code> approach was (A) and the drift happened anyway. Generator: knowledge-db/bin/kb:377-460; header warning: knowledge-db/INDEX.md:5-6.</p>
+<p>Trade-off accepted: prose descriptions per tag were dropped (vocabulary now lists values from kb.config.json); the manual regions keep the two genuinely human tables.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ sed -i '' 's/| verified |/| resolved |/' knowledge-db/INDEX.md  # tamper
+$ knowledge-db/bin/kb check
+KB007 knowledge-db/INDEX.md: does not match generated output — run `kb index` (never hand-edit outside manual regions)
+kb check: 1 finding(s)
+$ knowledge-db/bin/kb index &amp;&amp; knowledge-db/bin/kb check; echo $?
+0</code></pre>
+<p>Idempotency covered by tests/run-kb-tests.sh ("index twice produces no diff... PASS").</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:377-460</summary><pre><code>  377  
+  378  
+  379  def generate_index(kb_dir, repo_root, config, entry_fronts):
+  380      existing = ""
+  381      index_path = kb_dir / "INDEX.md"
+  382      if index_path.is_file():
+  383          existing = index_path.read_text(encoding="utf-8")
+  384      ready = read_manual_region(existing, "ready-answers", DEFAULT_READY)
+  385      external = read_manual_region(existing, "external-docs", DEFAULT_EXTERNAL)
+  386  
+  387      out = []
+  388      out.append("# Knowledge Database Index")
+  389      out.append("")
+  390      out.append("The front door to project memory. **Search here BEFORE investigating.**")
+  391      out.append("")
+  392      out.append("GENERATED by `bin/kb index` from entry front-matter (rule KB007).")
+  393      out.append("Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.")
+  394      out.append("")
+  395      out.append("---")
+  396      out.append("")
+  397      out.append("## Ready-Answer Table")
+  398      out.append("")
+  399      out.append("_Topic → the ONE doc to read. Check these BEFORE exploring._")
+  400      out.append("")
+  401      out.append(MANUAL_START.format(name="ready-answers"))
+  402      out.append(ready)
+  403      out.append(MANUAL_END.format(name="ready-answers"))
+  404      out.append("")
+  405      out.append("---")
+  406      out.append("")
+  407      out.append("## Lock-Step Invariants")
+  408      out.append("")
+  409      out.append("_Declared in `kb.config.json` (`lockstep`), enforced by KB009 in diff mode._")
+  410      out.append("")
+  411      out.append("| When This Changes | Must Also Update |")
+  412      out.append("|-------------------|------------------|")
+  413      for pair in config.get("lockstep", []):
+  414          out.append(f"| {pair.get('source', '')} | {pair.get('doc', '')} |")
+  415      out.append("")
+  416      out.append("---")
+  417      out.append("")
+  418      out.append("## Source-of-Truth Hierarchy")
+  419      out.append("")
+  420      out.append("_When sources disagree, trust the higher rank. Note stale sources._")
+  421      out.append("")
+  422      out.append("1. **Real source assets** — Code, actual configs, runtime behavior")
+  423      out.append("2. **Generated definitions** — ETL outputs, compiled schemas")
+  424      out.append("3. **Outbound feeds** — API responses, exports")
+  425      out.append("4. **Documentation** — READMEs, design docs (can drift)")
+  426      out.append("")
+  427  
+  428      for bucket in config.get("buckets", {}):
+  429          title, blurb = BUCKET_HEADINGS.get(bucket, (bucket.title(), f"_{config['buckets'][bucket]}_"))
+  430          out.append("---")
+  431          out.append("")
+  432          out.append(f"## {title}")
+  433          out.append("")
+  434          out.append(blurb)
+  435          out.append("")
+  436          out.append("| Date | Title | Status | Tags | Entry |")</code></pre></details>
+<details class="src"><summary>knowledge-db/INDEX.md:5-6</summary><pre><code>    5  GENERATED by `bin/kb index` from entry front-matter (rule KB007).
+    6  Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md" data-status="verified">
+<h2>HTML view: build-time embedding, not runtime fetch or hosted docs</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="badge">decided by: Project maintainer (2026-08-24, "just a self contained option")</span>
+<span class="tags">area:tooling, area:ui, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p>INDEX.html embeds all entry content and cited source lines at build time. Rejected: runtime <code>fetch()</code> of md files (dead on <code>file://</code> — browsers block local fetch via CORS, so double-click shows an empty shell) and hosted docs (GitHub Pages/MkDocs — dependencies, hosting setup, and org-visible knowledge exposure the maintainer declined).</p>
+<h3>Context / Question</h3>
+<p>Three ways to give non-technical users a readable KB: (A) INDEX.html with JS fetching INDEX.md + entries at open time, (B) static site generator / GitHub Pages, (C) fully self-contained HTML generated by <code>kb index</code>. The target user double-clicks a file; no server, no git, no accounts.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (C), by maintainer directive. (A) fails the core use case: <code>fetch()</code> from <code>file://</code> is CORS-blocked, requiring a local server — kills the non-technical audience. (B) violates the zero-dependency constraint and makes knowledge exposure a hosting default rather than a choice. (C) reuses the existing "INDEX is build output" machinery (same command, same hooks, same CI), works offline, and travels as one file over email/Slack. Cost: page must be regenerated to stay fresh — handled by KB012.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Self-containment of the generated page (captured 2026-08-24):</p>
+<pre><code>$ python3 -c "import re,sys; t=open('knowledge-db/INDEX.html').read(); print('external refs:', len(re.findall(r'(?:src|href)=\"https?://', t)))"
+external refs: 0</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:685-700</summary><pre><code>  685  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
+  686      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
+  687      parsed_entries = []
+  688      for bucket, path in entries:
+  689          parsed = parse_entry(path)
+  690          parsed_entries.append((bucket, path, parsed))
+  691  
+  692      def entry_titles():
+  693          t = {}
+  694          for bucket, path, parsed in parsed_entries:
+  695              t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
+  696          return t
+  697      titles = entry_titles()
+  698  
+  699      ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)
+  700  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-index-html-evidence-browser.md">INDEX.html: self-contained evidence browser for non-technical readers</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-24-autonomous-superseding-no-prompts.md" data-status="verified">
+<h2>Never prompt: autonomous superseding with audit trail replaces consent</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="badge">decided by: Project maintainer (explicit directive, 2026-08-24)</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>Agents never prompt the user about KB operations — create, update, and supersede autonomously. Superseding a verified entry requires an audit trail (reason stated, replacement linked in <code>related:</code>, enforced by KB005), not permission. Supersedes the 2026-08-21 consent-before-superseding decision.</p>
+<h3>Context / Question</h3>
+<p>Mechanism 9 (v0.2.x-0.4.0) required a Y/N prompt before superseding verified entries. Maintainer directive on 2026-08-24: "It should never prompt the user in any way, and never keep from saving important information from the KB." A consent gate stalls autonomous agents (headless sessions have nobody to answer) and risks losing corrections — exactly the memory-loss failure mode Mechanism 10 exists to prevent. Options: (A) keep consent, (B) autonomous superseding with mandatory audit trail, opt-in flag to restore prompting.</p>
+<h3>Findings / What We Did</h3>
+<p>Chose (B). The safety consent provided (protecting proven knowledge from silent overwrites) is preserved structurally: the old entry is never deleted, <code>status: superseded</code> + <code>related:</code> link are enforced (KB005), and the agent reports what it superseded in the task summary — informing, not asking. Changed: CLAUDE.md:155-163 (Mechanism 9 rewritten), knowledge-db/AGENT.md:28-40 (portable rule 3), knowledge-database/SKILL.md:135-147 ("Never Prompt, Never Withhold"), plus the HARD RULE block install.sh forwards. Opt-in <code>supersede_with_consent: true</code> restores the old behavior.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Both docs now state the no-prompt rule (captured 2026-08-24):</p>
+<pre><code>$ sed -n '155p;157p' CLAUDE.md
+### 9. Autonomous Superseding with Audit Trail
+**Never prompt the user** to create, update, or supersede entries — capture must not stall on permission,
+$ grep -n "NEVER PROMPT" knowledge-db/AGENT.md
+28:## 3. NEVER PROMPT, NEVER WITHHOLD
+$ grep -n "NEVER PROMPT" CLAUDE.md
+287:3. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,</code></pre>
+<p>Applied in the same change set: 2026-08-21-consent-only-for-superseding.md marked superseded with this entry linked (user consent for that supersede given explicitly in the 2026-08-24 directive).</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>CLAUDE.md:155-163</summary><pre><code>  155  ### 9. Autonomous Superseding with Audit Trail
+  156  
+  157  **Never prompt the user** to create, update, or supersede entries — capture must not stall on permission,
+  158  and important knowledge must never go unsaved. When new evidence invalidates a VERIFIED entry,
+  159  supersede it immediately: state the reason, set `status: superseded`, link the replacement in
+  160  `related:` (KB005). Never delete the old entry. Inform the user in the task summary — informing, not asking.
+  161  
+  162  **Opt-in:** `supersede_with_consent: true` in workspace CLAUDE.md restores ask-before-superseding (not recommended; blocks autonomous agents).
+  163  </code></pre></details>
+<details class="src"><summary>knowledge-db/AGENT.md:28-40</summary><pre><code>   28  ## 3. NEVER PROMPT, NEVER WITHHOLD
+   29  
+   30  Capturing knowledge is autonomous. Never ask permission to create, update, or
+   31  supersede a KB entry, and never skip recording something important because it
+   32  feels interruptive:
+   33  
+   34  - Create/update entries the moment an insight occurs (incremental capture —
+   35    a session can end at any time; memory not written to the KB is memory lost).
+   36  - Superseding a `verified` entry: do it autonomously WITH an audit trail —
+   37    state the reason in the new entry, link the replacement in `related:` (KB005),
+   38    never delete the old entry.
+   39  - The only user-facing move is informing, not asking: mention in your summary
+   40    what was recorded or superseded.</code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:135-147</summary><pre><code>  135  ### Never Prompt, Never Withhold
+  136  
+  137  Capturing knowledge is autonomous. Never ask permission to create, update, or
+  138  supersede entries, and never skip recording something important.
+  139  
+  140  Superseding a VERIFIED entry: do it immediately WITH an audit trail — state the
+  141  reason in the new entry, set `status: superseded` on the old one, link the
+  142  replacement in `related:`. Never delete the old entry. Inform the user in the
+  143  task summary (informing, not asking).
+  144  
+  145  Opt-in exception: `supersede_with_consent: true` in workspace CLAUDE.md restores
+  146  ask-before-superseding (not recommended; blocks autonomous agents).
+  147  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-21-consent-only-for-superseding.md">Consent only for superseding verified entries</a>, <a href="#solutions/2026-08-24-agent-rules-forwarding.md">Forward agent hard rules on install: AGENT.md + install.sh layer 5</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-21-security-hardening-approach.md" data-status="verified">
+<h2>Security hardening approach for CLI tools</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-21</span>
+<span class="tags">area:tooling, layer:cli, area:security</span>
+</div>
+<h3>Summary</h3>
+<p>Security fixes applied incrementally as subagent reviews found them. Approach: fix immediately, don't batch.</p>
+<h3>Context / Question</h3>
+<p>Security auditor agent found three issues in v0.3.0:</p>
+<ul>
+<li>Command injection via unsanitized dir path in kb-discover (Medium)</li>
+<li>Path traversal in kb-ingest --kb-dir (Medium)</li>
+<li>Temp file race condition in kb-lint (Low)</li>
+</ul>
+<p>Question: Fix all at once or incremental releases?</p>
+<h3>Options Considered</h3>
+<p><strong>Option A: Batch fixes into major release</strong></p>
+<ul>
+<li>Wait for more issues to accumulate</li>
+<li>Risk: Vulnerabilities remain exploitable longer</li>
+</ul>
+<p><strong>Option B: Immediate patch release (chosen)</strong></p>
+<ul>
+<li>Fix as soon as discovered</li>
+<li>Release v0.3.1 with security fixes</li>
+<li>Matches incremental capture philosophy</li>
+</ul>
+<h3>Decision</h3>
+<p><strong>Option B: Immediate patch release</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>Security vulnerabilities should not wait</li>
+<li>Incremental capture applies to fixes too</li>
+<li>Users get protection faster</li>
+<li>Clear changelog shows what was fixed</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ ./tests/run-tests.sh
+Results: 23/23 passed
+
+$ ./scripts/kb-lint knowledge-db
+Errors: 0</code></pre>
+<p>All fixes maintain backward compatibility. Tests pass on both macOS and Linux (sed portability fixed).</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/kb-discover:106-122</summary><pre><code>  106  if [[ ! -d "$TARGET_DIR" ]]; then
+  107      echo -e "${RED}Error: Directory not found: $TARGET_DIR${NC}"
+  108      exit 1
+  109  fi
+  110  
+  111  # Default output
+  112  if [[ -z "$OUTPUT_DIR" ]]; then
+  113      OUTPUT_DIR="$KB_DIR/explorations"
+  114  fi
+  115  
+  116  # Resolve to absolute path and validate
+  117  TARGET_DIR=$(cd "$TARGET_DIR" &amp;&amp; pwd)
+  118  
+  119  # Security: Validate resolved path contains only safe characters
+  120  # Prevents command injection via malicious directory names
+  121  if [[ "$TARGET_DIR" =~ [\`\$\(\)\;\|\&amp;\&lt;\&gt;\"\'] ]]; then
+  122      echo -e "${RED}Error: Path contains unsafe characters${NC}"</code></pre></details>
+<details class="src"><summary>scripts/kb-ingest:107-120</summary><pre><code>  107  # Max input size (1MB) to prevent DoS
+  108  MAX_SIZE=$((1024 * 1024))
+  109  
+  110  # Read input
+  111  if [[ -n "$INPUT_FILE" ]]; then
+  112      if [[ ! -f "$INPUT_FILE" ]]; then
+  113          echo -e "${RED}Error: File not found: $INPUT_FILE${NC}"
+  114          exit 1
+  115      fi
+  116      # Check file size before reading
+  117      FILE_SIZE=$(stat -f%z "$INPUT_FILE" 2&gt;/dev/null || stat -c%s "$INPUT_FILE" 2&gt;/dev/null || echo 0)
+  118      if [[ "$FILE_SIZE" -gt "$MAX_SIZE" ]]; then
+  119          echo -e "${RED}Error: File too large (max 1MB). Consider splitting input.${NC}"
+  120          exit 1</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:120-126</summary><pre><code>  120                              # Use awk for safer insertion (avoids sed injection)
+  121                              # Use mktemp for secure temp file (prevents symlink attacks)
+  122                              TEMP_FILE=$(mktemp)
+  123                              trap "rm -f '$TEMP_FILE'" EXIT
+  124                              awk -v section="## $section_name" -v row="$new_row" '
+  125                                  $0 == section { in_section=1 }
+  126                                  in_section &amp;&amp; /^\| Date / { print; print row; in_section=0; next }</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-21-one-entry-per-choice.md" data-status="verified">
+<h2>decisions/ bucket: one entry per choice</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-21</span>
+<span class="badge">re-verified 2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>The decisions/ bucket uses "one entry per CHOICE" granularity, not "one entry per task/session". Multiple choices in one session = multiple decision entries.</p>
+<h3>Context / Question</h3>
+<p>During this session, we made 4+ distinct decisions but rolled them into one solutions/ entry. User asked: "why did we not save decisions we were making if we're using KB skill?"</p>
+<p>Root cause: Original guidance said "one entry covers whole task" without distinguishing bucket-specific granularity.</p>
+<h3>Options Considered</h3>
+<p><strong>Option A: One entry per task (all buckets)</strong></p>
+<ul>
+<li>Simple rule</li>
+<li>Consolidates related work</li>
+<li>Risk: Decisions get buried in solutions</li>
+</ul>
+<p><strong>Option B: Bucket-specific granularity (chosen)</strong></p>
+<ul>
+<li>solutions/ = one per feature/fix</li>
+<li>errors/ = one per bug</li>
+<li>explorations/ = one per question</li>
+<li>decisions/ = one per CHOICE</li>
+</ul>
+<h3>Decision</h3>
+<p><strong>Option B: Bucket-specific granularity</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>Different buckets serve different lookup patterns</li>
+<li>"How did we implement X?" = one solution entry</li>
+<li>"Why did we choose Y over Z?" = one decision entry per choice</li>
+<li>If you debated A vs B, that's one entry</li>
+<li>Future lookup is "why this choice?" not "what happened that session"</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Granularity table present in both docs (captured 2026-08-24):</p>
+<pre><code>$ sed -n '115p;124p' CLAUDE.md
+#### Entry Granularity
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+$ sed -n '104p;111p' knowledge-database/SKILL.md
+### Entry Granularity
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |</code></pre>
+<p>The v0.3.0 session created 4 separate decision entries (this being one of them).</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>CLAUDE.md:115-129</summary><pre><code>  115  #### Entry Granularity
+  116  
+  117  Different buckets have different granularity rules:
+  118  
+  119  | Bucket | Granularity | Example |
+  120  |--------|-------------|---------|
+  121  | solutions/ | One per feature/fix | "KB v2 security fixes" |
+  122  | errors/ | One per bug | "YAML injection in kb-ingest" |
+  123  | explorations/ | One per question | "How does auth middleware work?" |
+  124  | decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+  125  
+  126  **decisions/ rule**: If you debated A vs B, that's one entry. Multiple debates = multiple entries.
+  127  
+  128  **When to split**: If you would search for it separately, it deserves a separate entry.
+  129  </code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:104-114</summary><pre><code>  104  ### Entry Granularity
+  105  
+  106  | Bucket | Granularity | Example |
+  107  |--------|-------------|---------|
+  108  | solutions/ | One per feature/fix | "KB v2 security fixes" |
+  109  | errors/ | One per bug | "YAML injection in kb-ingest" |
+  110  | explorations/ | One per question | "How does auth middleware work?" |
+  111  | decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+  112  
+  113  **decisions/ rule**: Multiple debates in session = multiple decision entries.
+  114  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-21-mandatory-vs-optional-auto-capture.md" data-status="verified">
+<h2>Mandatory vs optional auto-capture</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-21</span>
+<span class="badge">re-verified 2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>Auto-capture is mandatory (non-trivial work = KB entry created), not an optional prompt.</p>
+<h3>Context / Question</h3>
+<p>Original v0.2.0 design prompted user at task end:</p>
+<pre><code>This session involved [work]. Create KB entry?
+  [Y] Create  [N] Skip  [T] Tentative</code></pre>
+<p>User feedback: "why does it prompt to record an entry? it should be a hard rule"</p>
+<h3>Options Considered</h3>
+<p><strong>Option A: Optional prompt (original)</strong></p>
+<ul>
+<li>User decides whether to create entry</li>
+<li>Risk: Users skip entries, memory degrades</li>
+<li>Aligns with "user is in control"</li>
+</ul>
+<p><strong>Option B: Mandatory capture (chosen)</strong></p>
+<ul>
+<li>Non-trivial work = entry created automatically</li>
+<li>User reviews content, not whether to create</li>
+<li>Aligns with KB's core promise: "never investigate twice"</li>
+</ul>
+<h3>Decision</h3>
+<p><strong>Option B: Mandatory capture</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>KB value compounds with coverage - optional creation leads to gaps</li>
+<li>"Never investigate twice" requires comprehensive capture</li>
+<li>User still controls content quality, just not existence</li>
+<li>Skipping defeats the purpose of the system</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Both docs state mandatory auto-capture with no Y/N/T prompt (captured 2026-08-24):</p>
+<pre><code>$ sed -n '105p;107p' CLAUDE.md
+### 8. Auto-Capture (Mandatory)
+**Non-trivial work = KB entry created.** This is not optional.
+$ sed -n '85p;87p' knowledge-database/SKILL.md
+### Auto-Capture (Mandatory)
+**Non-trivial work = KB entry created.** This is not optional.</code></pre>
+<p>Shipped in v0.2.1 (see CHANGELOG.md).</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>CLAUDE.md:105-153</summary><pre><code>  105  ### 8. Auto-Capture (Mandatory)
+  106  
+  107  **Non-trivial work = KB entry created.** This is not optional.
+  108  
+  109  ```
+  110  Creating KB entry for: [describe work]
+  111    Bucket: [suggested bucket]/
+  112    Status: [verified if proven, tentative if not]
+  113  ```
+  114  
+  115  #### Entry Granularity
+  116  
+  117  Different buckets have different granularity rules:
+  118  
+  119  | Bucket | Granularity | Example |
+  120  |--------|-------------|---------|
+  121  | solutions/ | One per feature/fix | "KB v2 security fixes" |
+  122  | errors/ | One per bug | "YAML injection in kb-ingest" |
+  123  | explorations/ | One per question | "How does auth middleware work?" |
+  124  | decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+  125  
+  126  **decisions/ rule**: If you debated A vs B, that's one entry. Multiple debates = multiple entries.
+  127  
+  128  **When to split**: If you would search for it separately, it deserves a separate entry.
+  129  
+  130  #### What Triggers Auto-Capture
+  131  
+  132  | Task | Record? | Bucket |
+  133  |------|---------|--------|
+  134  | Debug failing test | YES | errors/ |
+  135  | Investigate "how does X work" | YES | explorations/ |
+  136  | Add feature (multi-file) | YES | solutions/ |
+  137  | Choose between approaches | YES | decisions/ |
+  138  | Rename with reasoning ("why this name?") | YES | decisions/ |
+  139  | Fix obvious typo ("teh" -&gt; "the") | NO | - |
+  140  | Mechanical find/replace (no judgment) | NO | - |
+  141  
+  142  **Rule of thumb**: If there was reasoning behind the change, record it. Future you will ask "why?"
+  143  
+  144  #### What's Most Valuable to Record
+  145  
+  146  Priority order (highest value first):
+  147  
+  148  1. **Errors with fixes** - Prevents bug reintroduction. Include: symptom, root cause, fix, prevention.
+  149  2. **"How X works" investigations** - Prevents re-exploration. Time saved = investigation time.
+  150  3. **Decisions with rationale** - Prevents re-debating. Include: options considered, why chosen.
+  151  4. **Multi-step solutions** - Prevents redoing work. Include: what was built, key files changed.
+  152  
+  153  **The pattern that compounds**: Every error recorded is a bug that can never be reintroduced. Every exploration recorded is an investigation that never happens twice.</code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:85-88</summary><pre><code>   85  ### Auto-Capture (Mandatory)
+   86  
+   87  **Non-trivial work = KB entry created.** This is not optional.
+   88  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-21-incremental-vs-batched-capture.md" data-status="verified">
+<h2>Incremental capture vs batched at session end</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-21</span>
+<span class="badge">re-verified 2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>Record findings AS THEY OCCUR, not batched at session end. This is Mechanism 10: Incremental Capture.</p>
+<h3>Context / Question</h3>
+<p>During this session, we consolidated multiple decisions into one solutions/ entry. User pointed out:</p>
+<ul>
+<li>"every conversation can trigger a KB entry"</li>
+<li>"imagine user logged off mid session - we should prevent memory loss"</li>
+<li>"we need to make it iron proof"</li>
+</ul>
+<p>Original design said "at END of every non-trivial task, create KB entry" - single point of failure.</p>
+<h3>Options Considered</h3>
+<p><strong>Option A: Batch at session end (original)</strong></p>
+<ul>
+<li>Create entries when task completes</li>
+<li>Risk: Session ends unexpectedly = all insights lost</li>
+<li>Simpler - one capture moment</li>
+</ul>
+<p><strong>Option B: Incremental capture (chosen)</strong></p>
+<ul>
+<li>Record findings as they occur</li>
+<li>Decision made? Create decision entry NOW</li>
+<li>Bug fixed? Create error entry NOW</li>
+<li>Session crash = only lose work since last capture</li>
+</ul>
+<h3>Decision</h3>
+<p><strong>Option B: Incremental capture</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>Sessions end unexpectedly: context exhaustion, logout, crash, network issues</li>
+<li>Memory not committed = memory lost</li>
+<li>Each insight is valuable independently</li>
+<li>"If session ended RIGHT NOW, would this insight survive?" test</li>
+<li>Matches decisions/ granularity rule: one entry per choice</li>
+</ul>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Mechanism 10 stated in both docs (captured 2026-08-24):</p>
+<pre><code>$ sed -n '164p;166p' CLAUDE.md
+### 10. Incremental Capture (Session Resilience)
+**Record findings AS THEY OCCUR, not batched at session end.**
+$ sed -n '89p;91p' knowledge-database/SKILL.md
+### Incremental Capture (Session Resilience)
+**Record findings AS THEY OCCUR, not batched at session end.**</code></pre>
+<p>The v0.3.0 session created separate decision entries during work (not batched at end), demonstrating the pattern.</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>CLAUDE.md:164-196</summary><pre><code>  164  ### 10. Incremental Capture (Session Resilience)
+  165  
+  166  **Record findings AS THEY OCCUR, not batched at session end.**
+  167  
+  168  Sessions can end unexpectedly:
+  169  - Context window exhausted
+  170  - User logs off mid-task
+  171  - Network disconnection
+  172  - System crash
+  173  
+  174  **Memory not committed to KB = memory lost.**
+  175  
+  176  #### Capture Timing
+  177  
+  178  | Event | Action |
+  179  |-------|--------|
+  180  | Made choice between A and B | Create decision entry NOW |
+  181  | Discovered how something works | Create exploration entry NOW |
+  182  | Fixed a bug | Create error entry NOW |
+  183  | Completed a feature | Create solution entry NOW |
+  184  
+  185  **Do NOT wait** for "task complete" to batch-create entries. Each insight is captured when it occurs.
+  186  
+  187  #### Checkpoint Discipline
+  188  
+  189  During long sessions, after each significant finding:
+  190  1. Note the finding (can be brief)
+  191  2. Create or update KB entry immediately
+  192  3. Continue work
+  193  
+  194  **Rule**: If session ended RIGHT NOW, would this insight survive? If no, record it.
+  195  
+  196  ---</code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:89-103</summary><pre><code>   89  ### Incremental Capture (Session Resilience)
+   90  
+   91  **Record findings AS THEY OCCUR, not batched at session end.**
+   92  
+   93  Sessions can end unexpectedly (context exhaustion, logout, crash). Memory not committed = memory lost.
+   94  
+   95  | Event | Action |
+   96  |-------|--------|
+   97  | Made choice between A and B | Create decision entry NOW |
+   98  | Discovered how something works | Create exploration entry NOW |
+   99  | Fixed a bug | Create error entry NOW |
+  100  | Completed a feature | Create solution entry NOW |
+  101  
+  102  **Rule**: If session ended RIGHT NOW, would this insight survive? If no, record it.
+  103  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md">Mandatory vs optional auto-capture</a>, <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a></p>
+</article>
+<article class="entry" id="decisions/2026-08-21-consent-only-for-superseding.md" data-status="superseded">
+<h2>Consent only for superseding verified entries</h2>
+<div class="meta">
+<span class="badge superseded">superseded</span>
+<span class="badge">2026-08-21</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<div class="banner">Outdated &mdash; replaced by: <a href="#decisions/2026-08-24-autonomous-superseding-no-prompts.md">Never prompt: autonomous superseding with audit trail replaces consent</a>, <a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md">Mandatory vs optional auto-capture</a></div>
+<h3>Summary</h3>
+<p>User consent is ONLY required before marking a VERIFIED entry as SUPERSEDED. No consent needed for creating entries or updating tentative entries.</p>
+<h3>Context / Question</h3>
+<p>Original v0.2.0 design prompted for tentative entries too:</p>
+<ul>
+<li>"Create KB entry?" prompt for all new entries</li>
+<li>User feedback: "I don't like the CONSENT part. it should only request if we're supersede"</li>
+</ul>
+<h3>Options Considered</h3>
+<p><strong>Option A: Consent for all entry creation</strong></p>
+<ul>
+<li>Always ask before creating entries</li>
+<li>Risk: Slows down workflow, users may decline</li>
+<li>Conflicts with mandatory auto-capture</li>
+</ul>
+<p><strong>Option B: Consent only for superseding verified (chosen)</strong></p>
+<ul>
+<li>Creating entries = automatic (mandatory capture)</li>
+<li>Updating tentative = automatic</li>
+<li>Superseding verified = requires explicit consent</li>
+<li>Verified entries represent proven knowledge</li>
+</ul>
+<h3>Decision</h3>
+<p><strong>Option B: Consent only for superseding verified</strong></p>
+<p>Rationale:</p>
+<ul>
+<li>Verified entries are "proven knowledge" - destructive to lose them</li>
+<li>Creating new entries should be frictionless (compounds value)</li>
+<li>Tentative entries are "best guess" - safe to update without ceremony</li>
+<li>Only superseding verified = changing proven truth = needs consent</li>
+</ul>
+<p>Prompt format:</p>
+<blockquote>"Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"</blockquote>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Both docs state the consent rule, scoped to superseding verified entries only (captured 2026-08-24):</p>
+<pre><code>$ sed -n '155p;157p' CLAUDE.md
+### 9. Consent Before Superseding Verified
+**Before marking a VERIFIED entry as SUPERSEDED**, ask user:
+$ sed -n '128p;133p' knowledge-database/SKILL.md
+### Consent Before Superseding
+Never change verified entry status without explicit user consent.</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>CLAUDE.md:155-163</summary><pre><code>  155  ### 9. Autonomous Superseding with Audit Trail
+  156  
+  157  **Never prompt the user** to create, update, or supersede entries — capture must not stall on permission,
+  158  and important knowledge must never go unsaved. When new evidence invalidates a VERIFIED entry,
+  159  supersede it immediately: state the reason, set `status: superseded`, link the replacement in
+  160  `related:` (KB005). Never delete the old entry. Inform the user in the task summary — informing, not asking.
+  161  
+  162  **Opt-in:** `supersede_with_consent: true` in workspace CLAUDE.md restores ask-before-superseding (not recommended; blocks autonomous agents).
+  163  </code></pre></details>
+<details class="src"><summary>knowledge-database/SKILL.md:128-134</summary><pre><code>  128  #### Priority (Most Valuable First)
+  129  
+  130  1. **Errors with fixes** - Prevents bug reintroduction
+  131  2. **Investigations** - Prevents re-exploration
+  132  3. **Decisions with rationale** - Prevents re-debating
+  133  4. **Multi-step solutions** - Prevents redoing work
+  134  </code></pre></details>
+</div>
+</article>
+<article class="entry" id="decisions/2026-08-20-bash-for-cli-tools.md" data-status="verified">
+<h2>Bash for Phase 1 CLI tools</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-20</span>
+<span class="badge">decided by: Project maintainer</span>
+<span class="tags">area:tooling, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p>Chose bash scripting for Phase 1 CLI tools (kb-ingest, kb-discover, kb-lint) over compiled alternatives. Enables zero-dependency installation and rapid iteration at the cost of scalability.</p>
+<h3>Context / Question</h3>
+<p>Need CLI tools for Knowledge Database. Options: bash, Python, Node.js, Go, Rust.</p>
+<h3>Options Considered</h3>
+<div class="tblwrap"><table>
+<tr><th>Option</th><th>Pros</th><th>Cons</th></tr>
+<tr><td><strong>Bash</strong></td><td>Zero deps, universal, fast iteration</td><td>No types, hard to test, won't scale</td></tr>
+<tr><td>Python</td><td>Readable, rich stdlib</td><td>Requires Python install, venv complexity</td></tr>
+<tr><td>Node.js</td><td>Match JS-heavy agent ecosystem</td><td>Requires Node, npm complexity</td></tr>
+<tr><td>Go</td><td>Single binary, fast, types</td><td>Compile step, slower iteration</td></tr>
+<tr><td>Rust</td><td>Fastest, safest</td><td>Slowest iteration, overkill for Phase 1</td></tr>
+</table></div>
+<h3>Decision</h3>
+<p>Bash for Phase 1. Reasoning:</p>
+<ul>
+<li><strong>Zero-friction install</strong>: <code>git clone</code> + <code>chmod +x</code> = working tools</li>
+<li><strong>Universal availability</strong>: bash exists on macOS, Linux, WSL</li>
+<li><strong>Rapid iteration</strong>: No compile step during active development</li>
+<li><strong>Acceptable scope</strong>: Phase 1 tools are simple text processors</li>
+</ul>
+<h3>Consequences</h3>
+<h3>Accepted Trade-offs</h3>
+<ul>
+<li><strong>No type safety</strong>: Errors caught at runtime only</li>
+<li><strong>Testing complexity</strong>: Bash testing requires temp directories, sed assertions</li>
+<li><strong>Scale ceiling</strong>: At ~500 LOC per script, consider rewrite</li>
+</ul>
+<h3>Migration Path (Phase 2+)</h3>
+<p>When any of these trigger, migrate to Go:</p>
+<ul>
+<li>Script exceeds 500 lines</li>
+<li>Need concurrent operations (parallel file processing)</li>
+<li>Need to distribute single binary</li>
+<li>Performance becomes bottleneck</li>
+</ul>
+<p>See roadmap/phases/phase-2-git-hooks.md for planned migration.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<p>Tools work as documented:</p>
+<pre><code>$ ./tests/run-tests.sh
+Results: 23/23 passed
+All tests passed</code></pre>
+<p>Install friction minimal: <code>init-knowledge-db.sh</code> uses only bash + coreutils, and the test run above executed it with no dependency installation step.</p>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>roadmap/phases/phase-1-local-tooling.md:15-30</summary><pre><code>   15  ---
+   16  
+   17  ## Tools
+   18  
+   19  ### 1. `kb-ingest` — Transcript/Text Parser
+   20  
+   21  **Purpose**: Convert unstructured text (conversations, notes, transcripts) into KB entries.
+   22  
+   23  **Input**:
+   24  - Raw text file
+   25  - Claude Code session transcript
+   26  - Pasted conversation
+   27  
+   28  **Output**:
+   29  - Draft KB entry in appropriate bucket
+   30  - Suggested tags based on content</code></pre></details>
+<details class="src"><summary>scripts/kb-ingest:1-5</summary><pre><code>    1  #!/bin/bash
+    2  # kb-ingest: Parse text/transcripts into KB entries
+    3  # Alpha version - basic text parsing
+    4  #
+    5  # Usage:</code></pre></details>
+<details class="src"><summary>scripts/kb-discover:1-5</summary><pre><code>    1  #!/bin/bash
+    2  # kb-discover: Scan codebase and generate exploration entries
+    3  # Alpha version - basic directory analysis
+    4  #
+    5  # Usage:</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:1-5</summary><pre><code>    1  #!/bin/bash
+    2  # kb-lint: Lint Knowledge Database for issues
+    3  # Checks: missing sources, INDEX sync, status validity, duplicates, tag hygiene
+    4  #
+    5  # Usage:</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a></p>
+</article>
+</section>
+</main></div>
+<script>
+const q = document.getElementById('q');
+const st = document.getElementById('st');
+function apply() {
+  const v = q.value.toLowerCase();
+  const s = st.value;
+  document.querySelectorAll('article.entry').forEach(a => {
+    const okText = !v || a.textContent.toLowerCase().includes(v);
+    const okStatus = !s || a.dataset.status === s;
+    a.classList.toggle('hide', !(okText && okStatus));
+  });
+  document.querySelectorAll('section.bucket').forEach(sec => {
+    const any = sec.querySelectorAll('article.entry:not(.hide)').length > 0;
+    sec.style.display = any ? '' : 'none';
+  });
+}
+q.addEventListener('input', apply);
+st.addEventListener('change', apply);
+</script>
+</body></html>

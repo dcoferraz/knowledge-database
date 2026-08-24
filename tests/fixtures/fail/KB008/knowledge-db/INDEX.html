@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<!-- kb:fingerprint:7ca70389966bc7012b085f3505723274433dec37b5ce01f30d009af2fa4b951e -->
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge Database</title>
+<style>
+:root { --fg:#1f2328; --muted:#59636e; --line:#d1d9e0; --bg:#ffffff; --soft:#f6f8fa;
+        --ok:#1a7f37; --warn:#9a6700; --gone:#59636e; --accent:#0969da; }
+* { box-sizing:border-box; }
+body { margin:0; font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+       color:var(--fg); background:var(--bg); }
+header.top { position:sticky; top:0; background:var(--bg); border-bottom:1px solid var(--line);
+             padding:10px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; z-index:2; }
+header.top h1 { font-size:17px; margin:0; }
+header.top input { flex:1; min-width:200px; padding:6px 10px; border:1px solid var(--line); border-radius:6px; }
+header.top select { padding:6px; border:1px solid var(--line); border-radius:6px; }
+.layout { display:grid; grid-template-columns:280px 1fr; gap:0; }
+nav.side { border-right:1px solid var(--line); padding:14px; height:calc(100vh - 54px);
+           overflow:auto; position:sticky; top:54px; }
+nav.side h2 { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin:16px 0 6px; }
+nav.side a { display:block; padding:3px 6px; color:var(--fg); text-decoration:none; border-radius:5px; font-size:13.5px; }
+nav.side a:hover { background:var(--soft); }
+main { padding:20px 28px 80px; max-width:900px; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+.dot.verified{background:var(--ok);} .dot.tentative{background:var(--warn);} .dot.superseded{background:var(--gone);}
+article.entry { border:1px solid var(--line); border-radius:10px; padding:18px 22px; margin:0 0 22px; }
+article.entry.hide { display:none; }
+article.entry > h2 { margin:0 0 6px; font-size:19px; }
+.meta { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+.badge { font-size:12px; padding:2px 9px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+.badge.verified { color:var(--ok); border-color:var(--ok); }
+.badge.tentative { color:var(--warn); border-color:var(--warn); }
+.badge.superseded { color:var(--gone); border-color:var(--gone); text-decoration:line-through; }
+.banner { background:#fff8f6; border:1px solid #f0c8c0; border-radius:8px; padding:8px 12px; margin:8px 0 12px; font-size:14px; }
+.proof { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:4px 14px 10px; margin:10px 0; }
+.proof > h3 { font-size:13px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+details.src { margin:4px 0; }
+details.src summary { cursor:pointer; font-family:ui-monospace,Menlo,monospace; font-size:13px; color:var(--accent); }
+pre { background:var(--soft); border:1px solid var(--line); border-radius:8px; padding:10px 12px;
+      overflow-x:auto; font-size:12.5px; line-height:1.45; }
+code { font-family:ui-monospace,Menlo,monospace; font-size:.92em; background:var(--soft);
+       padding:1px 4px; border-radius:4px; }
+pre code { background:none; padding:0; }
+.tblwrap { overflow-x:auto; }
+table { border-collapse:collapse; margin:8px 0; font-size:14px; }
+th,td { border:1px solid var(--line); padding:5px 10px; text-align:left; }
+th { background:var(--soft); }
+h3 { font-size:15.5px; margin:16px 0 6px; }
+h4 { font-size:14px; margin:12px 0 4px; }
+blockquote { margin:8px 0; padding:4px 12px; border-left:3px solid var(--line); color:var(--muted); }
+.tags { color:var(--muted); font-size:12.5px; }
+.bucket-blurb { color:var(--muted); margin:-6px 0 14px; }
+section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; margin-top:36px; }
+.empty { color:var(--muted); font-style:italic; }
+@media (max-width:900px){ .layout{grid-template-columns:1fr;} nav.side{position:static;height:auto;border-right:none;border-bottom:1px solid var(--line);} }
+</style></head><body>
+<header class="top"><h1>Knowledge Database</h1>
+<input id="q" type="search" placeholder="Search titles, text, tags...">
+<select id="st"><option value="">all statuses</option><option value="verified">verified (proven)</option><option value="tentative">tentative (unconfirmed)</option><option value="superseded">superseded (replaced)</option></select>
+</header>
+<div class="layout"><nav class="side">
+<h2>What we know</h2>
+<a href="#explorations/2020-01-10-stale.md"><span class="dot verified"></span>Stale</a>
+<h2>What we built</h2>
+<span class="empty">nothing yet</span>
+<h2>What broke + the fix</h2>
+<span class="empty">nothing yet</span>
+<h2>Why we chose things</h2>
+<span class="empty">nothing yet</span>
+</nav><main>
+<h2>Start here: ready answers</h2>
+<p class="bucket-blurb">Topic &rarr; the one place to look first.</p>
+<div class="tblwrap"><table>
+<tr><th>Topic</th><th>Canonical Source</th><th>Last Verified</th></tr>
+</table></div>
+<h2>How to read this page</h2>
+<p class="bucket-blurb"><span class="badge verified">verified</span> proven, with captured evidence shown in the Proof box &nbsp;<span class="badge tentative">tentative</span> best understanding, not yet proven &nbsp;<span class="badge superseded">superseded</span> outdated, links to its replacement. Every claim cites real files: expand a source to see the exact lines it is grounded in (captured when this page was generated).</p>
+<section class="bucket"><h2>What we know <span class="tags">(explorations/ &mdash; what is true)</span></h2>
+<article class="entry" id="explorations/2020-01-10-stale.md" data-status="verified">
+<h2>Stale</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2020-01-10</span>
+<span class="tags">area:tooling</span>
+</div>
+<h3>Summary</h3>
+<p>Fixture entry.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ wc -l src/app.txt
+       3 src/app.txt</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>src/app.txt:1-2</summary><pre><code>    1  line one
+    2  line two</code></pre></details>
+</div>
+</article>
+</section>
+<section class="bucket"><h2>What we built <span class="tags">(solutions/ &mdash; what we did)</span></h2>
+<p class="empty">Nothing recorded yet.</p>
+</section>
+<section class="bucket"><h2>What broke + the fix <span class="tags">(errors/ &mdash; what broke + the fix)</span></h2>
+<p class="empty">Nothing recorded yet.</p>
+</section>
+<section class="bucket"><h2>Why we chose things <span class="tags">(decisions/ &mdash; why we chose X)</span></h2>
+<p class="empty">Nothing recorded yet.</p>
+</section>
+</main></div>
+<script>
+const q = document.getElementById('q');
+const st = document.getElementById('st');
+function apply() {
+  const v = q.value.toLowerCase();
+  const s = st.value;
+  document.querySelectorAll('article.entry').forEach(a => {
+    const okText = !v || a.textContent.toLowerCase().includes(v);
+    const okStatus = !s || a.dataset.status === s;
+    a.classList.toggle('hide', !(okText && okStatus));
+  });
+  document.querySelectorAll('section.bucket').forEach(sec => {
+    const any = sec.querySelectorAll('article.entry:not(.hide)').length > 0;
+    sec.style.display = any ? '' : 'none';
+  });
+}
+q.addEventListener('input', apply);
+st.addEventListener('change', apply);
+</script>
+</body></html>
