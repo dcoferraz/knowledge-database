@@ -38,38 +38,45 @@ Skip only pure one-liners (rename var, fix typo).
 
 ```
 IF knowledge-db/ missing:
-  1. Create folder structure:
+  1. Create folder structure (copy the FULL knowledge-db/ skeleton, including
+     the enforcement tooling — not just templates):
      knowledge-db/
-       README.md
-       INDEX.md
+       README.md        (rule table KB001-KB011)
+       AGENT.md         (portable agent hard rules)
+       INDEX.md         (generated: run bin/kb index after copying)
        _TEMPLATE.md
+       kb.config.json   (closed vocabularies — single source of truth)
+       bin/kb           (zero-dep CLI: new / index / check)
+       install.sh       (idempotent enforcement installer)
        explorations/.gitkeep
        solutions/.gitkeep
        errors/.gitkeep
        decisions/.gitkeep
 
-  2. Detect host instructions file (first found):
-     - .github/copilot-instructions.md
-     - CLAUDE.md
-     - AGENTS.md
-     - .cursor/rules/
-     Create if none exists (prefer CLAUDE.md).
+  2. Run knowledge-db/install.sh — it wires ALL enforcement layers, including
+     appending the HARD-RULE block to the host instructions file
+     (CLAUDE.md / AGENTS.md / .github/copilot-instructions.md; creates
+     CLAUDE.md if none exists). Idempotent, marker-guarded, never clobbers.
 
-  3. Append HARD-RULE block (check before append to avoid duplicates):
-     [See HARD-RULE section below]
+  3. If install.sh cannot run (no bash/python3), append the HARD-RULE block
+     below to the host instructions file manually (check before append).
 ```
 
 Bootstrap is safe to run multiple times. Never overwrites existing entries.
 
 ---
 
-## 2. READ Loop (start of task)
+## 2. READ Loop (ALWAYS — start of EVERY task)
 
-1. Open `knowledge-db/INDEX.md`
-2. Scan tables for relevant entries by title/tags
-3. Grep folder for keywords: `grep -r "keyword" knowledge-db/`
-4. If **verified** entry answers question -> use it, stop exploring
-5. If **tentative** entry exists -> build on it, upgrade to verified when proven
+1. Open `knowledge-db/INDEX.md` (Ready-Answer Table first, then entry catalog)
+2. Grep folder for keywords: `grep -r "keyword" knowledge-db/`
+3. If **verified** entry answers question -> use it, stop exploring
+4. If **tentative** entry exists -> build on it, upgrade to verified when proven
+5. **EMPTY KB** (or nothing relevant): say so, then suggest BOTH bootstrap paths —
+   a codebase exploration to seed it (`scripts/kb-discover <dir>` or manual
+   investigation recorded as exploration entries), OR manual document/context
+   input from the user (specs, docs, transcripts -> `scripts/kb-ingest` or direct
+   entries). Suggest, then continue the task — never block on it.
 
 ---
 
@@ -125,12 +132,18 @@ Sessions can end unexpectedly (context exhaustion, logout, crash). Memory not co
 3. **Decisions with rationale** - Prevents re-debating
 4. **Multi-step solutions** - Prevents redoing work
 
-### Consent Before Superseding
+### Never Prompt, Never Withhold
 
-**Before marking a VERIFIED entry as SUPERSEDED:**
-> "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
+Capturing knowledge is autonomous. Never ask permission to create, update, or
+supersede entries, and never skip recording something important.
 
-Never change verified entry status without explicit user consent.
+Superseding a VERIFIED entry: do it immediately WITH an audit trail — state the
+reason in the new entry, set `status: superseded` on the old one, link the
+replacement in `related:`. Never delete the old entry. Inform the user in the
+task summary (informing, not asking).
+
+Opt-in exception: `supersede_with_consent: true` in workspace CLAUDE.md restores
+ask-before-superseding (not recommended; blocks autonomous agents).
 
 ### Pick Bucket by Intent
 
@@ -145,8 +158,9 @@ File under dominant intent, cross-link related entries. For decisions: one entry
 
 ### Create Entry
 
-1. Copy `_TEMPLATE.md` to appropriate bucket
-2. Name: `YYYY-MM-DD-short-kebab-slug.md`
+1. Scaffold: `knowledge-db/bin/kb new <type> <slug>` (falls back to copying
+   `_TEMPLATE.md` if the CLI is unavailable)
+2. Name: `YYYY-MM-DD-short-kebab-slug.md` (kb new does this)
 3. Fill front-matter:
    ```yaml
    ---
@@ -166,8 +180,10 @@ File under dominant intent, cross-link related entries. For decisions: one entry
    - **verified** = proven (tests pass, output confirmed, repro'd)
    - **tentative** = best understanding, not yet proven
    - **superseded** = outdated, link to replacement
-6. Add row to INDEX.md (newest on top)
+6. Regenerate the catalog: `knowledge-db/bin/kb index` (INDEX.md is generated —
+   never hand-edit outside the `kb:manual` regions)
 7. Cross-link related entries
+8. Validate: `knowledge-db/bin/kb check` exits 0
 
 ### Content Rules
 
@@ -193,18 +209,22 @@ Check INDEX.md tag-vocab section before creating new tags.
 
 ## HARD-RULE Block (append to host instructions)
 
+This block is what `knowledge-db/install.sh` appends (marker-guarded). Append it
+manually only when install.sh cannot run:
+
 ```markdown
-## HARD RULE: Build the Knowledge Database on every task
+## HARD RULE: Knowledge Database
 
-This repo keeps durable memory in `knowledge-db/` so we never explore the same thing twice and never re-introduce a fixed bug. For EVERY non-trivial task (agent or human):
+This repo keeps durable memory in `knowledge-db/` so we never explore the same thing twice and never re-introduce a fixed bug. For EVERY task (agent or human):
 
-1) **READ FIRST** — search `knowledge-db/` (start with INDEX.md); reuse a verified entry.
-2) **DO THE WORK**.
-3) **WRITE BACK** — copy _TEMPLATE.md into explorations|solutions|errors|decisions, ground every claim in a real source file, set status, update INDEX.md. errors/ entries must record Symptom -> Root cause -> Fix -> Prevention.
+1) **ALWAYS READ FIRST** — search `knowledge-db/` (start with INDEX.md); reuse a verified entry.
+2) **EMPTY KB** — if no relevant entries exist, say so and suggest a codebase exploration to seed it OR manual document/context input to ingest. Then continue the task.
+3) **DO THE WORK**.
+4) **WRITE BACK** — scaffold with `knowledge-db/bin/kb new <type> <slug>`, ground every claim in a real source file (path:Lstart-Lend), regenerate the index with `bin/kb index`. errors/ entries record Symptom -> Root cause -> Fix -> Prevention. `bin/kb check` must exit 0.
 
-**AUTO-CAPTURE**: Non-trivial work = KB entry created. This is mandatory, not optional.
+**AUTO-CAPTURE**: Non-trivial work = KB entry created. Mandatory, not optional.
 **INCREMENTAL**: Record findings AS THEY OCCUR, not batched at session end. Session can end anytime.
-**CONSENT**: Only required before superseding verified entries.
+**NEVER PROMPT, NEVER WITHHOLD**: Create, update, and supersede entries autonomously. Superseding a verified entry needs a stated reason + `related:` link to the replacement — never permission.
 
 Leaving a task without KB entries is incomplete work.
 ```

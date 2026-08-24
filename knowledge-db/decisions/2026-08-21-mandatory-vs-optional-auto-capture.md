@@ -5,8 +5,9 @@ status: verified
 date: 2026-08-21
 tags: [area:tooling, layer:enforcement]
 sources:
-  - CLAUDE.md:103-139
-  - knowledge-database/SKILL.md:79-102
+  - CLAUDE.md:105-153
+  - knowledge-database/SKILL.md:85-88
+last_verified: 2026-08-24
 related:
   - solutions/2026-08-21-kb-v2-improvements.md
   - decisions/2026-08-21-incremental-vs-batched-capture.md
@@ -50,4 +51,15 @@ Rationale:
 
 ## Verification
 
-v0.2.1 released with mandatory auto-capture. CLAUDE.md:103-139 and SKILL.md:79-102 updated to remove Y/N/T prompt and state "This is mandatory, not a prompt."
+Both docs state mandatory auto-capture with no Y/N/T prompt (captured 2026-08-24):
+
+```bash
+$ sed -n '105p;107p' CLAUDE.md
+### 8. Auto-Capture (Mandatory)
+**Non-trivial work = KB entry created.** This is not optional.
+$ sed -n '85p;87p' knowledge-database/SKILL.md
+### Auto-Capture (Mandatory)
+**Non-trivial work = KB entry created.** This is not optional.
+```
+
+Shipped in v0.2.1 (see CHANGELOG.md).

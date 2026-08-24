@@ -5,6 +5,44 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-24
+
+Response to external evaluator feedback: conventions that were "enforced by
+agent behavior" drifted in practice (INDEX tag drift, prose-only "verified"
+proof, hypothetical output as evidence). v0.4.0 makes every hard rule
+mechanically enforced or explicitly labelled guidance.
+
+### Added
+- **`knowledge-db/bin/kb`**: zero-dependency CLI (Python 3 stdlib) — `new` (scaffold valid entries, status tentative), `index` (INDEX.md is now GENERATED from front-matter), `check` (rules KB001-KB011, `--json`, `--staged`/`--diff-base` diff modes)
+- **`knowledge-db/kb.config.json`**: single source of truth for buckets, statuses, tag vocabulary, staleness budgets, lockstep pairs, write-back paths — closed enums (KB002)
+- **Rule IDs KB001-KB011**, each with a conformance fixture (`tests/fixtures/`, `tests/run-kb-tests.sh`: pass/ exits 0, each fail/KBxxx exits non-zero naming its ID)
+- **`knowledge-db/install.sh`**: idempotent, merging installer for three enforcement layers — agent Stop hook in committed `.claude/settings.json`, `.githooks/pre-commit` + `core.hooksPath`, CI workflow; `--check` audits without changing anything
+- **Staleness budget (KB008)**: `verified` older than 90 days fails until re-verified (`last_verified` field) or downgraded
+- **Write-back trigger (KB011)**: replaces the end-of-task checklist as the hard gate — a diff touching production code but no `knowledge-db/**` file fails
+- **Source rev pinning (KB003)**: `path:Lstart-Lend@rev` warns when the file changed since the rev
+
+### Changed
+- INDEX.md is build output (KB007: byte-for-byte match); hand-edits only inside `kb:manual` fenced regions
+- knowledge-db/README.md rewritten enforce-or-delete: every hard rule cites its ID; unenforceable items moved to an explicit "Guidance (not checked)" section
+- `.claude/settings.json` is now committed (personal overrides stay in gitignored `settings.local.json`)
+
+### Fixed
+- Tag drift between entry front-matter and INDEX rows (3 rows); undeclared `area:release` tag now declared in config
+- Four decision entries claimed `verified` with prose-only Verification; now carry captured command output (KB004)
+- Hypothetical marker `# Works without any dependency installation` used as proof in bash-for-cli-tools decision; replaced with real evidence
+
+### Added (agent-rules forwarding)
+- **`knowledge-db/AGENT.md`**: portable agent hard rules that travel with the KB folder — ALWAYS read first, EMPTY KB (suggest exploration or manual document/context input, then continue), NEVER PROMPT / NEVER WITHHOLD, write back
+- **install.sh layer 5**: appends a marker-guarded HARD RULE block to the host instructions file (CLAUDE.md / AGENTS.md / copilot-instructions.md; creates CLAUDE.md if none); `--check` asserts it
+- `scripts/init-knowledge-db.sh` now ships the full enforcement (AGENT.md, kb.config.json, bin/kb, install.sh) and generates INDEX.md via `kb index`
+
+### Changed (behavior)
+- **Mechanism 9 flipped**: autonomous superseding with audit trail replaces consent prompts. Agents never prompt about KB operations; superseding a verified entry requires reason + `related:` link (KB005), not permission. Opt-in `supersede_with_consent: true` restores prompting.
+- **KB tracked by default**: `init-knowledge-db.sh` no longer gitignores the KB (`--local` opts in) — a gitignored KB breaks KB011 diff enforcement and loses knowledge across clones
+
+### Deprecated
+- `scripts/kb-lint` — superseded by `bin/kb check` (kept for compatibility)
+
 ## [0.3.1] - 2026-08-21
 
 ### Fixed

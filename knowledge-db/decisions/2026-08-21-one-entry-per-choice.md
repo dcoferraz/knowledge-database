@@ -5,8 +5,9 @@ status: verified
 date: 2026-08-21
 tags: [area:tooling, layer:enforcement]
 sources:
-  - CLAUDE.md:115-125
-  - knowledge-database/SKILL.md:91-99
+  - CLAUDE.md:115-129
+  - knowledge-database/SKILL.md:104-114
+last_verified: 2026-08-24
 related:
   - decisions/2026-08-21-incremental-vs-batched-capture.md
 ---
@@ -47,4 +48,15 @@ Rationale:
 
 ## Verification
 
-Granularity table added to CLAUDE.md:115-125 and SKILL.md:91-99. This session created 4 separate decision entries (this being one of them).
+Granularity table present in both docs (captured 2026-08-24):
+
+```bash
+$ sed -n '115p;124p' CLAUDE.md
+#### Entry Granularity
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+$ sed -n '104p;111p' knowledge-database/SKILL.md
+### Entry Granularity
+| decisions/ | **One per CHOICE** | "Why mandatory vs optional auto-capture" |
+```
+
+The v0.3.0 session created 4 separate decision entries (this being one of them).

@@ -1,0 +1,13 @@
+---
+title: Bare source
+type: exploration
+status: tentative
+date: 2026-01-10
+tags: [area:tooling]
+sources:
+  - src/app.txt
+---
+
+## Summary
+
+Fixture entry.

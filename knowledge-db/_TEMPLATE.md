@@ -1,14 +1,15 @@
 ---
 title:
-type:         # exploration | solution | error | decision
-status:       # verified | tentative | superseded
-date:
-tags: []      # [area:<area>, layer:<layer>] - grep existing tags first
-sources:      # REQUIRED: real files this is grounded in (path:line-range)
-  -
-related:      # other KB entries; REQUIRED if status is superseded
-  -
+type:         # declared in kb.config.json types (KB002)
+status: tentative  # verified requires captured proof (KB004)
+date:         # must equal filename date (KB001)
+tags: []      # every tag declared in kb.config.json (KB002)
+sources: []   # path:Lstart[-Lend][@rev], path must exist (KB003)
+related: []   # other KB entries; REQUIRED if status is superseded (KB005)
 ---
+
+<!-- Prefer `bin/kb new <type> <slug>` — it scaffolds a valid entry and regenerates INDEX.md.
+     If copying this by hand: fill every list or use [], never leave a bare "-" (KB005). -->
 
 ## Summary
 

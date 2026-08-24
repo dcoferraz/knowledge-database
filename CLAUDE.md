@@ -34,12 +34,12 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ## The Ten Enforcement Mechanisms
 
-> **Implementation Status**: These mechanisms are conventions enforced by agent behavior (reading this file). They are NOT automated (no hooks, CI gates, or runtime validation). See Phase 2 in roadmap/ for planned automation.
+> **Implementation Status**: Mechanically checkable mechanisms are enforced by `knowledge-db/bin/kb check` as rules KB001-KB011 (see knowledge-db/README.md for the rule table). `knowledge-db/install.sh` wires three enforcement layers: agent Stop hook (.claude/settings.json), git pre-commit (.githooks/), and CI (.github/workflows/kb-check.yml). What cannot be mechanically checked remains agent convention, labelled as such.
 
 ### 1. Always-On Enforcement
 
 - Loop is mandatory, not triggered by user phrases
-- **Planned**: On adoption, auto-append HARD RULE to agent config. Not yet implemented - requires manual copy.
+- Enforced: `knowledge-db/install.sh` merges a Stop hook running `kb check` into the committed `.claude/settings.json`, and KB011 fails any diff that touches production code without touching `knowledge-db/`
 
 ### 2. Routing to Canonical Docs
 
@@ -55,7 +55,7 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
   - Config change → update deployment docs
 - Before finishing: verify each invariant held. Code changed but paired doc didn't? Task is INCOMPLETE.
 
-> **Note**: Currently manual verification via checklist. Automated detection (git hook or CI) planned for Phase 2.
+> **Note**: Enforced as KB009. Pairs are declared in `knowledge-db/kb.config.json` (`lockstep`) and checked against the diff by `kb check --staged` (pre-commit) and `kb check --diff-base` (CI).
 
 ### 4. Source-of-Truth Hierarchy + Hard Grounding
 
@@ -99,7 +99,7 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Reuse tags**: grep existing tags before creating new ones; vocabulary lives in INDEX.md
 - **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
-- **Periodic lint**: run `kb-lint` to check sources, valid status, INDEX sync; newest rows on top
+- **Periodic lint**: run `knowledge-db/bin/kb check` (KB001-KB011); `bin/kb index` regenerates INDEX.md from front-matter — never hand-edit outside the `kb:manual` regions (KB007)
 - **Archival at scale**: When INDEX.md exceeds ~100 entries, move older entries (6+ months) to `INDEX-archive-YYYY.md`. Keep INDEX.md focused on active knowledge.
 
 ### 8. Auto-Capture (Mandatory)
@@ -152,14 +152,14 @@ Priority order (highest value first):
 
 **The pattern that compounds**: Every error recorded is a bug that can never be reintroduced. Every exploration recorded is an investigation that never happens twice.
 
-### 9. Consent Before Superseding Verified
+### 9. Autonomous Superseding with Audit Trail
 
-**Before marking a VERIFIED entry as SUPERSEDED**, ask user:
-> "Entry '[title]' is verified. Mark as superseded because [reason]? [Y/N]"
+**Never prompt the user** to create, update, or supersede entries — capture must not stall on permission,
+and important knowledge must never go unsaved. When new evidence invalidates a VERIFIED entry,
+supersede it immediately: state the reason, set `status: superseded`, link the replacement in
+`related:` (KB005). Never delete the old entry. Inform the user in the task summary — informing, not asking.
 
-Verified entries represent proven knowledge. Never change their status without explicit user consent.
-
-**Opt-out:** Add `supersede_without_consent: true` to workspace CLAUDE.md to allow autonomous superseding.
+**Opt-in:** `supersede_with_consent: true` in workspace CLAUDE.md restores ask-before-superseding (not recommended; blocks autonomous agents).
 
 ### 10. Incremental Capture (Session Resilience)
 
@@ -230,7 +230,11 @@ MUST record all four:
 
 ## Write-Back Checklist
 
-Run at END of every non-trivial task. Task is INCOMPLETE until all pass:
+The hard gate is automatic: KB011 fails any staged/PR diff that touches production
+code paths (declared in `kb.config.json` `writeback.code`) without touching
+`knowledge-db/`, and `kb check` enforces entry quality (KB001-KB010). The list
+below is the manual walkthrough of what those rules check plus the judgment calls
+they cannot:
 
 ```
 [ ] Entry created/updated from _TEMPLATE.md in correct bucket (YYYY-MM-DD-slug.md)
@@ -251,22 +255,40 @@ Run at END of every non-trivial task. Task is INCOMPLETE until all pass:
 ## Setup
 
 ```bash
-./scripts/init-knowledge-db.sh
+./scripts/init-knowledge-db.sh   # creates knowledge-db/ with templates and empty buckets
+knowledge-db/install.sh          # wires enforcement: agent hook, git pre-commit, CI
 ```
-
-Creates `knowledge-db/` with templates and empty buckets.
 
 ---
 
 ## Tooling
 
 ```bash
-# Ingest text/transcripts into KB entries
-./scripts/kb-ingest --input notes.txt --auto
+# Enforcement CLI (zero-dependency, Python 3 stdlib) — the authoritative validator
+knowledge-db/bin/kb new <type> <slug>   # scaffold a valid entry, regen INDEX
+knowledge-db/bin/kb index               # regenerate INDEX.md from front-matter
+knowledge-db/bin/kb check               # validate (KB001-KB011); --staged/--diff-base for diff rules
+knowledge-db/install.sh                 # wire agent hook + pre-commit + CI (idempotent); --check to audit
 
-# Discover codebase boundaries
-./scripts/kb-discover ./target-app
-
-# Lint KB for issues (missing sources, INDEX sync, etc.)
-./scripts/kb-lint
+# Legacy helpers (bash)
+./scripts/kb-ingest --input notes.txt --auto   # ingest text/transcripts into KB entries
+./scripts/kb-discover ./target-app             # discover codebase boundaries
+./scripts/kb-lint                              # superseded by bin/kb check
 ```
+
+<!-- kb:agent-rules:start -->
+## HARD RULE: Knowledge Database
+
+This repo keeps durable memory in `knowledge-db/`. For EVERY task:
+
+1. **ALWAYS READ FIRST** — check `knowledge-db/INDEX.md` before exploring; reuse verified entries.
+2. **EMPTY KB** — if no (relevant) entries exist, say so and suggest either a codebase
+   exploration to seed it, or manual document/context input to ingest. Then continue the task.
+3. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,
+   as insights occur. Superseding a verified entry needs a stated reason and a `related:`
+   link to the replacement — never permission.
+4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
+   with KB entries. `knowledge-db/bin/kb check` must exit 0.
+
+Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB011): `knowledge-db/README.md`.
+<!-- kb:agent-rules:end -->

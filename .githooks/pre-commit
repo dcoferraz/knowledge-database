@@ -1,0 +1,3 @@
+#!/bin/bash
+# knowledge-db enforcement. Bypassable with --no-verify; CI still gates.
+exec "$(git rev-parse --show-toplevel)/knowledge-db/bin/kb" check --staged

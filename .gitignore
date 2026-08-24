@@ -12,5 +12,6 @@ Thumbs.db
 # Note: knowledge-db/ is TRACKED in this repo as worked examples
 # Users installing the skill have knowledge-db/ added to THEIR .gitignore
 
-# Claude Code
-.claude/
+# Claude Code: personal overrides stay local; project settings (hooks) are committed
+.claude/*
+!.claude/settings.json

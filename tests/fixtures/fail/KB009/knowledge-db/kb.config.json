@@ -1,0 +1,51 @@
+{
+  "buckets": {
+    "explorations": "what is true",
+    "solutions": "what we did",
+    "errors": "what broke + the fix",
+    "decisions": "why we chose X"
+  },
+  "types": {
+    "exploration": "explorations",
+    "solution": "solutions",
+    "error": "errors",
+    "decision": "decisions"
+  },
+  "statuses": [
+    "verified",
+    "tentative",
+    "superseded"
+  ],
+  "tags": {
+    "area": [
+      "tooling"
+    ],
+    "layer": [
+      "cli"
+    ],
+    "severity": [
+      "high"
+    ]
+  },
+  "staleness_days": {
+    "verified": 3650
+  },
+  "required_sections": {
+    "errors": [
+      "Symptom",
+      "Root Cause",
+      "Fix",
+      "Prevention"
+    ]
+  },
+  "lockstep": [
+    {
+      "source": "src/app.txt",
+      "doc": "docs/"
+    }
+  ],
+  "writeback": {
+    "code": [],
+    "exempt": []
+  }
+}

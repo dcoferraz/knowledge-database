@@ -1,0 +1,36 @@
+{
+  "buckets": {
+    "explorations": "what is true",
+    "solutions": "what we did",
+    "errors": "what broke + the fix",
+    "decisions": "why we chose X"
+  },
+  "types": {
+    "exploration": "explorations",
+    "solution": "solutions",
+    "error": "errors",
+    "decision": "decisions"
+  },
+  "statuses": ["verified", "tentative", "superseded"],
+  "tags": {
+    "area": ["auth", "api", "ui", "db", "payments", "infra", "test", "tooling", "security", "release"],
+    "layer": ["controller", "service", "model", "middleware", "util", "cli", "enforcement"],
+    "scope": [],
+    "severity": ["critical", "high", "medium", "low"],
+    "tech": ["react", "node", "postgres", "bash", "python"]
+  },
+  "staleness_days": {
+    "verified": 90
+  },
+  "required_sections": {
+    "errors": ["Symptom", "Root Cause", "Fix", "Prevention"]
+  },
+  "lockstep": [
+    { "source": "knowledge-db/bin/kb", "doc": "tests/" },
+    { "source": "knowledge-db/kb.config.json", "doc": "knowledge-db/INDEX.md" }
+  ],
+  "writeback": {
+    "code": ["scripts/**", "hooks/**", "knowledge-db/bin/**"],
+    "exempt": []
+  }
+}

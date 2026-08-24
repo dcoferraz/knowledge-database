@@ -5,8 +5,9 @@ status: verified
 date: 2026-08-21
 tags: [area:tooling, layer:enforcement]
 sources:
-  - CLAUDE.md:149-173
-  - knowledge-database/SKILL.md:83-99
+  - CLAUDE.md:164-196
+  - knowledge-database/SKILL.md:89-103
+last_verified: 2026-08-24
 related:
   - decisions/2026-08-21-mandatory-vs-optional-auto-capture.md
   - solutions/2026-08-21-kb-v2-improvements.md
@@ -51,4 +52,15 @@ Rationale:
 
 ## Verification
 
-v0.3.0 implements Mechanism 10. This session created separate decision entries during work (not batched at end), demonstrating the pattern.
+Mechanism 10 stated in both docs (captured 2026-08-24):
+
+```bash
+$ sed -n '164p;166p' CLAUDE.md
+### 10. Incremental Capture (Session Resilience)
+**Record findings AS THEY OCCUR, not batched at session end.**
+$ sed -n '89p;91p' knowledge-database/SKILL.md
+### Incremental Capture (Session Resilience)
+**Record findings AS THEY OCCUR, not batched at session end.**
+```
+
+The v0.3.0 session created separate decision entries during work (not batched at end), demonstrating the pattern.

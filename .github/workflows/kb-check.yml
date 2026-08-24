@@ -1,0 +1,27 @@
+name: kb-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  kb-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate knowledge base
+        run: knowledge-db/bin/kb check
+      - name: Assert enforcement is installed
+        run: knowledge-db/install.sh --check
+      - name: KB conformance suite
+        run: |
+          if [ -x tests/run-kb-tests.sh ]; then tests/run-kb-tests.sh; fi
+      - name: Legacy bash tool suite
+        run: |
+          if [ -x tests/run-tests.sh ]; then tests/run-tests.sh; fi
+      - name: Write-back + lockstep rules (PR diff)
+        if: github.event_name == 'pull_request'
+        run: knowledge-db/bin/kb check --diff-base "origin/${{ github.base_ref }}"

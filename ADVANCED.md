@@ -130,8 +130,8 @@ cat 02-meetings/2026-08-15-kickoff.md | kb-ingest --bucket decisions
 # Generate exploration from vendor documentation
 kb-discover ./04-vendor-docs/stripe-api.md --output knowledge-db/explorations/
 
-# Lint the entire workspace KB
-kb-lint ./knowledge-db/
+# Validate the entire workspace KB (rules KB001-KB011)
+knowledge-db/bin/kb check
 ```
 
 Think about what this means:

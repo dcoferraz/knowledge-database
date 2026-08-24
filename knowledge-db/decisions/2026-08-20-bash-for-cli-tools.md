@@ -68,8 +68,4 @@ Results: 23/23 passed
 All tests passed
 ```
 
-Install friction confirmed minimal:
-```bash
-$ git clone ... && ./scripts/init-knowledge-db.sh
-# Works without any dependency installation
-```
+Install friction minimal: `init-knowledge-db.sh` uses only bash + coreutils, and the test run above executed it with no dependency installation step.

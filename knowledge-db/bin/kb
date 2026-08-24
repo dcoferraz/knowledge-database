@@ -1,0 +1,674 @@
+#!/usr/bin/env python3
+"""kb — zero-dependency knowledge-db CLI.
+
+Subcommands:
+  kb new <type> <slug>      Scaffold a valid entry (status: tentative), regenerate INDEX.md
+  kb index                  Regenerate INDEX.md entirely from entry front-matter
+  kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
+
+Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
+  KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
+  KB002  closed vocabularies (config)        KB008  verified entries go stale
+  KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
+  KB004  verified requires captured proof    KB010  one trap per error entry
+  KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
+         no template residue
+  KB006  required sections per bucket
+
+Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
+documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
+"""
+
+import argparse
+import json
+import re
+import subprocess
+import sys
+from datetime import date, datetime, timedelta
+from pathlib import Path
+
+MANUAL_START = "<!-- kb:manual:{name}:start -->"
+MANUAL_END = "<!-- kb:manual:{name}:end -->"
+
+KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "_TEMPLATE.md", "AGENT.md", "kb.config.json", "install.sh"}
+KNOWN_ROOT_DIRS = {"bin"}
+REQUIRED_KEYS = ["title", "type", "status", "date", "tags", "sources"]
+OPTIONAL_KEYS = ["related", "last_verified", "decision_by"]
+SOURCE_RE = re.compile(r"^(?P<path>[^:\s][^:]*):(?P<start>\d+)(-(?P<end>\d+))?(@(?P<rev>[0-9a-fA-F]{6,40}))?$")
+FILENAME_RE = re.compile(r"^(?P<date>\d{4}-\d{2}-\d{2})-(?P<slug>[a-z0-9][a-z0-9-]*)\.md$")
+HYPOTHETICAL_RE = re.compile(r"^\s*#\s*(should|todo|expected|works)\b", re.IGNORECASE)
+
+
+class Finding:
+    def __init__(self, rule, file, message, warning=False):
+        self.rule = rule
+        self.file = file
+        self.message = message
+        self.warning = warning
+
+    def line(self):
+        prefix = "WARN " if self.warning else ""
+        return f"{prefix}{self.rule} {self.file}: {self.message}"
+
+
+def fail(msg):
+    print(f"kb: {msg}", file=sys.stderr)
+    sys.exit(2)
+
+
+def find_kb_dir(cli_kb_dir):
+    if cli_kb_dir:
+        kb = Path(cli_kb_dir).resolve()
+        if not (kb / "kb.config.json").is_file():
+            fail(f"no kb.config.json in {kb}")
+        return kb
+    here = Path(__file__).resolve().parent.parent
+    if (here / "kb.config.json").is_file():
+        return here
+    fail("cannot locate kb.config.json (pass --kb-dir)")
+
+
+def load_config(kb_dir):
+    try:
+        return json.loads((kb_dir / "kb.config.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as e:
+        fail(f"kb.config.json unreadable: {e}")
+
+
+# ---------------------------------------------------------------- parsing
+
+def _strip_comment(value):
+    # Strip a trailing "  # comment" outside quotes.
+    if value.startswith('"') and value.endswith('"') and len(value) >= 2:
+        return value[1:-1]
+    m = re.search(r"\s+#", value)
+    if m:
+        value = value[: m.start()]
+    value = value.strip()
+    if value.startswith('"') and value.endswith('"') and len(value) >= 2:
+        value = value[1:-1]
+    return value
+
+
+def parse_entry(path):
+    """Return dict: front (key -> str|list), sections {name: text}, errors [str],
+    residue (bool: bare '-' list items present), order (section names in order)."""
+    text = path.read_text(encoding="utf-8")
+    lines = text.split("\n")
+    result = {"front": {}, "sections": {}, "section_counts": {}, "errors": [], "residue": False}
+    if not lines or lines[0].strip() != "---":
+        result["errors"].append("missing front-matter (file must start with ---)")
+        return result
+    end = None
+    for i in range(1, len(lines)):
+        if lines[i].strip() == "---":
+            end = i
+            break
+    if end is None:
+        result["errors"].append("unterminated front-matter (no closing ---)")
+        return result
+
+    front = result["front"]
+    current_list_key = None
+    for raw in lines[1:end]:
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):(.*)$", raw)
+        if m:
+            key, rest = m.group(1), m.group(2).strip()
+            if rest == "" or rest.startswith("#"):
+                front[key] = []
+                current_list_key = key
+            elif rest.startswith("[") and rest.endswith("]"):
+                inner = rest[1:-1].strip()
+                front[key] = [v.strip() for v in inner.split(",") if v.strip()] if inner else []
+                current_list_key = None
+            else:
+                front[key] = _strip_comment(rest)
+                current_list_key = None
+        elif re.match(r"^\s+-", raw):
+            item = _strip_comment(re.sub(r"^\s+-\s*", "", raw))
+            if current_list_key is None:
+                result["errors"].append(f"stray list item: {raw.strip()!r}")
+                continue
+            if item == "":
+                result["residue"] = True
+            else:
+                front[current_list_key].append(item)
+        else:
+            result["errors"].append(f"unparseable front-matter line: {raw.strip()!r}")
+
+    # sections
+    body = lines[end + 1:]
+    current = None
+    for raw in body:
+        h = re.match(r"^##\s+(.+?)\s*$", raw)
+        if h:
+            current = h.group(1)
+            result["section_counts"][current] = result["section_counts"].get(current, 0) + 1
+            result["sections"].setdefault(current, "")
+            continue
+        if current is not None:
+            result["sections"][current] += raw + "\n"
+    return result
+
+
+def fenced_blocks(section_text):
+    blocks, in_fence, buf = [], False, []
+    for raw in section_text.split("\n"):
+        if raw.strip().startswith("```"):
+            if in_fence:
+                blocks.append("\n".join(buf))
+                buf = []
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            buf.append(raw)
+    return blocks
+
+
+# ---------------------------------------------------------------- glob
+
+def glob_match(pattern, path):
+    """Match path against a glob where ** crosses '/' and * does not.
+    A pattern ending in '/' matches any path under that prefix."""
+    if pattern.endswith("/"):
+        return path.startswith(pattern) or path + "/" == pattern
+    regex = ""
+    i = 0
+    while i < len(pattern):
+        c = pattern[i]
+        if c == "*":
+            if pattern[i:i + 2] == "**":
+                regex += ".*"
+                i += 2
+                if i < len(pattern) and pattern[i] == "/":
+                    i += 1
+                continue
+            regex += "[^/]*"
+        elif c == "?":
+            regex += "[^/]"
+        else:
+            regex += re.escape(c)
+        i += 1
+    return re.fullmatch(regex, path) is not None
+
+
+# ---------------------------------------------------------------- entries
+
+def collect_entries(kb_dir, config, findings):
+    buckets = set(config.get("buckets", {}))
+    entries = []
+    for child in sorted(kb_dir.iterdir()):
+        name = child.name
+        if name.startswith("."):
+            continue
+        if child.is_dir():
+            if name in KNOWN_ROOT_DIRS:
+                continue
+            if name not in buckets:
+                findings.append(Finding("KB002", f"{kb_dir.name}/{name}/",
+                                        f"unknown bucket directory (declare in kb.config.json buckets or remove)"))
+                continue
+            for f in sorted(child.iterdir()):
+                if f.name.startswith(".") or f.is_dir():
+                    continue
+                if f.suffix != ".md":
+                    findings.append(Finding("KB001", f"{kb_dir.name}/{name}/{f.name}",
+                                            "non-markdown file in bucket"))
+                    continue
+                entries.append((name, f))
+        elif name not in KNOWN_ROOT_FILES:
+            findings.append(Finding("KB002", f"{kb_dir.name}/{name}",
+                                    "unknown file at KB root (not a declared artifact)"))
+    return entries
+
+
+def check_entry(kb_dir, repo_root, config, bucket, path, findings, today):
+    rel = str(path.relative_to(repo_root))
+    parsed = parse_entry(path)
+    for e in parsed["errors"]:
+        findings.append(Finding("KB001", rel, e))
+    front = parsed["front"]
+
+    # KB001: filename shape, required keys, type<->dir, filename date == date
+    m = FILENAME_RE.match(path.name)
+    if not m:
+        findings.append(Finding("KB001", rel, "filename must be YYYY-MM-DD-<kebab-slug>.md"))
+    for key in REQUIRED_KEYS:
+        if key not in front:
+            findings.append(Finding("KB001", rel, f"missing front-matter key: {key}"))
+    for key in front:
+        if key not in REQUIRED_KEYS and key not in OPTIONAL_KEYS:
+            findings.append(Finding("KB001", rel, f"unknown front-matter key: {key}", warning=True))
+    entry_type = front.get("type", "")
+    types = config.get("types", {})
+    if isinstance(entry_type, str) and entry_type in types and types[entry_type] != bucket:
+        findings.append(Finding("KB001", rel, f"type '{entry_type}' belongs in {types[entry_type]}/, found in {bucket}/"))
+    entry_date = front.get("date", "")
+    parsed_date = None
+    if isinstance(entry_date, str) and entry_date:
+        try:
+            parsed_date = datetime.strptime(entry_date, "%Y-%m-%d").date()
+        except ValueError:
+            findings.append(Finding("KB001", rel, f"date '{entry_date}' is not a valid YYYY-MM-DD date"))
+        if m and parsed_date and m.group("date") != entry_date:
+            findings.append(Finding("KB001", rel, f"filename date {m.group('date')} != front-matter date {entry_date}"))
+
+    # KB002: closed vocabularies
+    if isinstance(entry_type, str) and entry_type and entry_type not in types:
+        findings.append(Finding("KB002", rel, f"type '{entry_type}' not declared in kb.config.json types"))
+    status = front.get("status", "")
+    if isinstance(status, str) and status and status not in config.get("statuses", []):
+        findings.append(Finding("KB002", rel, f"status '{status}' not declared in kb.config.json statuses"))
+    tag_vocab = config.get("tags", {})
+    for tag in front.get("tags", []) if isinstance(front.get("tags"), list) else []:
+        if ":" not in tag:
+            findings.append(Finding("KB002", rel, f"tag '{tag}' must be <dimension>:<value>"))
+            continue
+        dim, value = tag.split(":", 1)
+        if dim not in tag_vocab:
+            findings.append(Finding("KB002", rel, f"tag dimension '{dim}' not declared in kb.config.json tags"))
+        elif value not in tag_vocab[dim]:
+            findings.append(Finding("KB002", rel, f"tag '{tag}' not declared in kb.config.json tags.{dim}"))
+
+    # KB003: sources grammar + existence (+ rev-drift warning)
+    sources = front.get("sources", [])
+    if isinstance(sources, list):
+        for src in sources:
+            sm = SOURCE_RE.match(src)
+            if not sm:
+                findings.append(Finding("KB003", rel,
+                                        f"source '{src}' must match path:Lstart[-Lend][@rev] (bare paths rejected)"))
+                continue
+            src_path = repo_root / sm.group("path")
+            if not src_path.is_file():
+                findings.append(Finding("KB003", rel, f"source path not found: {sm.group('path')}"))
+            elif sm.group("rev"):
+                drift = git_lines(repo_root, ["diff", "--name-only", sm.group("rev"), "--", sm.group("path")])
+                if drift is None:
+                    findings.append(Finding("KB003", rel,
+                                            f"source rev @{sm.group('rev')} not resolvable in git", warning=True))
+                elif drift:
+                    findings.append(Finding("KB003", rel,
+                                            f"{sm.group('path')} changed since @{sm.group('rev')}; re-check line range",
+                                            warning=True))
+        if status == "verified" and not sources:
+            findings.append(Finding("KB003", rel, "verified entry must cite at least one source"))
+
+    # KB004: verified requires captured proof
+    if status == "verified":
+        verif = parsed["sections"].get("Verification")
+        if verif is None:
+            findings.append(Finding("KB004", rel, "status verified but no '## Verification' section"))
+        else:
+            blocks = fenced_blocks(verif)
+            nonempty = [b for b in blocks if b.strip()]
+            if not nonempty:
+                findings.append(Finding("KB004", rel,
+                                        "Verification must contain a fenced block with captured output"))
+            for b in nonempty:
+                for line in b.split("\n"):
+                    if HYPOTHETICAL_RE.match(line):
+                        findings.append(Finding("KB004", rel,
+                                                f"hypothetical-output marker in Verification: {line.strip()!r}"))
+
+    # KB005: superseded links replacement; no template residue
+    related = front.get("related", [])
+    if status == "superseded" and (not isinstance(related, list) or not related):
+        findings.append(Finding("KB005", rel, "status superseded requires non-empty related: linking the replacement"))
+    if parsed["residue"]:
+        findings.append(Finding("KB005", rel, "template residue: bare '-' under a list key"))
+
+    # KB006: required sections per bucket
+    for section in config.get("required_sections", {}).get(bucket, []):
+        if section not in parsed["sections"]:
+            findings.append(Finding("KB006", rel, f"missing required section: ## {section}"))
+
+    # KB008: verified entries go stale
+    budget = config.get("staleness_days", {}).get("verified")
+    if status == "verified" and budget and parsed_date:
+        last = parsed_date
+        lv = front.get("last_verified")
+        if isinstance(lv, str) and lv:
+            try:
+                last = datetime.strptime(lv, "%Y-%m-%d").date()
+            except ValueError:
+                findings.append(Finding("KB001", rel, f"last_verified '{lv}' is not a valid YYYY-MM-DD date"))
+        if (today - last).days > budget:
+            findings.append(Finding("KB008", rel,
+                                    f"verified {(today - last).days}d ago (budget {budget}d): "
+                                    "re-verify (bump last_verified with fresh proof) or downgrade to tentative"))
+
+    # KB010: one trap per error entry
+    if bucket == "errors":
+        for section in ("Symptom", "Root Cause", "Fix", "Prevention"):
+            if parsed["section_counts"].get(section, 0) > 1:
+                findings.append(Finding("KB010", rel,
+                                        f"multiple '## {section}' sections: one trap per error entry — split it"))
+
+    front["_rel"] = f"{bucket}/{path.name}"
+    return front
+
+
+# ---------------------------------------------------------------- INDEX
+
+def read_manual_region(index_text, name, default):
+    start = MANUAL_START.format(name=name)
+    end = MANUAL_END.format(name=name)
+    if index_text and start in index_text and end in index_text:
+        return index_text.split(start, 1)[1].split(end, 1)[0].strip("\n")
+    return default
+
+
+DEFAULT_READY = ("| Topic | Canonical Source | Last Verified |\n"
+                 "|-------|------------------|---------------|")
+DEFAULT_EXTERNAL = ("| Doc | Purpose | Path/URL | Last Verified |\n"
+                    "|-----|---------|----------|---------------|")
+
+BUCKET_HEADINGS = {
+    "explorations": ("Explorations", '_"What is true" — findings from investigating existing behavior_'),
+    "solutions": ("Solutions", '_"What we did" — how changes/features/fixes were implemented_'),
+    "errors": ("Errors", '_"What broke + the fix" — reproducible traps and their resolution_'),
+    "decisions": ("Decisions", '_"Why we chose X" — design/architecture choices and trade-offs_'),
+}
+
+
+def generate_index(kb_dir, repo_root, config, entry_fronts):
+    existing = ""
+    index_path = kb_dir / "INDEX.md"
+    if index_path.is_file():
+        existing = index_path.read_text(encoding="utf-8")
+    ready = read_manual_region(existing, "ready-answers", DEFAULT_READY)
+    external = read_manual_region(existing, "external-docs", DEFAULT_EXTERNAL)
+
+    out = []
+    out.append("# Knowledge Database Index")
+    out.append("")
+    out.append("The front door to project memory. **Search here BEFORE investigating.**")
+    out.append("")
+    out.append("GENERATED by `bin/kb index` from entry front-matter (rule KB007).")
+    out.append("Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.")
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## Ready-Answer Table")
+    out.append("")
+    out.append("_Topic → the ONE doc to read. Check these BEFORE exploring._")
+    out.append("")
+    out.append(MANUAL_START.format(name="ready-answers"))
+    out.append(ready)
+    out.append(MANUAL_END.format(name="ready-answers"))
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## Lock-Step Invariants")
+    out.append("")
+    out.append("_Declared in `kb.config.json` (`lockstep`), enforced by KB009 in diff mode._")
+    out.append("")
+    out.append("| When This Changes | Must Also Update |")
+    out.append("|-------------------|------------------|")
+    for pair in config.get("lockstep", []):
+        out.append(f"| {pair.get('source', '')} | {pair.get('doc', '')} |")
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## Source-of-Truth Hierarchy")
+    out.append("")
+    out.append("_When sources disagree, trust the higher rank. Note stale sources._")
+    out.append("")
+    out.append("1. **Real source assets** — Code, actual configs, runtime behavior")
+    out.append("2. **Generated definitions** — ETL outputs, compiled schemas")
+    out.append("3. **Outbound feeds** — API responses, exports")
+    out.append("4. **Documentation** — READMEs, design docs (can drift)")
+    out.append("")
+
+    for bucket in config.get("buckets", {}):
+        title, blurb = BUCKET_HEADINGS.get(bucket, (bucket.title(), f"_{config['buckets'][bucket]}_"))
+        out.append("---")
+        out.append("")
+        out.append(f"## {title}")
+        out.append("")
+        out.append(blurb)
+        out.append("")
+        out.append("| Date | Title | Status | Tags | Entry |")
+        out.append("|------|-------|--------|------|-------|")
+        rows = [f for f in entry_fronts if f["_rel"].startswith(bucket + "/")]
+        rows.sort(key=lambda f: (str(f.get("date", "")), f["_rel"]), reverse=True)
+        for f in rows:
+            tags = f.get("tags", [])
+            tags_cell = "[" + ", ".join(tags) + "]" if isinstance(tags, list) and tags else ""
+            out.append(f"| {f.get('date', '')} | {f.get('title', '')} | {f.get('status', '')} "
+                       f"| {tags_cell} | {f['_rel']} |")
+        out.append("")
+
+    out.append("---")
+    out.append("")
+    out.append("## Canonical External Docs")
+    out.append("")
+    out.append("_External sources of truth indexed here for quick reference_")
+    out.append("")
+    out.append(MANUAL_START.format(name="external-docs"))
+    out.append(external)
+    out.append(MANUAL_END.format(name="external-docs"))
+    out.append("")
+    out.append("---")
+    out.append("")
+    out.append("## Tag Vocabulary")
+    out.append("")
+    out.append("_Closed enums from `kb.config.json` (rule KB002). To add a tag, edit the config._")
+    out.append("")
+    for dim, values in config.get("tags", {}).items():
+        out.append(f"- `{dim}:` " + (", ".join(f"`{v}`" for v in values) if values else "(none declared)"))
+    out.append("")
+    return "\n".join(out)
+
+
+# ---------------------------------------------------------------- git / diff
+
+def git_lines(repo_root, args):
+    try:
+        proc = subprocess.run(["git", "-C", str(repo_root)] + args,
+                              capture_output=True, text=True, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if proc.returncode != 0:
+        return None
+    return [l for l in proc.stdout.split("\n") if l.strip()]
+
+
+def changed_paths(repo_root, staged, diff_base):
+    if staged:
+        return git_lines(repo_root, ["diff", "--cached", "--name-only"])
+    if diff_base:
+        return git_lines(repo_root, ["diff", "--name-only", f"{diff_base}...HEAD"])
+    return None
+
+
+def check_diff_rules(kb_dir, repo_root, config, changed, findings):
+    kb_prefix = str(kb_dir.relative_to(repo_root)) + "/"
+    # KB009: lockstep pairs
+    for pair in config.get("lockstep", []):
+        src, doc = pair.get("source", ""), pair.get("doc", "")
+        src_hit = [p for p in changed if glob_match(src, p)]
+        if src_hit and not any(glob_match(doc, p) for p in changed):
+            findings.append(Finding("KB009", src_hit[0],
+                                    f"changed, but lockstep pair '{doc}' untouched in this diff"))
+    # KB011: write-back trigger
+    wb = config.get("writeback", {})
+    code_hits = [p for p in changed
+                 if any(glob_match(g, p) for g in wb.get("code", []))
+                 and not any(glob_match(g, p) for g in wb.get("exempt", []))]
+    if code_hits and not any(p.startswith(kb_prefix) for p in changed):
+        buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+        findings.append(Finding("KB011", code_hits[0],
+                                f"code changed but no {kb_prefix} entry touched — "
+                                f"record the work (likely bucket: solutions/ for features, errors/ for fixes; "
+                                f"all buckets: {buckets})"))
+
+
+# ---------------------------------------------------------------- commands
+
+def cmd_check(kb_dir, repo_root, config, args):
+    findings = []
+    today = date.today()
+    entries = collect_entries(kb_dir, config, findings)
+    fronts = []
+    for bucket, path in entries:
+        fronts.append(check_entry(kb_dir, repo_root, config, bucket, path, findings, today))
+
+    # KB007: INDEX.md matches generated output byte-for-byte
+    index_path = kb_dir / "INDEX.md"
+    generated = generate_index(kb_dir, repo_root, config, fronts)
+    kb_rel = str(kb_dir.relative_to(repo_root)) if kb_dir != repo_root else kb_dir.name
+    if not index_path.is_file():
+        findings.append(Finding("KB007", f"{kb_rel}/INDEX.md", "missing — run `kb index`"))
+    elif index_path.read_text(encoding="utf-8") != generated:
+        findings.append(Finding("KB007", f"{kb_rel}/INDEX.md",
+                                "does not match generated output — run `kb index` (never hand-edit outside manual regions)"))
+
+    if args.staged or args.diff_base:
+        changed = changed_paths(repo_root, args.staged, args.diff_base)
+        if changed is None:
+            findings.append(Finding("KB009", str(repo_root), "cannot compute git diff for diff-mode rules",
+                                    warning=True))
+        else:
+            check_diff_rules(kb_dir, repo_root, config, changed, findings)
+
+    errors = [f for f in findings if not f.warning]
+    warnings = [f for f in findings if f.warning]
+    if args.json:
+        print(json.dumps({
+            "ok": not errors,
+            "findings": [{"rule": f.rule, "file": f.file, "message": f.message} for f in errors],
+            "warnings": [{"rule": f.rule, "file": f.file, "message": f.message} for f in warnings],
+        }, indent=2))
+    else:
+        for f in errors + warnings:
+            print(f.line())
+        if errors:
+            print(f"kb check: {len(errors)} finding(s)")
+    return 1 if errors else 0
+
+
+def cmd_index(kb_dir, repo_root, config, args):
+    findings = []
+    entries = collect_entries(kb_dir, config, findings)
+    fronts = []
+    today = date.today()
+    scratch = []
+    for bucket, path in entries:
+        fronts.append(check_entry(kb_dir, repo_root, config, bucket, path, scratch, today))
+    generated = generate_index(kb_dir, repo_root, config, fronts)
+    if args.stdout:
+        print(generated, end="")
+    else:
+        (kb_dir / "INDEX.md").write_text(generated, encoding="utf-8")
+        print(f"regenerated {kb_dir / 'INDEX.md'}", file=sys.stderr)
+    return 0
+
+
+NEW_BODY = """
+## Summary
+
+<!-- 1-2 sentences: the key takeaway -->
+
+## Context / Question
+
+<!-- What triggered this investigation/work? -->
+
+## Findings / What We Did
+
+<!-- Cite a source for EVERY claim (path:Lstart-Lend). Unsourced = stays tentative. -->
+{error_sections}
+## Verification
+
+<!-- Required before status: verified (KB004). Paste ACTUAL command + captured output
+     in a fenced block. Hypothetical markers (# should / # expected / # todo) are rejected. -->
+"""
+
+ERROR_SECTIONS = """
+## Symptom
+
+<!-- Exact error message / observed behavior. ONE trap per entry (KB010). -->
+
+## Root Cause
+
+<!-- Why? Cite source files. -->
+
+## Fix
+
+<!-- What changed? File paths + code. -->
+
+## Prevention
+
+<!-- How to avoid re-introducing it. -->
+"""
+
+
+def cmd_new(kb_dir, repo_root, config, args):
+    types = config.get("types", {})
+    if args.type not in types:
+        fail(f"unknown type '{args.type}' (declared: {', '.join(types)})")
+    slug = args.slug.strip().lower()
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
+        fail(f"slug must be kebab-case: {args.slug!r}")
+    today = date.today().isoformat()
+    bucket = types[args.type]
+    path = kb_dir / bucket / f"{today}-{slug}.md"
+    if path.exists():
+        fail(f"already exists: {path}")
+    title = slug.replace("-", " ").capitalize()
+    body = NEW_BODY.format(error_sections=ERROR_SECTIONS if bucket == "errors" else "")
+    front = (f"---\n"
+             f"title: {title}\n"
+             f"type: {args.type}\n"
+             f"status: tentative\n"
+             f"date: {today}\n"
+             f"tags: []\n"
+             f"sources: []\n"
+             f"---\n")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(front + body, encoding="utf-8")
+
+    class _A:
+        stdout = False
+    cmd_index(kb_dir, repo_root, config, _A)
+    print(path.relative_to(repo_root))
+    return 0
+
+
+def main():
+    parser = argparse.ArgumentParser(prog="kb", description=__doc__,
+                                     formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser.add_argument("--kb-dir", help="KB directory (default: parent of this script)")
+    sub = parser.add_subparsers(dest="cmd", required=True)
+
+    p_new = sub.add_parser("new", help="scaffold a valid entry")
+    p_new.add_argument("type")
+    p_new.add_argument("slug")
+
+    p_index = sub.add_parser("index", help="regenerate INDEX.md from front-matter")
+    p_index.add_argument("--stdout", action="store_true", help="print instead of writing")
+
+    p_check = sub.add_parser("check", help="validate the KB")
+    p_check.add_argument("--json", action="store_true", help="machine-readable report")
+    p_check.add_argument("--staged", action="store_true", help="also run diff rules against staged changes")
+    p_check.add_argument("--diff-base", help="also run diff rules against <ref>...HEAD")
+
+    args = parser.parse_args()
+    kb_dir = find_kb_dir(args.kb_dir)
+    repo_root = kb_dir.parent
+    config = load_config(kb_dir)
+
+    if args.cmd == "new":
+        return cmd_new(kb_dir, repo_root, config, args)
+    if args.cmd == "index":
+        return cmd_index(kb_dir, repo_root, config, args)
+    if args.cmd == "check":
+        return cmd_check(kb_dir, repo_root, config, args)
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

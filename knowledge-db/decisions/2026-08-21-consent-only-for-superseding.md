@@ -1,13 +1,14 @@
 ---
 title: "Consent only for superseding verified entries"
 type: decision
-status: verified
+status: superseded
 date: 2026-08-21
 tags: [area:tooling, layer:enforcement]
 sources:
-  - CLAUDE.md:141-148
-  - knowledge-database/SKILL.md:103-108
+  - CLAUDE.md:155-163
+  - knowledge-database/SKILL.md:128-134
 related:
+  - decisions/2026-08-24-autonomous-superseding-no-prompts.md
   - decisions/2026-08-21-mandatory-vs-optional-auto-capture.md
 ---
 
@@ -49,4 +50,13 @@ Prompt format:
 
 ## Verification
 
-CLAUDE.md:141-148 and SKILL.md:103-108 updated. Consent mechanism explicitly scoped to superseding verified entries only.
+Both docs state the consent rule, scoped to superseding verified entries only (captured 2026-08-24):
+
+```bash
+$ sed -n '155p;157p' CLAUDE.md
+### 9. Consent Before Superseding Verified
+**Before marking a VERIFIED entry as SUPERSEDED**, ask user:
+$ sed -n '128p;133p' knowledge-database/SKILL.md
+### Consent Before Superseding
+Never change verified entry status without explicit user consent.
+```
