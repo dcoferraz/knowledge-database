@@ -9,6 +9,7 @@ sources:
   - knowledge-db/bin/kb:592-610
   - knowledge-db/bin/kb:875-886
   - knowledge-db/README.md:71
+  - ADVANCED.md:211-240
 related:
   - decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md
   - decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md
@@ -16,6 +17,9 @@ related:
 ---
 
 ## Summary
+
+Documented for non-technical audiences in ADVANCED.md ("The Human Window",
+ADVANCED.md:211-240) since 2026-08-24, linked from the README guides section.
 
 `kb index` now generates `INDEX.html` alongside INDEX.md: a single self-contained file a non-technical reader double-clicks to browse every entry, its Verification proof, and the actual source lines each claim is grounded in. Freshness enforced by KB012.
 

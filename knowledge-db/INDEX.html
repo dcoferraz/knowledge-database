@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:1e31620a364bd3946f0a003d834672ab647736d285955181d2de1f639b41d277 -->
+<!-- kb:fingerprint:092043787b060b97dc47a1227ff94c3325c9d3fc4d2d397a5fdcd1549dc152b2 -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -933,6 +933,7 @@ All tests passed</code></pre>
 <span class="tags">area:tooling, area:ui, layer:cli</span>
 </div>
 <h3>Summary</h3>
+<p>Documented for non-technical audiences in ADVANCED.md ("The Human Window", ADVANCED.md:211-240) since 2026-08-24, linked from the README guides section.</p>
 <p><code>kb index</code> now generates <code>INDEX.html</code> alongside INDEX.md: a single self-contained file a non-technical reader double-clicks to browse every entry, its Verification proof, and the actual source lines each claim is grounded in. Freshness enforced by KB012.</p>
 <h3>Context / Question</h3>
 <p>Product-facing users need to read the KB without git, markdown, or a server. Requirement: navigate the proof — the grounding of each statement (cited source lines), all decisions with who/why, supersession chains.</p>
@@ -1045,6 +1046,36 @@ Results: 16 passed, 0 failed</code></pre>
   885  {kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
   886  &lt;/kb-hard-rules&gt;""")</code></pre></details>
 <details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
+<details class="src"><summary>ADVANCED.md:211-240</summary><pre><code>  211  ## The Human Window: INDEX.html
+  212  
+  213  Everything above assumes someone comfortable in a repo. Most stakeholders are not.
+  214  `kb index` generates `INDEX.html` alongside `INDEX.md` for exactly that audience:
+  215  a self-contained knowledge browser that needs **no server, no dependencies, no
+  216  tooling — double-click the file and it opens in any browser**.
+  217  
+  218  What a non-technical reader gets:
+  219  
+  220  1. **Plain-language navigation** - Buckets labeled in human terms ("what broke and
+  221     how we fixed it", not `errors/`), with a search box and a status filter
+  222     (verified / tentative / superseded).
+  223  2. **Proof, not claims** - Every verified entry shows its Verification evidence,
+  224     and every source citation expands to the actual cited lines, embedded at build
+  225     time. A skeptical stakeholder can check the receipts without opening an editor.
+  226  3. **Decision accountability** - Decision entries show who decided; superseded
+  227     entries carry a banner linking their replacement, so nobody acts on stale
+  228     knowledge.
+  229  4. **It travels** - One file, no external assets. It survives email, Slack, and a
+  230     shared drive intact. Send it to a client, an auditor, or an exec before a
+  231     review meeting.
+  232  
+  233  Freshness is enforced, not hoped for: rule KB012 embeds a fingerprint of the KB
+  234  content in the file, and `kb check` (pre-commit and CI) fails when INDEX.html no
+  235  longer matches the entries. The copy in the repo is never silently stale — a
+  236  forwarded copy is a snapshot, so regenerate with `kb index` before sharing.
+  237  
+  238  For PMs: this is the artifact you show in the meeting. The KB stops being "a
+  239  thing the developers do" and becomes the project's shared source of truth.
+  240  </code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md">HTML view: build-time embedding, not runtime fetch or hosted docs</a>, <a href="#decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md">KB012 freshness via content fingerprint, not KB007-style byte check</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
 </article>
@@ -1082,14 +1113,14 @@ $ grep -n "ENFORCEMENT.md" README.md
     4  &gt; This document explains how the enforcement machinery works, why each layer
     5  &gt; exists, and how to tune it. For the context-workspace pattern, see
     6  &gt; [ADVANCED.md](ADVANCED.md).</code></pre></details>
-<details class="src"><summary>README.md:465-472</summary><pre><code>  465  **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
-  466  
-  467  It covers:
-  468  - The six enforcement layers and what each one catches
-  469  - Per-prompt rules injection (`kb rules` + UserPromptSubmit hook)
-  470  - Multi-runtime rule planting (Claude Code, Codex, Copilot, Cursor, Windsurf)
-  471  - Tuning the write-back gates (KB011 code, KB013 docs)
-  472  - Auditing and repairing drift with `install.sh --check`</code></pre></details>
+<details class="src"><summary>README.md:465-472</summary><pre><code>  465  
+  466  **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
+  467  
+  468  It covers:
+  469  - The six enforcement layers and what each one catches
+  470  - Per-prompt rules injection (`kb rules` + UserPromptSubmit hook)
+  471  - Multi-runtime rule planting (Claude Code, Codex, Copilot, Cursor, Windsurf)
+  472  - Tuning the write-back gates (KB011 code, KB013 docs)</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a>, <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a></p>
 </article>

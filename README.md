@@ -460,6 +460,7 @@ It covers:
 - Using KB tools on your full context
 - Decision tracking with stakeholder attribution
 - Why this matters for project managers and team leads
+- INDEX.html: the zero-tooling knowledge browser for non-technical stakeholders
 - Complete setup instructions
 
 **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**

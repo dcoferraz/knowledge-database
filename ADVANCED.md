@@ -208,6 +208,38 @@ You are not just helping developers code faster. You are building a **project br
 
 ---
 
+## The Human Window: INDEX.html
+
+Everything above assumes someone comfortable in a repo. Most stakeholders are not.
+`kb index` generates `INDEX.html` alongside `INDEX.md` for exactly that audience:
+a self-contained knowledge browser that needs **no server, no dependencies, no
+tooling — double-click the file and it opens in any browser**.
+
+What a non-technical reader gets:
+
+1. **Plain-language navigation** - Buckets labeled in human terms ("what broke and
+   how we fixed it", not `errors/`), with a search box and a status filter
+   (verified / tentative / superseded).
+2. **Proof, not claims** - Every verified entry shows its Verification evidence,
+   and every source citation expands to the actual cited lines, embedded at build
+   time. A skeptical stakeholder can check the receipts without opening an editor.
+3. **Decision accountability** - Decision entries show who decided; superseded
+   entries carry a banner linking their replacement, so nobody acts on stale
+   knowledge.
+4. **It travels** - One file, no external assets. It survives email, Slack, and a
+   shared drive intact. Send it to a client, an auditor, or an exec before a
+   review meeting.
+
+Freshness is enforced, not hoped for: rule KB012 embeds a fingerprint of the KB
+content in the file, and `kb check` (pre-commit and CI) fails when INDEX.html no
+longer matches the entries. The copy in the repo is never silently stale — a
+forwarded copy is a snapshot, so regenerate with `kb index` before sharing.
+
+For PMs: this is the artifact you show in the meeting. The KB stops being "a
+thing the developers do" and becomes the project's shared source of truth.
+
+---
+
 ## Setting Up a Context Workspace
 
 ```bash
