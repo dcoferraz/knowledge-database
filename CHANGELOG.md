@@ -5,6 +5,19 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] - 2026-08-24
+
+### Added
+- **ENFORCEMENT.md**: dedicated guide for the six-layer enforcement machinery —
+  layer table with what each catches, per-prompt rules injection mechanics,
+  multi-runtime rule planting semantics and `RULE_TARGETS` tuning, KB011/KB013
+  write-back gate configuration, drift audit/repair, timing caveats, and the
+  bash errexit portability rule. Linked from the README guides section.
+- **ADVANCED.md "The Human Window"**: INDEX.html section for non-technical
+  stakeholders — zero-tooling browsing, plain-language navigation, proof
+  navigation down to cited source lines, decision attribution, single-file
+  sharing, KB012 freshness guarantee.
+
 ## [0.5.1] - 2026-08-24
 
 ### Fixed
@@ -171,6 +184,7 @@ mechanically enforced or explicitly labelled guidance.
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.5.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.0...v0.4.1
