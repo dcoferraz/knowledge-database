@@ -2,7 +2,7 @@
 
 This folder is the project's **durable memory**. Never investigate the same thing twice. Never re-introduce a fixed bug.
 
-Every hard rule below has a stable ID (KB001-KB014) and is enforced by `bin/kb check`.
+Every hard rule below has a stable ID (KB001-KB015) and is enforced by `bin/kb check`.
 A rule without an ID is not a rule — anything unenforceable lives in the
 "Guidance (not checked)" section at the bottom. Vocabularies (buckets, statuses,
 tags, staleness budgets, lockstep pairs) live in ONE place: `kb.config.json`.
@@ -76,6 +76,7 @@ Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fail
 | KB012 | `INDEX.html` (self-contained human-facing view) is fresh: its embedded fingerprint matches the KB content (generated INDEX.md + entry files). Embedded source snippets are best-effort context and deliberately outside the fingerprint. |
 | KB013 | Doc write-back trigger: a diff touching `writeback.docs` paths (decision-bearing docs: CLAUDE.md, AGENTS.md, ADRs, docs/) but no `knowledge-db/**` file fails — a doc edit that states a rule, constraint, or choice is a decision and belongs in `decisions/` too. Diff mode only. |
 | KB014 | Version drift (warning-only): `kb.config.json` records the tool version that wrote it (`kb_version`); a missing or mismatched value warns so independently-upgraded tooling and config are visible. `kb version` prints both. Never fails the check — see UPGRADING.md for the upgrade order. |
+| KB015 | Changelog art (config-gated by `changelog_art` in `kb.config.json`): every released version heading in the changelog starts with a small SVG artwork at the LEFT of the title (`## ![name](<dir>/vX.Y.Z-<animal>.svg) [X.Y.Z] - date`). The SVG must exist, live under the declared dir, and be unique per version. Convention: a small random animal per release. Off unless configured. |
 
 Every rule has a fixture: `tests/fixtures/pass/` must exit 0; each
 `tests/fixtures/fail/KBxxx/` must exit non-zero naming that ID (`tests/run-kb-tests.sh`).

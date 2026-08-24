@@ -17,6 +17,7 @@ Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
          no template residue                 KB012  INDEX.html fresh (fingerprint)
   KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
                                              KB014  version drift (warning-only)
+                                             KB015  changelog art (config-gated)
 
 Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
 documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
@@ -31,7 +32,7 @@ import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
-KB_TOOL_VERSION = "0.5.3"
+KB_TOOL_VERSION = "0.6.0"
 
 MANUAL_START = "<!-- kb:manual:{name}:start -->"
 MANUAL_END = "<!-- kb:manual:{name}:end -->"
@@ -908,6 +909,52 @@ def check_version_drift(kb_dir, config, findings):
                                 warning=True))
 
 
+CHANGELOG_VERSION_RE = re.compile(r"^##\s+.*\[(\d+\.\d+\.\d+)\]")
+CHANGELOG_ART_RE = re.compile(r"^##\s+!\[[^\]]*\]\(([^)]+\.svg)\)\s+\[(\d+\.\d+\.\d+)\]")
+
+
+def check_changelog_art(repo_root, config, findings):
+    # KB015 (config-gated): every released version heading in the changelog
+    # carries a small SVG artwork at the LEFT of the title. The art must exist,
+    # live under the declared dir, and be unique per version (the "random
+    # animal per release" practice — distinctness is the mechanical proxy).
+    art_cfg = config.get("changelog_art")
+    if not art_cfg:
+        return
+    rel_file = art_cfg.get("file", "CHANGELOG.md")
+    art_dir = art_cfg.get("dir", "images/changelog")
+    log_path = repo_root / rel_file
+    if not log_path.is_file():
+        findings.append(Finding("KB015", rel_file, "changelog_art configured but file missing"))
+        return
+    seen = {}
+    for n, line in enumerate(log_path.read_text(encoding="utf-8").splitlines(), 1):
+        m_ver = CHANGELOG_VERSION_RE.match(line)
+        if not m_ver:
+            continue
+        ver = m_ver.group(1)
+        m_art = CHANGELOG_ART_RE.match(line)
+        if not m_art:
+            findings.append(Finding("KB015", f"{rel_file}:{n}",
+                                    f"version [{ver}] heading lacks SVG art left of the title — "
+                                    f"add a small animal SVG under {art_dir}/ as "
+                                    f"## ![name]({art_dir}/v{ver}-<animal>.svg) [{ver}] - <date>"))
+            continue
+        art = m_art.group(1)
+        if not art.startswith(art_dir.rstrip("/") + "/"):
+            findings.append(Finding("KB015", f"{rel_file}:{n}",
+                                    f"version [{ver}] art '{art}' is outside the declared dir {art_dir}/"))
+        if not (repo_root / art).is_file():
+            findings.append(Finding("KB015", f"{rel_file}:{n}",
+                                    f"version [{ver}] art file '{art}' does not exist"))
+        if art in seen:
+            findings.append(Finding("KB015", f"{rel_file}:{n}",
+                                    f"version [{ver}] reuses art '{art}' (already used by [{seen[art]}]) — "
+                                    f"each release gets its own animal"))
+        else:
+            seen[art] = ver
+
+
 def cmd_version(kb_dir, repo_root, config, args):
     declared = config.get("kb_version", "unrecorded")
     print(f"kb tool version: {KB_TOOL_VERSION}")
@@ -919,6 +966,7 @@ def cmd_check(kb_dir, repo_root, config, args):
     findings = []
     today = date.today()
     check_version_drift(kb_dir, config, findings)
+    check_changelog_art(repo_root, config, findings)
     entries = collect_entries(kb_dir, config, findings)
     fronts = []
     for bucket, path in entries:

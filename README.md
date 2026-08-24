@@ -9,7 +9,7 @@
 
 
 
-[![Version](https://img.shields.io/badge/version-0.4.0-orange)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.6.0-orange)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Claude Code](https://img.shields.io/badge/Claude%20Code-skill-blueviolet)](https://claude.ai/claude-code)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub%20Copilot-compatible-green)](https://github.com/features/copilot)
@@ -209,7 +209,7 @@ knowledge-db/
 ├── INDEX.html         GENERATED human-facing view — double-click, browse entries + proof
 ├── AGENT.md           Portable agent hard rules (read-first, empty-KB, never-prompt)
 ├── kb.config.json     Single source of truth: buckets, statuses, tags, budgets
-├── bin/kb             Zero-dependency CLI: new / index / check / rules (rules KB001-KB013)
+├── bin/kb             Zero-dependency CLI: new / index / check / rules (rules KB001-KB015)
 ├── install.sh         Idempotent enforcement installer
 ├── _TEMPLATE.md       Reference layout (prefer `bin/kb new`)
 ├── explorations/      "How does X work?"
@@ -240,7 +240,7 @@ knowledge-db/bin/kb rules                      # hard-rules block for prompt-inj
 
 | Tool | Purpose | Example |
 |------|---------|---------|
-| `bin/kb` | Scaffold, index, validate (rules KB001-KB013), print rules | `kb check --json` |
+| `bin/kb` | Scaffold, index, validate (rules KB001-KB015), print rules | `kb check --json` |
 | `install.sh` | Plant rules in 6 runtime files + agent hooks (Stop + per-prompt) + pre-commit + CI | `install.sh --check` |
 | `kb-ingest` | Parse text into KB entry | `cat notes.txt \| kb-ingest --auto` |
 | `kb-discover` | Scan codebase, generate exploration | `kb-discover ./legacy-app` |

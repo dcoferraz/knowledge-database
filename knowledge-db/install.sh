@@ -253,7 +253,7 @@ This repo keeps durable memory in \`$KB_NAME/\`. For EVERY task:
 4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
    with KB entries. \`$KB_NAME/bin/kb check\` must exit 0.
 
-Full rules: \`$KB_NAME/AGENT.md\`. Rule table (KB001-KB013): \`$KB_NAME/README.md\`.
+Full rules: \`$KB_NAME/AGENT.md\`. Rule table (KB001-KB015): \`$KB_NAME/README.md\`.
 <!-- kb:agent-rules:end -->
 EOF
 }

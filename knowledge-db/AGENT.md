@@ -54,4 +54,4 @@ the same breath (KB013 enforces this on staged/PR diffs).
   outside the `kb:manual` regions (KB007).
 - Validate before finishing: `knowledge-db/bin/kb check` must exit 0.
 
-The full rule table (KB001-KB013) lives in `knowledge-db/README.md`.
+The full rule table (KB001-KB015) lives in `knowledge-db/README.md`.

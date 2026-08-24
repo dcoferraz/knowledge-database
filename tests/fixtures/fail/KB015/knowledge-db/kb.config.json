@@ -44,10 +44,10 @@
     "code": [
       "src/**"
     ],
-    "docs": [
-      "CLAUDE.md",
-      "docs/**"
-    ],
     "exempt": []
+  },
+  "changelog_art": {
+    "file": "CHANGELOG.md",
+    "dir": "images/changelog"
   }
 }

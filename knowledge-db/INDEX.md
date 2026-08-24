@@ -96,6 +96,7 @@ _"Why we chose X" — design/architecture choices and trade-offs_
 | 2026-08-24 | Inject hard rules every prompt, not only at session start | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-inject-rules-every-prompt.md |
 | 2026-08-24 | Enforce-or-delete: every hard rule gets an ID or leaves the README | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-enforce-or-delete-rule-ids.md |
 | 2026-08-24 | Derive INDEX.md from front-matter instead of hand-maintaining it | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-derive-index-from-front-matter.md |
+| 2026-08-24 | KB015: changelog animal art as a config-gated hard rule | verified | [area:release, area:tooling, layer:enforcement] | decisions/2026-08-24-changelog-animal-art-kb015.md |
 | 2026-08-24 | HTML view: build-time embedding, not runtime fetch or hosted docs | verified | [area:tooling, area:ui, layer:cli] | decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md |
 | 2026-08-24 | Never prompt: autonomous superseding with audit trail replaces consent | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-autonomous-superseding-no-prompts.md |
 | 2026-08-21 | Security hardening approach for CLI tools | verified | [area:tooling, layer:cli, area:security] | decisions/2026-08-21-security-hardening-approach.md |

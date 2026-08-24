@@ -1,5 +1,5 @@
 {
-  "kb_version": "0.5.3",
+  "kb_version": "0.6.0",
   "buckets": {
     "explorations": "what is true",
     "solutions": "what we did",
@@ -88,5 +88,9 @@
       "adr/**"
     ],
     "exempt": []
+  },
+  "changelog_art": {
+    "file": "CHANGELOG.md",
+    "dir": "images/changelog"
   }
 }
