@@ -5,6 +5,39 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-24
+
+Response to field failure and external parity feedback: enforcement content
+existed, but the delivery mechanism auto-loaded for only one agent runtime and
+only from session start. v0.5.0 makes the rules reach every major agent runtime
+with zero human steps, and closes the doc-only-decision write-back gap.
+
+### Added
+- **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
+  `<kb-hard-rules>` block; `install.sh` merges a UserPromptSubmit hook running it
+  into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
+  active immediately after a mid-session install, immune to context loss.
+- **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
+  into every runtime file the major agents auto-ingest — `CLAUDE.md`,
+  `AGENTS.md`, `.github/copilot-instructions.md`,
+  `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
+  `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
+  Marker-guarded create-or-merge, idempotent; `--check` fails if any target
+  loses the block. Replaces the single-host-file behavior.
+- **KB013 — doc write-back trigger**: a staged/PR diff touching
+  `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
+  without touching `knowledge-db/**` fails — a doc edit that states a rule,
+  constraint, or choice is a decision and belongs in `decisions/` too.
+  Conformance fixture included.
+- Installer conformance tests: all-6-files planted, frontmatter shapes,
+  idempotent rerun, drift detection (suite now 23 tests).
+
+### Changed
+- `install.sh` output notes that planted rule files load at each agent's next
+  session start while the UserPromptSubmit hook covers the current Claude Code
+  session from the next prompt.
+- `kb.config.json` `writeback` gains a `docs` glob list alongside `code`.
+
 ## [0.4.1] - 2026-08-24
 
 ### Added
@@ -130,6 +163,9 @@ mechanically enforced or explicitly labelled guidance.
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.5.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.3.1...v0.4.0
 [0.3.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.2.1...v0.2.2

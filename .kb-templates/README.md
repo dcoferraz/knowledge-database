@@ -2,7 +2,7 @@
 
 This folder is the project's **durable memory**. Never investigate the same thing twice. Never re-introduce a fixed bug.
 
-Every hard rule below has a stable ID (KB001-KB011) and is enforced by `bin/kb check`.
+Every hard rule below has a stable ID (KB001-KB013) and is enforced by `bin/kb check`.
 A rule without an ID is not a rule — anything unenforceable lives in the
 "Guidance (not checked)" section at the bottom. Vocabularies (buckets, statuses,
 tags, staleness budgets, lockstep pairs) live in ONE place: `kb.config.json`.
@@ -15,8 +15,9 @@ Every non-trivial task:
 
 1. **READ FIRST** — Check INDEX.md (Ready-Answer Table + entry catalog). If answered, USE IT and STOP.
 2. **DO THE WORK** — Explore or implement.
-3. **WRITE BACK** — Record what you learned. Enforced by KB011: a diff that touches
-   production code but no `knowledge-db/` file fails `kb check --staged` / `--diff-base`.
+3. **WRITE BACK** — Record what you learned. Enforced by KB011 (production code) and
+   KB013 (decision-bearing docs): a diff that touches those paths but no
+   `knowledge-db/` file fails `kb check --staged` / `--diff-base`.
 
 "Non-trivial" = anything requiring search, reading multiple files, debugging, or making decisions.
 
@@ -26,12 +27,15 @@ Every non-trivial task:
 knowledge-db/bin/kb new <type> <slug>   # scaffold a valid entry (status: tentative), regen INDEX
 knowledge-db/bin/kb index               # regenerate INDEX.md + INDEX.html from entry front-matter
 knowledge-db/bin/kb check               # validate; exits non-zero with "RULE_ID file: message"
-knowledge-db/bin/kb check --staged      # + diff rules (KB009, KB011) against staged changes
+knowledge-db/bin/kb check --staged      # + diff rules (KB009, KB011, KB013) against staged changes
 knowledge-db/bin/kb check --json        # machine-readable report
+knowledge-db/bin/kb rules               # print agent hard-rules block (prompt-injection hooks)
 ```
 
 Zero dependencies: Python 3 stdlib only. `install.sh` wires enforcement
-(agent hook, git pre-commit, CI); `install.sh --check` asserts it is still wired.
+(HARD RULE block planted into the 6 runtime files the major agents auto-ingest,
+agent Stop hook, per-prompt rules injection, git pre-commit, CI);
+`install.sh --check` asserts it is still wired.
 
 ## Folder Structure
 
@@ -69,6 +73,7 @@ Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fail
 | KB010 | One trap per error entry. An error entry with duplicate Symptom / Root Cause / Fix / Prevention sections fails — split it so symptom-grep lands on one file. |
 | KB011 | Write-back trigger: a diff touching `writeback.code` paths but no `knowledge-db/**` file fails, naming the bucket the entry probably belongs in. Diff mode only. |
 | KB012 | `INDEX.html` (self-contained human-facing view) is fresh: its embedded fingerprint matches the KB content (generated INDEX.md + entry files). Embedded source snippets are best-effort context and deliberately outside the fingerprint. |
+| KB013 | Doc write-back trigger: a diff touching `writeback.docs` paths (decision-bearing docs: CLAUDE.md, AGENTS.md, ADRs, docs/) but no `knowledge-db/**` file fails — a doc edit that states a rule, constraint, or choice is a decision and belongs in `decisions/` too. Diff mode only. |
 
 Every rule has a fixture: `tests/fixtures/pass/` must exit 0; each
 `tests/fixtures/fail/KBxxx/` must exit non-zero naming that ID (`tests/run-kb-tests.sh`).

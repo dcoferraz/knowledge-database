@@ -197,7 +197,7 @@ git clone https://github.com/dcoferraz/knowledge-database.git
 Then wire enforcement (idempotent; merges into existing settings/hooks/CI):
 
 ```bash
-knowledge-db/install.sh          # agent hard rules + Stop hook + git pre-commit + CI job
+knowledge-db/install.sh          # rules planted in 6 agent runtime files + per-prompt injection + Stop hook + git pre-commit + CI job
 knowledge-db/install.sh --check  # audit: fails if any enforcement layer is missing
 ```
 
@@ -209,7 +209,7 @@ knowledge-db/
 ├── INDEX.html         GENERATED human-facing view — double-click, browse entries + proof
 ├── AGENT.md           Portable agent hard rules (read-first, empty-KB, never-prompt)
 ├── kb.config.json     Single source of truth: buckets, statuses, tags, budgets
-├── bin/kb             Zero-dependency CLI: new / index / check (rules KB001-KB011)
+├── bin/kb             Zero-dependency CLI: new / index / check / rules (rules KB001-KB013)
 ├── install.sh         Idempotent enforcement installer
 ├── _TEMPLATE.md       Reference layout (prefer `bin/kb new`)
 ├── explorations/      "How does X work?"
@@ -227,7 +227,8 @@ knowledge-db/
 knowledge-db/bin/kb new error yaml-injection   # scaffold a valid entry, regen INDEX
 knowledge-db/bin/kb index                      # regenerate INDEX.md + INDEX.html from front-matter
 knowledge-db/bin/kb check                      # validate: "RULE_ID file: message", non-zero exit
-knowledge-db/bin/kb check --staged             # + lockstep (KB009) and write-back (KB011) rules
+knowledge-db/bin/kb check --staged             # + lockstep (KB009) and write-back (KB011 code, KB013 docs) rules
+knowledge-db/bin/kb rules                      # hard-rules block for prompt-injection hooks
 
 # Helpers (bash)
 ./scripts/init-knowledge-db.sh                 # initialize KB structure
@@ -239,8 +240,8 @@ knowledge-db/bin/kb check --staged             # + lockstep (KB009) and write-ba
 
 | Tool | Purpose | Example |
 |------|---------|---------|
-| `bin/kb` | Scaffold, index, validate (rules KB001-KB012) | `kb check --json` |
-| `install.sh` | Wire agent hook + pre-commit + CI | `install.sh --check` |
+| `bin/kb` | Scaffold, index, validate (rules KB001-KB013), print rules | `kb check --json` |
+| `install.sh` | Plant rules in 6 runtime files + agent hooks (Stop + per-prompt) + pre-commit + CI | `install.sh --check` |
 | `kb-ingest` | Parse text into KB entry | `cat notes.txt \| kb-ingest --auto` |
 | `kb-discover` | Scan codebase, generate exploration | `kb-discover ./legacy-app` |
 | `kb-lint` | Legacy health check (superseded by `bin/kb check`) | `kb-lint --fix` |
@@ -392,12 +393,22 @@ knowledge-database/
 
 ## Compatibility
 
-| Agent | Install Method |
-|-------|----------------|
-| Claude Code | Plugin marketplace or manual skill |
-| GitHub Copilot | Copy CLAUDE.md to `.github/copilot-instructions.md` |
-| Cursor | Copy CLAUDE.md to `.cursor/rules/` |
+`knowledge-db/install.sh` plants the HARD RULE block into every runtime file the
+major agents auto-ingest — zero copy-paste, belt-and-suspenders (whichever agent is
+active still sees it):
+
+| Agent | Auto-loaded rule file (planted by install.sh) |
+|-------|-----------------------------------------------|
+| Claude Code | `CLAUDE.md` + per-prompt injection (UserPromptSubmit hook running `kb rules`) + Stop hook |
+| Codex / agents-md runtimes | `AGENTS.md` |
+| GitHub Copilot | `.github/copilot-instructions.md` + `.github/instructions/kb.instructions.md` (`applyTo: '**'`) |
+| Cursor | `.cursor/rules/knowledge-db.mdc` (`alwaysApply: true`) |
+| Windsurf | `.windsurfrules` |
 | Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
+
+Each target is marker-guarded (create-or-merge, idempotent); `install.sh --check`
+fails if any of them loses the block. To restrict targets, edit `RULE_TARGETS` in
+`install.sh`.
 
 ---
 

@@ -2,14 +2,20 @@
 # knowledge-db enforcement installer. Idempotent and merging: re-runnable,
 # never clobbers existing agent settings, hooks, or CI.
 #
-# Installs five layers:
+# Installs six layers:
 #   1. KB scaffold           (knowledge-db/ with config, tool, buckets) — only if absent
 #   2. Agent Stop hook       merged into committed .claude/settings.json (kb check)
-#   3. Git pre-commit hook   .githooks/pre-commit + core.hooksPath (kb check --staged)
-#   4. CI job                .github/workflows/kb-check.yml
-#   5. Agent hard rules      HARD RULE block appended to host instructions file
-#                            (CLAUDE.md / AGENTS.md / copilot-instructions.md; full
-#                            rules live in <KB>/AGENT.md)
+#   3. Agent prompt rules    UserPromptSubmit hook merged into .claude/settings.json
+#                            (kb rules): hard rules injected on EVERY prompt — active
+#                            immediately, survives mid-session installs and context loss
+#   4. Git pre-commit hook   .githooks/pre-commit + core.hooksPath (kb check --staged)
+#   5. CI job                .github/workflows/kb-check.yml
+#   6. Agent hard rules      HARD RULE block planted into EVERY runtime file the
+#                            major agents auto-ingest (CLAUDE.md, AGENTS.md,
+#                            .github/copilot-instructions.md, .github/instructions/
+#                            kb.instructions.md with applyTo '**', .cursor/rules/
+#                            knowledge-db.mdc with alwaysApply, .windsurfrules);
+#                            full rules live in <KB>/AGENT.md
 #
 # Usage:
 #   knowledge-db/install.sh           install/repair; prints changed vs already-in-place
@@ -92,7 +98,49 @@ EOF
     note_changed "agent Stop hook merged into .claude/settings.json"
 fi
 
-# ---------------------------------------------------------------- 3. git hook
+# ---------------------------------------------------------------- 3. prompt rules hook
+
+RULES_CMD="\"\$CLAUDE_PROJECT_DIR/$KB_NAME/bin/kb\" rules"
+
+has_rules_hook() {
+    [[ -f "$SETTINGS" ]] && python3 - "$SETTINGS" <<'EOF'
+import json, sys
+try:
+    data = json.load(open(sys.argv[1]))
+except Exception:
+    sys.exit(1)
+for group in data.get("hooks", {}).get("UserPromptSubmit", []):
+    for hook in group.get("hooks", []):
+        if "kb\" rules" in hook.get("command", "") or "kb rules" in hook.get("command", ""):
+            sys.exit(0)
+sys.exit(1)
+EOF
+}
+
+if has_rules_hook; then
+    note_ok "agent prompt rules hook (.claude/settings.json UserPromptSubmit)"
+elif $CHECK_ONLY; then
+    note_missing "agent prompt rules hook (.claude/settings.json UserPromptSubmit)"
+else
+    mkdir -p "$REPO_ROOT/.claude"
+    RULES_CMD="$RULES_CMD" SETTINGS="$SETTINGS" python3 - <<'EOF'
+import json, os
+path = os.environ["SETTINGS"]
+data = {}
+if os.path.exists(path):
+    with open(path) as f:
+        data = json.load(f)
+hooks = data.setdefault("hooks", {})
+ups = hooks.setdefault("UserPromptSubmit", [])
+ups.append({"hooks": [{"type": "command", "command": os.environ["RULES_CMD"]}]})
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+    f.write("\n")
+EOF
+    note_changed "agent prompt rules hook (UserPromptSubmit: kb rules) merged into .claude/settings.json"
+fi
+
+# ---------------------------------------------------------------- 4. git hook
 
 precommit_ok() {
     [[ -f "$PRECOMMIT" ]] && grep -q "kb\" check --staged" "$PRECOMMIT"
@@ -132,7 +180,7 @@ else
     note_changed "git core.hooksPath set to .githooks"
 fi
 
-# ---------------------------------------------------------------- 4. CI job
+# ---------------------------------------------------------------- 5. CI job
 
 if [[ -f "$WORKFLOW" ]]; then
     note_ok "CI job (.github/workflows/kb-check.yml)"
@@ -169,34 +217,28 @@ EOF
     note_changed "CI job written to .github/workflows/kb-check.yml"
 fi
 
-# ---------------------------------------------------------------- 5. agent rules
+# ---------------------------------------------------------------- 6. agent rules
+# Belt-and-suspenders: the HARD RULE block is planted into EVERY runtime file the
+# major agents auto-ingest, so whichever agent is active still sees it with zero
+# human steps. Each target is marker-guarded (create-or-merge, idempotent).
+# To restrict, delete unwanted paths from RULE_TARGETS — --check mirrors the list.
 
-find_host_file() {
-    for f in "CLAUDE.md" "AGENTS.md" ".github/copilot-instructions.md"; do
-        if [[ -f "$REPO_ROOT/$f" ]]; then
-            echo "$REPO_ROOT/$f"
-            return
-        fi
-    done
-    echo "$REPO_ROOT/CLAUDE.md"
-}
-
-HOST_FILE="$(find_host_file)"
-HOST_REL="${HOST_FILE#"$REPO_ROOT"/}"
 MARKER="<!-- kb:agent-rules:start -->"
 
-if [[ ! -f "$KB_DIR/AGENT.md" ]]; then
-    if $CHECK_ONLY; then
-        note_missing "agent hard rules ($KB_NAME/AGENT.md)"
-    fi
-elif [[ -f "$HOST_FILE" ]] && grep -qF "$MARKER" "$HOST_FILE"; then
-    note_ok "agent hard rules ($HOST_REL references $KB_NAME/AGENT.md)"
-elif $CHECK_ONLY; then
-    note_missing "agent hard rules (HARD RULE block absent from $HOST_REL)"
-else
-    mkdir -p "$(dirname "$HOST_FILE")"
-    cat >> "$HOST_FILE" <<EOF
+# "<relative path>|<kind>": append = marker block appended to (possibly existing)
+# markdown; copilot-fm / cursor-fm = created with the frontmatter that runtime
+# needs to auto-apply the rule to every task (merge if the file already exists).
+RULE_TARGETS=(
+    "CLAUDE.md|append"
+    "AGENTS.md|append"
+    ".github/copilot-instructions.md|append"
+    ".github/instructions/kb.instructions.md|copilot-fm"
+    ".cursor/rules/knowledge-db.mdc|cursor-fm"
+    ".windsurfrules|append"
+)
 
+emit_rule_block() {
+    cat <<EOF
 $MARKER
 ## HARD RULE: Knowledge Database
 
@@ -211,10 +253,53 @@ This repo keeps durable memory in \`$KB_NAME/\`. For EVERY task:
 4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
    with KB entries. \`$KB_NAME/bin/kb check\` must exit 0.
 
-Full rules: \`$KB_NAME/AGENT.md\`. Rule table (KB001-KB011): \`$KB_NAME/README.md\`.
+Full rules: \`$KB_NAME/AGENT.md\`. Rule table (KB001-KB013): \`$KB_NAME/README.md\`.
 <!-- kb:agent-rules:end -->
 EOF
-    note_changed "agent hard rules appended to $HOST_REL"
+}
+
+emit_frontmatter() {
+    case "$1" in
+        copilot-fm) printf -- "---\napplyTo: '**'\n---\n\n" ;;
+        cursor-fm)  printf -- "---\ndescription: Knowledge database hard rules (durable project memory)\nalwaysApply: true\n---\n\n" ;;
+    esac
+}
+
+if [[ ! -f "$KB_DIR/AGENT.md" ]] && $CHECK_ONLY; then
+    note_missing "agent hard rules ($KB_NAME/AGENT.md)"
+fi
+
+NEW_PLANTS=0
+RULES_MISSING=()
+for target in "${RULE_TARGETS[@]}"; do
+    REL="${target%%|*}"
+    KIND="${target##*|}"
+    FILE="$REPO_ROOT/$REL"
+    if [[ -f "$FILE" ]] && grep -qF "$MARKER" "$FILE"; then
+        continue
+    elif $CHECK_ONLY; then
+        RULES_MISSING+=("$REL")
+    else
+        mkdir -p "$(dirname "$FILE")"
+        if [[ ! -f "$FILE" ]]; then
+            { emit_frontmatter "$KIND"; emit_rule_block; } > "$FILE"
+        else
+            { printf "\n"; emit_rule_block; } >> "$FILE"
+        fi
+        note_changed "agent hard rules planted in $REL"
+        NEW_PLANTS=$((NEW_PLANTS + 1))
+    fi
+done
+
+if [[ ${#RULES_MISSING[@]} -gt 0 ]]; then
+    note_missing "agent hard rules (HARD RULE block absent from: ${RULES_MISSING[*]})"
+elif [[ $NEW_PLANTS -eq 0 ]]; then
+    note_ok "agent hard rules (all ${#RULE_TARGETS[@]} runtime files reference $KB_NAME/AGENT.md)"
+fi
+
+if [[ $NEW_PLANTS -gt 0 ]]; then
+    echo "NOTE: planted rule files load at each agent's NEXT session start;" >&2
+    echo "      the UserPromptSubmit hook (kb rules) covers the CURRENT Claude Code session from the next prompt." >&2
 fi
 
 # ---------------------------------------------------------------- report

@@ -34,12 +34,12 @@ Do not add `Co-Authored-By` lines for AI assistants in commit messages. The huma
 
 ## The Ten Enforcement Mechanisms
 
-> **Implementation Status**: Mechanically checkable mechanisms are enforced by `knowledge-db/bin/kb check` as rules KB001-KB011 (see knowledge-db/README.md for the rule table). `knowledge-db/install.sh` wires three enforcement layers: agent Stop hook (.claude/settings.json), git pre-commit (.githooks/), and CI (.github/workflows/kb-check.yml). What cannot be mechanically checked remains agent convention, labelled as such.
+> **Implementation Status**: Mechanically checkable mechanisms are enforced by `knowledge-db/bin/kb check` as rules KB001-KB013 (see knowledge-db/README.md for the rule table). `knowledge-db/install.sh` wires five enforcement layers: agent Stop hook (.claude/settings.json), per-prompt rules injection (UserPromptSubmit hook running `kb rules`), HARD RULE block planted into the 6 runtime files the major agents auto-ingest (CLAUDE.md, AGENTS.md, both Copilot instruction files, Cursor `.mdc`, `.windsurfrules`), git pre-commit (.githooks/), and CI (.github/workflows/kb-check.yml). What cannot be mechanically checked remains agent convention, labelled as such.
 
 ### 1. Always-On Enforcement
 
 - Loop is mandatory, not triggered by user phrases
-- Enforced: `knowledge-db/install.sh` merges a Stop hook running `kb check` into the committed `.claude/settings.json`, and KB011 fails any diff that touches production code without touching `knowledge-db/`
+- Enforced: `knowledge-db/install.sh` merges a Stop hook running `kb check` AND a UserPromptSubmit hook running `kb rules` (hard rules injected into context on EVERY prompt — active mid-session, immune to context loss) into the committed `.claude/settings.json`. KB011 fails any diff that touches production code without touching `knowledge-db/`; KB013 does the same for decision-bearing docs (`writeback.docs`: CLAUDE.md, AGENTS.md, ADRs, docs/)
 
 ### 2. Routing to Canonical Docs
 
@@ -99,7 +99,7 @@ Write build/runtime traps and fixes to **repo scope** so they're reused, not red
 - **Reuse tags**: grep existing tags before creating new ones; vocabulary lives in INDEX.md
 - **Search before creating**: if near-duplicate exists, UPDATE it instead of adding new
 - **Fix wrong entries**: set `status: superseded`, link replacement. Never leave known-wrong notes.
-- **Periodic lint**: run `knowledge-db/bin/kb check` (KB001-KB012); `bin/kb index` regenerates INDEX.md + INDEX.html from front-matter — never hand-edit outside the `kb:manual` regions (KB007)
+- **Periodic lint**: run `knowledge-db/bin/kb check` (KB001-KB013); `bin/kb index` regenerates INDEX.md + INDEX.html from front-matter — never hand-edit outside the `kb:manual` regions (KB007)
 - **Archival at scale**: When INDEX.md exceeds ~100 entries, move older entries (6+ months) to `INDEX-archive-YYYY.md`. Keep INDEX.md focused on active knowledge.
 
 ### 8. Auto-Capture (Mandatory)
@@ -232,7 +232,8 @@ MUST record all four:
 
 The hard gate is automatic: KB011 fails any staged/PR diff that touches production
 code paths (declared in `kb.config.json` `writeback.code`) without touching
-`knowledge-db/`, and `kb check` enforces entry quality (KB001-KB010). The list
+`knowledge-db/`, KB013 does the same for decision-bearing docs (`writeback.docs`),
+and `kb check` enforces entry quality (KB001-KB010). The list
 below is the manual walkthrough of what those rules check plus the judgment calls
 they cannot:
 
@@ -267,7 +268,8 @@ knowledge-db/install.sh          # wires enforcement: agent hook, git pre-commit
 # Enforcement CLI (zero-dependency, Python 3 stdlib) — the authoritative validator
 knowledge-db/bin/kb new <type> <slug>   # scaffold a valid entry, regen INDEX
 knowledge-db/bin/kb index               # regenerate INDEX.md + INDEX.html from front-matter
-knowledge-db/bin/kb check               # validate (KB001-KB012); --staged/--diff-base for diff rules
+knowledge-db/bin/kb check               # validate (KB001-KB013); --staged/--diff-base for diff rules
+knowledge-db/bin/kb rules               # print agent hard-rules block (used by UserPromptSubmit hook)
 knowledge-db/install.sh                 # wire agent hook + pre-commit + CI (idempotent); --check to audit
 
 # Legacy helpers (bash)
@@ -290,5 +292,5 @@ This repo keeps durable memory in `knowledge-db/`. For EVERY task:
 4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
    with KB entries. `knowledge-db/bin/kb check` must exit 0.
 
-Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB011): `knowledge-db/README.md`.
+Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB013): `knowledge-db/README.md`.
 <!-- kb:agent-rules:end -->

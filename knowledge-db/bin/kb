@@ -5,6 +5,7 @@ Subcommands:
   kb new <type> <slug>      Scaffold a valid entry (status: tentative), regenerate INDEX.md/.html
   kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
   kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
+  kb rules                  Print the agent hard-rules block (for prompt-injection hooks)
 
 Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
   KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
@@ -13,7 +14,7 @@ Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
   KB004  verified requires captured proof    KB010  one trap per error entry
   KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
          no template residue                 KB012  INDEX.html fresh (fingerprint)
-  KB006  required sections per bucket
+  KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
 
 Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
 documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
@@ -850,9 +851,41 @@ def check_diff_rules(kb_dir, repo_root, config, changed, findings):
                                 f"code changed but no {kb_prefix} entry touched — "
                                 f"record the work (likely bucket: solutions/ for features, errors/ for fixes; "
                                 f"all buckets: {buckets})"))
+    # KB013: doc write-back trigger (decision-bearing docs)
+    doc_hits = [p for p in changed
+                if any(glob_match(g, p) for g in wb.get("docs", []))
+                and not any(glob_match(g, p) for g in wb.get("exempt", []))]
+    if doc_hits and not any(p.startswith(kb_prefix) for p in changed):
+        findings.append(Finding("KB013", doc_hits[0],
+                                f"decision-bearing doc changed but no {kb_prefix} entry touched — "
+                                f"a doc edit that states a rule, constraint, or choice is a decision: "
+                                f"record it (likely bucket: decisions/)"))
 
 
 # ---------------------------------------------------------------- commands
+
+def cmd_rules(kb_dir, repo_root, config, args):
+    """Print the agent hard-rules block for prompt injection.
+
+    Designed as the command of a UserPromptSubmit hook: stdout is appended to
+    the agent's context on EVERY prompt, so the rules are active immediately
+    after install and cannot fall out of context mid-session.
+    """
+    kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
+    buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+    print(f"""<kb-hard-rules source="{kb_name}/AGENT.md">
+Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
+1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
+2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
+3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
+   superseding a verified entry needs a stated reason + related: link, never permission.
+4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
+   debugged errors, explorations, and multi-file work each get an entry NOW
+   ({kb_name}/bin/kb new <type> <slug>), not at session end.
+{kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
+</kb-hard-rules>""")
+    return 0
+
 
 def cmd_check(kb_dir, repo_root, config, args):
     findings = []
@@ -1015,6 +1048,8 @@ def main():
     p_check.add_argument("--staged", action="store_true", help="also run diff rules against staged changes")
     p_check.add_argument("--diff-base", help="also run diff rules against <ref>...HEAD")
 
+    sub.add_parser("rules", help="print agent hard-rules block (for prompt-injection hooks)")
+
     args = parser.parse_args()
     kb_dir = find_kb_dir(args.kb_dir)
     repo_root = kb_dir.parent
@@ -1026,6 +1061,8 @@ def main():
         return cmd_index(kb_dir, repo_root, config, args)
     if args.cmd == "check":
         return cmd_check(kb_dir, repo_root, config, args)
+    if args.cmd == "rules":
+        return cmd_rules(kb_dir, repo_root, config, args)
     return 2
 
 

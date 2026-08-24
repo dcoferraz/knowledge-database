@@ -42,6 +42,9 @@ feels interruptive:
 ## 4. WRITE BACK (non-trivial work = KB entry)
 
 Non-trivial = anything requiring search, multi-file reads, debugging, or decisions.
+Decisions count even when the only artifact is a doc edit: a new rule, constraint,
+or choice written into CLAUDE.md / AGENTS.md / an ADR gets a `decisions/` entry in
+the same breath (KB013 enforces this on staged/PR diffs).
 
 - Scaffold with `knowledge-db/bin/kb new <type> <slug>` (starts `tentative`).
 - Ground every claim in a real source: `path:Lstart-Lend` (KB003).
@@ -51,4 +54,4 @@ Non-trivial = anything requiring search, multi-file reads, debugging, or decisio
   outside the `kb:manual` regions (KB007).
 - Validate before finishing: `knowledge-db/bin/kb check` must exit 0.
 
-The full rule table (KB001-KB011) lives in `knowledge-db/README.md`.
+The full rule table (KB001-KB013) lives in `knowledge-db/README.md`.

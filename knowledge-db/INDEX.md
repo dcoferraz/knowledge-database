@@ -48,6 +48,7 @@ _"What is true" — findings from investigating existing behavior_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-08-24 | Multi-runtime rule delivery parity (external feedback) | verified | [area:tooling, layer:enforcement] | explorations/2026-08-24-multi-runtime-rule-delivery-parity.md |
 | 2026-08-20 | CLI Tool Architecture | verified | [area:tooling, layer:cli] | explorations/2026-08-20-cli-tool-architecture.md |
 
 ---
@@ -58,6 +59,8 @@ _"What we did" — how changes/features/fixes were implemented_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-08-24 | Prompt-injected rules and doc write-back (KB013) | verified | [area:tooling, layer:enforcement, tech:python, tech:bash] | solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md |
+| 2026-08-24 | Multi-runtime rule planting (belt-and-suspenders delivery) | verified | [area:tooling, layer:enforcement, tech:bash] | solutions/2026-08-24-multi-runtime-rule-planting.md |
 | 2026-08-24 | KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI | verified | [area:tooling, layer:cli, layer:enforcement, area:test] | solutions/2026-08-24-kb-enforcement-tooling.md |
 | 2026-08-24 | INDEX.html: self-contained evidence browser for non-technical readers | verified | [area:tooling, area:ui, layer:cli] | solutions/2026-08-24-index-html-evidence-browser.md |
 | 2026-08-24 | Forward agent hard rules on install: AGENT.md + install.sh layer 5 | verified | [area:tooling, layer:enforcement] | solutions/2026-08-24-agent-rules-forwarding.md |
@@ -86,6 +89,7 @@ _"Why we chose X" — design/architecture choices and trade-offs_
 | 2026-08-24 | Python 3 stdlib (not bash, not Node) for the kb enforcement CLI | verified | [area:tooling, layer:cli, tech:python] | decisions/2026-08-24-python-stdlib-for-kb-cli.md |
 | 2026-08-24 | KB012 freshness via content fingerprint, not KB007-style byte check | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md |
 | 2026-08-24 | KB is git-tracked by default; gitignore only via --local flag | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-kb-tracked-by-default.md |
+| 2026-08-24 | Inject hard rules every prompt, not only at session start | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-inject-rules-every-prompt.md |
 | 2026-08-24 | Enforce-or-delete: every hard rule gets an ID or leaves the README | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-enforce-or-delete-rule-ids.md |
 | 2026-08-24 | Derive INDEX.md from front-matter instead of hand-maintaining it | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-derive-index-from-front-matter.md |
 | 2026-08-24 | HTML view: build-time embedding, not runtime fetch or hosted docs | verified | [area:tooling, area:ui, layer:cli] | decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md |

@@ -18,43 +18,17 @@
   ],
   "tags": {
     "area": [
-      "auth",
-      "api",
-      "ui",
-      "db",
-      "payments",
-      "infra",
-      "test",
-      "tooling",
-      "security",
-      "release"
+      "tooling"
     ],
     "layer": [
-      "controller",
-      "service",
-      "model",
-      "middleware",
-      "util",
-      "cli",
-      "enforcement"
+      "cli"
     ],
-    "scope": [],
     "severity": [
-      "critical",
-      "high",
-      "medium",
-      "low"
-    ],
-    "tech": [
-      "react",
-      "node",
-      "postgres",
-      "bash",
-      "python"
+      "high"
     ]
   },
   "staleness_days": {
-    "verified": 90
+    "verified": 3650
   },
   "required_sections": {
     "errors": [
@@ -67,15 +41,11 @@
   "lockstep": [],
   "writeback": {
     "code": [
-      "src/**",
-      "lib/**",
-      "app/**"
+      "src/**"
     ],
     "docs": [
       "CLAUDE.md",
-      "AGENTS.md",
-      "docs/**",
-      "adr/**"
+      "docs/**"
     ],
     "exempt": []
   }

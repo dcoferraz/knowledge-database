@@ -1,0 +1,21 @@
+---
+description: Knowledge database hard rules (durable project memory)
+alwaysApply: true
+---
+
+<!-- kb:agent-rules:start -->
+## HARD RULE: Knowledge Database
+
+This repo keeps durable memory in `knowledge-db/`. For EVERY task:
+
+1. **ALWAYS READ FIRST** — check `knowledge-db/INDEX.md` before exploring; reuse verified entries.
+2. **EMPTY KB** — if no (relevant) entries exist, say so and suggest either a codebase
+   exploration to seed it, or manual document/context input to ingest. Then continue the task.
+3. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,
+   as insights occur. Superseding a verified entry needs a stated reason and a `related:`
+   link to the replacement — never permission.
+4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
+   with KB entries. `knowledge-db/bin/kb check` must exit 0.
+
+Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB013): `knowledge-db/README.md`.
+<!-- kb:agent-rules:end -->

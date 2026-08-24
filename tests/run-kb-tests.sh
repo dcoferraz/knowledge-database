@@ -47,7 +47,7 @@ rm -rf "$TMP_IDEM"
 echo "Testing static fail fixtures"
 for DIR in "$FIXTURES"/fail/KB*; do
     RULE=$(basename "$DIR")
-    case "$RULE" in KB009|KB011) continue ;; esac
+    case "$RULE" in KB009|KB011|KB013) continue ;; esac
     OUT=$("$KB" --kb-dir "$DIR/knowledge-db" check 2>&1)
     CODE=$?
     if [[ $CODE -ne 0 ]] && echo "$OUT" | grep -q "^$RULE "; then
@@ -58,14 +58,18 @@ for DIR in "$FIXTURES"/fail/KB*; do
 done
 
 echo "Testing diff-mode fail fixtures"
-for RULE in KB009 KB011; do
+for RULE in KB009 KB011 KB013; do
     TMP=$(mktemp -d)
     cp -R "$FIXTURES/fail/$RULE/." "$TMP/"
     git -C "$TMP" init -q
     git -C "$TMP" -c user.email=t@t -c user.name=t add -A
     git -C "$TMP" -c user.email=t@t -c user.name=t commit -qm base
-    echo "changed" >> "$TMP/src/app.txt"
-    git -C "$TMP" add src/app.txt
+    case "$RULE" in
+        KB013) TOUCH="CLAUDE.md" ;;
+        *)     TOUCH="src/app.txt" ;;
+    esac
+    echo "changed" >> "$TMP/$TOUCH"
+    git -C "$TMP" add "$TOUCH"
     OUT=$("$KB" --kb-dir "$TMP/knowledge-db" check --staged 2>&1)
     CODE=$?
     if [[ $CODE -ne 0 ]] && echo "$OUT" | grep -q "^$RULE "; then
@@ -88,6 +92,14 @@ else
 fi
 rm -rf "$TMP_AG"
 
+echo "Testing kb rules prints injectable hard-rules block"
+OUT=$("$KB" --kb-dir "$FIXTURES/pass/knowledge-db" rules 2>&1)
+if [[ $? -eq 0 ]] && echo "$OUT" | grep -q "<kb-hard-rules" && echo "$OUT" | grep -q "READ FIRST"; then
+    pass "kb rules output"
+else
+    fail "kb rules output" "$OUT"
+fi
+
 echo "Testing kb new scaffolds a valid entry"
 TMP=$(mktemp -d)
 cp -R "$FIXTURES/pass/." "$TMP/"
@@ -96,6 +108,44 @@ if [[ $? -eq 0 ]] && "$KB" --kb-dir "$TMP/knowledge-db" check >/dev/null 2>&1; t
     pass "kb new output passes kb check"
 else
     fail "kb new output passes kb check" "$OUT"
+fi
+rm -rf "$TMP"
+
+echo "Testing installer plants rules in all runtime files"
+TMP=$(mktemp -d)
+mkdir -p "$TMP/knowledge-db"
+cp -R "$REPO_ROOT/knowledge-db/bin" "$TMP/knowledge-db/"
+cp "$REPO_ROOT/knowledge-db/kb.config.json" "$REPO_ROOT/knowledge-db/install.sh" "$REPO_ROOT/knowledge-db/AGENT.md" "$TMP/knowledge-db/"
+mkdir -p "$TMP/knowledge-db/explorations" "$TMP/knowledge-db/solutions" "$TMP/knowledge-db/errors" "$TMP/knowledge-db/decisions"
+git -C "$TMP" init -q
+"$TMP/knowledge-db/bin/kb" index >/dev/null 2>&1
+"$TMP/knowledge-db/install.sh" >/dev/null 2>&1
+PLANT_OK=true
+for f in CLAUDE.md AGENTS.md .github/copilot-instructions.md .github/instructions/kb.instructions.md .cursor/rules/knowledge-db.mdc .windsurfrules; do
+    grep -qF "kb:agent-rules:start" "$TMP/$f" || { PLANT_OK=false; break; }
+done
+if $PLANT_OK; then
+    pass "all 6 runtime files planted"
+else
+    fail "all 6 runtime files planted" "marker missing in $f"
+fi
+head -2 "$TMP/.github/instructions/kb.instructions.md" | grep -q "applyTo: '\*\*'" \
+    && pass "copilot instructions applyTo frontmatter" \
+    || fail "copilot instructions applyTo frontmatter" "$(head -3 "$TMP/.github/instructions/kb.instructions.md")"
+grep -q "alwaysApply: true" "$TMP/.cursor/rules/knowledge-db.mdc" \
+    && pass "cursor mdc alwaysApply frontmatter" \
+    || fail "cursor mdc alwaysApply frontmatter" "$(head -4 "$TMP/.cursor/rules/knowledge-db.mdc")"
+RERUN=$("$TMP/knowledge-db/install.sh" 2>/dev/null | grep -c "^CHANGED")
+if [[ "$RERUN" -eq 0 ]]; then
+    pass "installer idempotent (rerun changes nothing)"
+else
+    fail "installer idempotent (rerun changes nothing)" "$RERUN CHANGED lines on rerun"
+fi
+rm "$TMP/.windsurfrules"
+if ! "$TMP/knowledge-db/install.sh" --check >/dev/null 2>&1; then
+    pass "check fails when a planted file is removed"
+else
+    fail "check fails when a planted file is removed" "exit 0 despite missing .windsurfrules"
 fi
 rm -rf "$TMP"
 
