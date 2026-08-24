@@ -63,6 +63,7 @@ _"What we did" — how changes/features/fixes were implemented_
 | 2026-08-24 | Multi-runtime rule planting (belt-and-suspenders delivery) | verified | [area:tooling, layer:enforcement, tech:bash] | solutions/2026-08-24-multi-runtime-rule-planting.md |
 | 2026-08-24 | KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI | verified | [area:tooling, layer:cli, layer:enforcement, area:test] | solutions/2026-08-24-kb-enforcement-tooling.md |
 | 2026-08-24 | INDEX.html: self-contained evidence browser for non-technical readers | verified | [area:tooling, area:ui, layer:cli] | solutions/2026-08-24-index-html-evidence-browser.md |
+| 2026-08-24 | ENFORCEMENT.md guide for the six-layer machinery | verified | [area:tooling, layer:enforcement] | solutions/2026-08-24-enforcement-guide.md |
 | 2026-08-24 | Forward agent hard rules on install: AGENT.md + install.sh layer 5 | verified | [area:tooling, layer:enforcement] | solutions/2026-08-24-agent-rules-forwarding.md |
 | 2026-08-21 | KB v2: Security, tests, mandatory auto-capture, releases | verified | [area:tooling, area:test, layer:cli, area:release] | solutions/2026-08-21-kb-v2-improvements.md |
 | 2026-08-20 | Test Suite for CLI Tools | verified | [area:tooling, area:test, layer:cli] | solutions/2026-08-20-test-suite-implementation.md |

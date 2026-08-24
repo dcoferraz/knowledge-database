@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:93cdb884e945e523c4b191b97cf617e774088206b3bfafdb0846822e33af820a -->
+<!-- kb:fingerprint:1e31620a364bd3946f0a003d834672ab647736d285955181d2de1f639b41d277 -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -67,6 +67,7 @@ section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; m
 <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md"><span class="dot verified"></span>Multi-runtime rule planting (belt-and-suspenders delivery)</a>
 <a href="#solutions/2026-08-24-kb-enforcement-tooling.md"><span class="dot verified"></span>KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>
 <a href="#solutions/2026-08-24-index-html-evidence-browser.md"><span class="dot verified"></span>INDEX.html: self-contained evidence browser for non-technical readers</a>
+<a href="#solutions/2026-08-24-enforcement-guide.md"><span class="dot verified"></span>ENFORCEMENT.md guide for the six-layer machinery</a>
 <a href="#solutions/2026-08-24-agent-rules-forwarding.md"><span class="dot verified"></span>Forward agent hard rules on install: AGENT.md + install.sh layer 5</a>
 <a href="#solutions/2026-08-21-kb-v2-improvements.md"><span class="dot verified"></span>KB v2: Security, tests, mandatory auto-capture, releases</a>
 <a href="#solutions/2026-08-20-test-suite-implementation.md"><span class="dot verified"></span>Test Suite for CLI Tools</a>
@@ -1046,6 +1047,51 @@ Results: 16 passed, 0 failed</code></pre>
 <details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md">HTML view: build-time embedding, not runtime fetch or hosted docs</a>, <a href="#decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md">KB012 freshness via content fingerprint, not KB007-style byte check</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
+</article>
+<article class="entry" id="solutions/2026-08-24-enforcement-guide.md" data-status="verified">
+<h2>ENFORCEMENT.md guide for the six-layer machinery</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement</span>
+</div>
+<h3>Summary</h3>
+<p>The v0.5.x enforcement machinery (six layers, per-prompt injection, multi-runtime planting, KB011/KB013 gates) now has a dedicated guide: ENFORCEMENT.md, peer to ADVANCED.md, linked from the README guides section.</p>
+<h3>Context / Question</h3>
+<p>v0.5.0/v0.5.1 shipped with README/CLAUDE.md mentions only — no deep-dive doc like ADVANCED.md gives the context-workspace pattern. Users had no single place explaining what each layer catches, the timing caveats, or how to tune RULE_TARGETS and the writeback globs.</p>
+<h3>Findings / What We Did</h3>
+<ul>
+<li>ENFORCEMENT.md (ENFORCEMENT.md:1-6): layer table, per-prompt injection</li>
+</ul>
+<p>mechanics and token cost, multi-runtime planting semantics (create-or-merge, marker-guarded, path-bound, RULE_TARGETS restriction), KB011/KB013 tuning guidance, audit/repair flow, timing caveats, and the bash errexit portability rule.</p>
+<ul>
+<li>README guides section links it with a bullet summary (README.md:465-472),</li>
+</ul>
+<p>mirroring the ADVANCED.md link pattern.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ test -f ENFORCEMENT.md &amp;&amp; grep -c "^## " ENFORCEMENT.md
+6
+
+$ grep -n "ENFORCEMENT.md" README.md
+465:**How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>ENFORCEMENT.md:1-6</summary><pre><code>    1  # Enforcement Guide: The Six Layers
+    2  
+    3  &gt; **Prerequisites:** Read the [README](README.md) first for the basic KB pattern.
+    4  &gt; This document explains how the enforcement machinery works, why each layer
+    5  &gt; exists, and how to tune it. For the context-workspace pattern, see
+    6  &gt; [ADVANCED.md](ADVANCED.md).</code></pre></details>
+<details class="src"><summary>README.md:465-472</summary><pre><code>  465  **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
+  466  
+  467  It covers:
+  468  - The six enforcement layers and what each one catches
+  469  - Per-prompt rules injection (`kb rules` + UserPromptSubmit hook)
+  470  - Multi-runtime rule planting (Claude Code, Codex, Copilot, Cursor, Windsurf)
+  471  - Tuning the write-back gates (KB011 code, KB013 docs)
+  472  - Auditing and repairing drift with `install.sh --check`</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a>, <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a></p>
 </article>
 <article class="entry" id="solutions/2026-08-24-agent-rules-forwarding.md" data-status="verified">
 <h2>Forward agent hard rules on install: AGENT.md + install.sh layer 5</h2>

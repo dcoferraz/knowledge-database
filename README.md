@@ -462,6 +462,15 @@ It covers:
 - Why this matters for project managers and team leads
 - Complete setup instructions
 
+**How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
+
+It covers:
+- The six enforcement layers and what each one catches
+- Per-prompt rules injection (`kb rules` + UserPromptSubmit hook)
+- Multi-runtime rule planting (Claude Code, Codex, Copilot, Cursor, Windsurf)
+- Tuning the write-back gates (KB011 code, KB013 docs)
+- Auditing and repairing drift with `install.sh --check`
+
 ---
 
 ## FAQ
