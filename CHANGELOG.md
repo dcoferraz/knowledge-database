@@ -5,6 +5,14 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-08-24
+
+### Fixed
+- CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
+  kills the script on bash >= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
+  All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
+  as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
+
 ## [0.5.0] - 2026-08-24
 
 Response to field failure and external parity feedback: enforcement content
@@ -163,6 +171,7 @@ mechanically enforced or explicitly labelled guidance.
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.5.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.3.1...v0.4.0

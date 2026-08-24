@@ -146,37 +146,37 @@ detect_bucket() {
 
     # Error signals
     if echo "$content" | grep -qiE "(error|exception|stack trace|traceback|failed|crash|bug|fix)"; then
-        ((score_error += 3))
+        score_error=$((score_error + 3))
     fi
     if echo "$content" | grep -qiE "(TypeError|SyntaxError|ReferenceError|Cannot read|undefined is not|null pointer)"; then
-        ((score_error += 5))
+        score_error=$((score_error + 5))
     fi
     if echo "$content" | grep -qE "at .+:[0-9]+:[0-9]+"; then
-        ((score_error += 3))  # Stack trace pattern
+        score_error=$((score_error + 3))  # Stack trace pattern
     fi
 
     # Exploration signals
     if echo "$content" | grep -qiE "(how does|what is|where is|understand|investigate|explore|found that|discovered)"; then
-        ((score_exploration += 3))
+        score_exploration=$((score_exploration + 3))
     fi
     if echo "$content" | grep -qiE "(works by|flow is|architecture|structure|pattern)"; then
-        ((score_exploration += 2))
+        score_exploration=$((score_exploration + 2))
     fi
 
     # Solution signals
     if echo "$content" | grep -qiE "(implemented|built|created|added|refactored|changed|modified|updated)"; then
-        ((score_solution += 3))
+        score_solution=$((score_solution + 3))
     fi
     if echo "$content" | grep -qiE "(feature|functionality|component|module)"; then
-        ((score_solution += 2))
+        score_solution=$((score_solution + 2))
     fi
 
     # Decision signals
     if echo "$content" | grep -qiE "(decided|chose|selected|picked|went with|trade-?off|alternative|option|vs\.|versus)"; then
-        ((score_decision += 4))
+        score_decision=$((score_decision + 4))
     fi
     if echo "$content" | grep -qiE "(pro:|con:|advantage|disadvantage|because|reason)"; then
-        ((score_decision += 2))
+        score_decision=$((score_decision + 2))
     fi
 
     # Find max

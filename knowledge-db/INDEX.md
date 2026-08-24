@@ -75,6 +75,7 @@ _"What broke + the fix" — reproducible traps and their resolution_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-08-24 | set -e kills ((VAR++)) from zero on bash >= 4.1 (CI-only failure) | verified | [area:test, layer:cli, tech:bash, severity:high] | errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md |
 | 2026-08-20 | kb-lint --fix flag documented but not implemented | verified | [area:tooling, layer:cli, severity:high] | errors/2026-08-20-fix-flag-not-implemented.md |
 
 ---

@@ -79,7 +79,7 @@ echo -e "${BLUE}[1/7] Checking INDEX.md sync...${NC}"
 INDEX_FILE="$KB_DIR/INDEX.md"
 if [[ ! -f "$INDEX_FILE" ]]; then
     echo -e "${RED}  ERROR: INDEX.md not found${NC}"
-    ((ERRORS++))
+    ERRORS=$((ERRORS + 1))
 else
     for bucket in explorations solutions errors decisions; do
         if [[ -d "$KB_DIR/$bucket" ]]; then
@@ -127,14 +127,14 @@ else
                                 { print }
                             ' "$INDEX_FILE" > "$TEMP_FILE" && mv "$TEMP_FILE" "$INDEX_FILE"
                             echo -e "${GREEN}  FIXED: Added to INDEX.md: $bucket/$filename${NC}"
-                            ((FIXED++))
+                            FIXED=$((FIXED + 1))
                         else
                             echo -e "${YELLOW}  WARN: Could not find ## $section_name in INDEX.md, add manually${NC}"
-                            ((WARNINGS++))
+                            WARNINGS=$((WARNINGS + 1))
                         fi
                     else
                         echo -e "${RED}  ERROR: Entry not in INDEX.md: $bucket/$filename${NC}"
-                        ((ERRORS++))
+                        ERRORS=$((ERRORS + 1))
                     fi
                 fi
             done
@@ -156,7 +156,7 @@ for bucket in explorations solutions errors decisions; do
 
             if [[ -z "$sources_content" ]]; then
                 echo -e "${YELLOW}  WARN: No sources in $bucket/$filename${NC}"
-                ((WARNINGS++))
+                WARNINGS=$((WARNINGS + 1))
             fi
         done
     fi
@@ -175,7 +175,7 @@ for bucket in explorations solutions errors decisions; do
 
             if [[ -n "$status" && ! "$status" =~ ^(verified|tentative|superseded)$ ]]; then
                 echo -e "${RED}  ERROR: Invalid status '$status' in $bucket/$filename${NC}"
-                ((ERRORS++))
+                ERRORS=$((ERRORS + 1))
             fi
         done
     fi
@@ -200,10 +200,10 @@ for bucket in explorations solutions errors decisions; do
                         TEMP_ENTRY=$(mktemp)
                         sed "s/^status:[[:space:]]*verified/status: tentative/" "$entry" > "$TEMP_ENTRY" && mv "$TEMP_ENTRY" "$entry"
                         echo -e "${GREEN}  FIXED: Downgraded to tentative (no Verification): $bucket/$filename${NC}"
-                        ((FIXED++))
+                        FIXED=$((FIXED + 1))
                     else
                         echo -e "${RED}  ERROR: verified status but no Verification section: $bucket/$filename${NC}"
-                        ((ERRORS++))
+                        ERRORS=$((ERRORS + 1))
                     fi
                 else
                     # Check if Verification has content (not just comments)
@@ -214,10 +214,10 @@ for bucket in explorations solutions errors decisions; do
                             TEMP_ENTRY=$(mktemp)
                             sed "s/^status:[[:space:]]*verified/status: tentative/" "$entry" > "$TEMP_ENTRY" && mv "$TEMP_ENTRY" "$entry"
                             echo -e "${GREEN}  FIXED: Downgraded to tentative (empty Verification): $bucket/$filename${NC}"
-                            ((FIXED++))
+                            FIXED=$((FIXED + 1))
                         else
                             echo -e "${YELLOW}  WARN: Verification section appears empty: $bucket/$filename${NC}"
-                            ((WARNINGS++))
+                            WARNINGS=$((WARNINGS + 1))
                         fi
                     fi
                 fi
@@ -242,7 +242,7 @@ for bucket in explorations solutions errors decisions; do
 
                 if [[ -z "$related_content" ]]; then
                     echo -e "${RED}  ERROR: superseded but no replacement linked: $bucket/$filename${NC}"
-                    ((ERRORS++))
+                    ERRORS=$((ERRORS + 1))
                 fi
             fi
         done
@@ -266,7 +266,7 @@ if [[ -d "$KB_DIR/errors" ]]; then
 
         if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo -e "${RED}  ERROR: errors/$filename missing sections: ${missing_sections[*]}${NC}"
-            ((ERRORS++))
+            ERRORS=$((ERRORS + 1))
         fi
     done
 fi
@@ -286,7 +286,7 @@ if [[ -n "$all_tags" ]]; then
         echo "$single_use" | while read -r tag; do
             echo -e "${YELLOW}    - $tag${NC}"
         done
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     fi
 
     # Show tag frequency

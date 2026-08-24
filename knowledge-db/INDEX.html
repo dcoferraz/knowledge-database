@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:25edaae35dc8cbd44aa20811fd0929e2db3b7e5fcacd02ba1436d5e051ecdeff -->
+<!-- kb:fingerprint:93cdb884e945e523c4b191b97cf617e774088206b3bfafdb0846822e33af820a -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -71,6 +71,7 @@ section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; m
 <a href="#solutions/2026-08-21-kb-v2-improvements.md"><span class="dot verified"></span>KB v2: Security, tests, mandatory auto-capture, releases</a>
 <a href="#solutions/2026-08-20-test-suite-implementation.md"><span class="dot verified"></span>Test Suite for CLI Tools</a>
 <h2>What broke + the fix</h2>
+<a href="#errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md"><span class="dot verified"></span>set -e kills ((VAR++)) from zero on bash &gt;= 4.1 (CI-only failure)</a>
 <a href="#errors/2026-08-20-fix-flag-not-implemented.md"><span class="dot verified"></span>kb-lint --fix flag documented but not implemented</a>
 <h2>Why we chose things</h2>
 <a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md"><span class="dot verified"></span>Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a>
@@ -887,39 +888,39 @@ All tests passed</code></pre>
    69  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
    70  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |
    71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
-<details class="src"><summary>CHANGELOG.md:8-40</summary><pre><code>    8  ## [0.5.0] - 2026-08-24
+<details class="src"><summary>CHANGELOG.md:8-40</summary><pre><code>    8  ## [0.5.1] - 2026-08-24
     9  
-   10  Response to field failure and external parity feedback: enforcement content
-   11  existed, but the delivery mechanism auto-loaded for only one agent runtime and
-   12  only from session start. v0.5.0 makes the rules reach every major agent runtime
-   13  with zero human steps, and closes the doc-only-decision write-back gap.
-   14  
-   15  ### Added
-   16  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
-   17    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
-   18    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
-   19    active immediately after a mid-session install, immune to context loss.
-   20  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
-   21    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
-   22    `AGENTS.md`, `.github/copilot-instructions.md`,
-   23    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
-   24    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
-   25    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
-   26    loses the block. Replaces the single-host-file behavior.
-   27  - **KB013 — doc write-back trigger**: a staged/PR diff touching
-   28    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
-   29    without touching `knowledge-db/**` fails — a doc edit that states a rule,
-   30    constraint, or choice is a decision and belongs in `decisions/` too.
-   31    Conformance fixture included.
-   32  - Installer conformance tests: all-6-files planted, frontmatter shapes,
-   33    idempotent rerun, drift detection (suite now 23 tests).
-   34  
-   35  ### Changed
-   36  - `install.sh` output notes that planted rule files load at each agent's next
-   37    session start while the UserPromptSubmit hook covers the current Claude Code
-   38    session from the next prompt.
-   39  - `kb.config.json` `writeback` gains a `docs` glob list alongside `code`.
-   40  </code></pre></details>
+   10  ### Fixed
+   11  - CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
+   12    kills the script on bash &gt;= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
+   13    All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
+   14    as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
+   15  
+   16  ## [0.5.0] - 2026-08-24
+   17  
+   18  Response to field failure and external parity feedback: enforcement content
+   19  existed, but the delivery mechanism auto-loaded for only one agent runtime and
+   20  only from session start. v0.5.0 makes the rules reach every major agent runtime
+   21  with zero human steps, and closes the doc-only-decision write-back gap.
+   22  
+   23  ### Added
+   24  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
+   25    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
+   26    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
+   27    active immediately after a mid-session install, immune to context loss.
+   28  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
+   29    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
+   30    `AGENTS.md`, `.github/copilot-instructions.md`,
+   31    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
+   32    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
+   33    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
+   34    loses the block. Replaces the single-host-file behavior.
+   35  - **KB013 — doc write-back trigger**: a staged/PR diff touching
+   36    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
+   37    without touching `knowledge-db/**` fails — a doc edit that states a rule,
+   38    constraint, or choice is a decision and belongs in `decisions/` too.
+   39    Conformance fixture included.
+   40  - Installer conformance tests: all-6-files planted, frontmatter shapes,</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-derive-index-from-front-matter.md">Derive INDEX.md from front-matter instead of hand-maintaining it</a>, <a href="#decisions/2026-08-24-python-stdlib-for-kb-cli.md">Python 3 stdlib (not bash, not Node) for the kb enforcement CLI</a>, <a href="#decisions/2026-08-24-enforce-or-delete-rule-ids.md">Enforce-or-delete: every hard rule gets an ID or leaves the README</a>, <a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md">Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a>, <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a></p>
 </article>
@@ -1537,59 +1538,59 @@ v0.2.2</code></pre>
     5  The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     6  and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     7  
-    8  ## [0.5.0] - 2026-08-24
+    8  ## [0.5.1] - 2026-08-24
     9  
-   10  Response to field failure and external parity feedback: enforcement content
-   11  existed, but the delivery mechanism auto-loaded for only one agent runtime and
-   12  only from session start. v0.5.0 makes the rules reach every major agent runtime
-   13  with zero human steps, and closes the doc-only-decision write-back gap.
-   14  
-   15  ### Added
-   16  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
-   17    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
-   18    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
-   19    active immediately after a mid-session install, immune to context loss.
-   20  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
-   21    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
-   22    `AGENTS.md`, `.github/copilot-instructions.md`,
-   23    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
-   24    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
-   25    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
-   26    loses the block. Replaces the single-host-file behavior.
-   27  - **KB013 — doc write-back trigger**: a staged/PR diff touching
-   28    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
-   29    without touching `knowledge-db/**` fails — a doc edit that states a rule,
-   30    constraint, or choice is a decision and belongs in `decisions/` too.
-   31    Conformance fixture included.
-   32  - Installer conformance tests: all-6-files planted, frontmatter shapes,
-   33    idempotent rerun, drift detection (suite now 23 tests).
-   34  
-   35  ### Changed
-   36  - `install.sh` output notes that planted rule files load at each agent's next
-   37    session start while the UserPromptSubmit hook covers the current Claude Code
-   38    session from the next prompt.
-   39  - `kb.config.json` `writeback` gains a `docs` glob list alongside `code`.
-   40  
-   41  ## [0.4.1] - 2026-08-24
+   10  ### Fixed
+   11  - CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
+   12    kills the script on bash &gt;= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
+   13    All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
+   14    as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
+   15  
+   16  ## [0.5.0] - 2026-08-24
+   17  
+   18  Response to field failure and external parity feedback: enforcement content
+   19  existed, but the delivery mechanism auto-loaded for only one agent runtime and
+   20  only from session start. v0.5.0 makes the rules reach every major agent runtime
+   21  with zero human steps, and closes the doc-only-decision write-back gap.
+   22  
+   23  ### Added
+   24  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
+   25    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
+   26    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
+   27    active immediately after a mid-session install, immune to context loss.
+   28  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
+   29    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
+   30    `AGENTS.md`, `.github/copilot-instructions.md`,
+   31    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
+   32    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
+   33    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
+   34    loses the block. Replaces the single-host-file behavior.
+   35  - **KB013 — doc write-back trigger**: a staged/PR diff touching
+   36    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
+   37    without touching `knowledge-db/**` fails — a doc edit that states a rule,
+   38    constraint, or choice is a decision and belongs in `decisions/` too.
+   39    Conformance fixture included.
+   40  - Installer conformance tests: all-6-files planted, frontmatter shapes,
+   41    idempotent rerun, drift detection (suite now 23 tests).
    42  
-   43  ### Added
-   44  - **`INDEX.html` — self-contained human-facing KB browser** for non-technical readers, generated by `kb index` alongside INDEX.md. Double-click to open; zero dependencies, no server, no external assets, works offline and survives email/Slack as a single file.
-   45    - Every entry inlined with plain-language bucket labels, search box, status filter
-   46    - **Proof navigation**: Verification evidence rendered per entry; every `sources:` citation expandable to the actual cited source lines (embedded at build time)
-   47    - Decisions show `decided by:` attribution; superseded entries carry a "replaced by" banner linking the replacement; related entries cross-link as in-page anchors
-   48  - **KB012**: `INDEX.html` freshness enforced via embedded fingerprint of KB content (generated INDEX.md + entry files). Embedded source snippets are deliberately outside the fingerprint — a KB007-style byte check would fail on every unrelated code edit. Conformance fixture included (suite now 16 tests).
-   49  
-   50  ## [0.4.0] - 2026-08-24
-   51  
-   52  Response to external evaluator feedback: conventions that were "enforced by
-   53  agent behavior" drifted in practice (INDEX tag drift, prose-only "verified"
-   54  proof, hypothetical output as evidence). v0.4.0 makes every hard rule
-   55  mechanically enforced or explicitly labelled guidance.
-   56  
-   57  ### Added
-   58  - **`knowledge-db/bin/kb`**: zero-dependency CLI (Python 3 stdlib) — `new` (scaffold valid entries, status tentative), `index` (INDEX.md is now GENERATED from front-matter), `check` (rules KB001-KB011, `--json`, `--staged`/`--diff-base` diff modes)
-   59  - **`knowledge-db/kb.config.json`**: single source of truth for buckets, statuses, tag vocabulary, staleness budgets, lockstep pairs, write-back paths — closed enums (KB002)
-   60  - **Rule IDs KB001-KB011**, each with a conformance fixture (`tests/fixtures/`, `tests/run-kb-tests.sh`: pass/ exits 0, each fail/KBxxx exits non-zero naming its ID)</code></pre></details>
+   43  ### Changed
+   44  - `install.sh` output notes that planted rule files load at each agent's next
+   45    session start while the UserPromptSubmit hook covers the current Claude Code
+   46    session from the next prompt.
+   47  - `kb.config.json` `writeback` gains a `docs` glob list alongside `code`.
+   48  
+   49  ## [0.4.1] - 2026-08-24
+   50  
+   51  ### Added
+   52  - **`INDEX.html` — self-contained human-facing KB browser** for non-technical readers, generated by `kb index` alongside INDEX.md. Double-click to open; zero dependencies, no server, no external assets, works offline and survives email/Slack as a single file.
+   53    - Every entry inlined with plain-language bucket labels, search box, status filter
+   54    - **Proof navigation**: Verification evidence rendered per entry; every `sources:` citation expandable to the actual cited source lines (embedded at build time)
+   55    - Decisions show `decided by:` attribution; superseded entries carry a "replaced by" banner linking the replacement; related entries cross-link as in-page anchors
+   56  - **KB012**: `INDEX.html` freshness enforced via embedded fingerprint of KB content (generated INDEX.md + entry files). Embedded source snippets are deliberately outside the fingerprint — a KB007-style byte check would fail on every unrelated code edit. Conformance fixture included (suite now 16 tests).
+   57  
+   58  ## [0.4.0] - 2026-08-24
+   59  
+   60  Response to external evaluator feedback: conventions that were "enforced by</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a>, <a href="#errors/2026-08-20-fix-flag-not-implemented.md">kb-lint --fix flag documented but not implemented</a>, <a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md">Mandatory vs optional auto-capture</a>, <a href="#decisions/2026-08-21-consent-only-for-superseding.md">Consent only for superseding verified entries</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a>, <a href="#decisions/2026-08-21-one-entry-per-choice.md">decisions/ bucket: one entry per choice</a></p>
 </article>
@@ -1844,6 +1845,44 @@ All tests passed</code></pre>
 </article>
 </section>
 <section class="bucket"><h2>What broke + the fix <span class="tags">(errors/ &mdash; what broke + the fix)</span></h2>
+<article class="entry" id="errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md" data-status="verified">
+<h2>set -e kills ((VAR++)) from zero on bash &gt;= 4.1 (CI-only failure)</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:test, layer:cli, tech:bash, severity:high</span>
+</div>
+<h3>Summary</h3>
+<p>CI (ubuntu, bash 5) failed 3 legacy kb-lint tests that passed on macOS (bash 3.2). <code>set -e</code> + <code>((WARNINGS++))</code> with WARNINGS=0: the post-increment expression evaluates to 0, returns exit status 1, and bash &gt;= 4.1 applies errexit to <code>((...))</code> — the script dies mid-run. bash 3.2 (macOS default) does not, so it never reproduced locally.</p>
+<h3>Symptom</h3>
+<p>kb-check CI job red on v0.4.1 and v0.5.0 pushes: "runs on empty KB", "--fix adds missing INDEX entry", "--fix downgrades to tentative" FAIL — 20/23. Locally 23/23. CI log shows kb-lint output ending right after the first "WARN: Tags used only once" line (the first <code>((WARNINGS++))</code> from zero).</p>
+<h3>Root Cause</h3>
+<p>scripts/kb-lint runs under <code>set -e</code> (scripts/kb-lint:10) and counted with <code>((ERRORS++))</code> / <code>((WARNINGS++))</code> / <code>((FIXED++))</code>. <code>((VAR++))</code> returns the pre-increment value as its status: from 0 that is status 1. bash changed in 4.1 to honor errexit for arithmetic commands; macOS ships bash 3.2, which ignores it — platform-dependent death. Trigger existed on every fresh KB: the README.md template example line <code>tags: [area:tooling]</code> is counted by tag hygiene as a single-use tag, guaranteeing one WARN increment from zero.</p>
+<h3>Fix</h3>
+<p>Replaced every <code>((VAR++))</code> / <code>((VAR += N))</code> in scripts/kb-lint and scripts/kb-ingest with <code>VAR=$((VAR + 1))</code> / <code>VAR=$((VAR + N))</code> — arithmetic ASSIGNMENT is always status 0, errexit-safe on every bash.</p>
+<h3>Prevention</h3>
+<ul>
+<li>In any <code>set -e</code> bash script, never use bare <code>((VAR++))</code>; use <code>VAR=$((VAR + 1))</code>.</li>
+<li>Test suites for bash tools must run on Linux bash &gt;= 4.1, not only macOS 3.2 —</li>
+</ul>
+<p>the CI job already does this and is what caught it; treat a red kb-check run as a release blocker.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ bash -c 'set -e; W=0; ((W++)); echo survived' ; echo "bash 3.2 exit: $?"
+survived
+bash 3.2 exit: 0        # macOS bash 3.2 ignores the failure -&gt; hid the bug
+
+$ tests/run-tests.sh | tail -3
+Results: 23/23 passed
+All tests passed
+
+$ ./scripts/kb-lint &lt;fresh-kb&gt; &gt;/dev/null; echo "lint-exit: $?"
+lint-exit: 0            # WARN path taken, increment from 0, script survives</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>scripts/kb-lint:10</summary><pre><code>   10  set -e</code></pre></details>
+<details class="src"><summary>scripts/kb-lint:289</summary><pre><code>  289          WARNINGS=$((WARNINGS + 1))</code></pre></details>
+</div>
+</article>
 <article class="entry" id="errors/2026-08-20-fix-flag-not-implemented.md" data-status="verified">
 <h2>kb-lint --fix flag documented but not implemented</h2>
 <div class="meta">
