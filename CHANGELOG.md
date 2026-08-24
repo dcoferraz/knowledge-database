@@ -5,6 +5,28 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.3] - 2026-08-24
+
+Response to the first real downstream upgrade (field report from a project
+moving an older minimal KB copy to v0.5.2): the upgrade worked but was fully
+manual, version drift was invisible, and a project-specific root file had no
+config escape.
+
+### Added
+- **`kb version` + KB014 (warning-only)**: `kb.config.json` now records the
+  tool version that wrote it (`kb_version`); `kb check` warns on a missing or
+  mismatched value so independently-upgraded tooling and config are visible.
+  `kb version` prints both.
+- **`extra_root_files` config key**: project-specific files at the KB root
+  (e.g. `RELEASES.md`) can be declared instead of failing KB002 — extend the
+  config, never patch `KNOWN_ROOT_FILES` in the vendored CLI.
+- **UPGRADING.md**: field-verified upgrade guide — vendor the tooling, adapt
+  the config, migrate the entries; the trap list (generated INDEX, strict
+  sources grammar, honest KB004 downgrades, closed statuses, recent-but-false
+  verified entries) and the audit-first note for `install.sh`.
+- Conformance tests: `kb version` output, KB014 drift warning, KB002
+  root-file escape (suite now 27 tests).
+
 ## [0.5.2] - 2026-08-24
 
 ### Added
@@ -184,6 +206,7 @@ mechanically enforced or explicitly labelled guidance.
 - Advanced Usage guide (Context Workspace pattern)
 - Roadmap for Phase 2 (git hooks) and Phase 3 (GitHub Action)
 
+[0.5.3]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.2...v0.5.3
 [0.5.2]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.1...v0.5.2
 [0.5.1]: https://github.com/dcoferraz/knowledge-database/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/dcoferraz/knowledge-database/compare/v0.4.1...v0.5.0

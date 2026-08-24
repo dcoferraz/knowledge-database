@@ -463,6 +463,12 @@ It covers:
 - INDEX.html: the zero-tooling knowledge browser for non-technical stakeholders
 - Complete setup instructions
 
+**Upgrading an existing KB to a newer version: [UPGRADING.md](UPGRADING.md)**
+
+Vendor the tooling, adapt the config, migrate the entries — never overwrite the
+KB wholesale. Field-verified order and traps, `kb version` / KB014 drift
+warning, `extra_root_files`, and when (not) to run `install.sh`.
+
 **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
 
 It covers:

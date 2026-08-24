@@ -111,6 +111,50 @@ else
 fi
 rm -rf "$TMP"
 
+echo "Testing kb version and KB014 drift warning"
+OUT=$("$KB" --kb-dir "$FIXTURES/pass/knowledge-db" version 2>&1)
+if [[ $? -eq 0 ]] && echo "$OUT" | grep -q "kb tool version:"; then
+    pass "kb version output"
+else
+    fail "kb version output" "$OUT"
+fi
+TMP=$(mktemp -d)
+cp -R "$FIXTURES/pass/." "$TMP/"
+python3 -c "
+import json
+p = '$TMP/knowledge-db/kb.config.json'
+d = json.load(open(p)); d['kb_version'] = '0.0.1'
+json.dump(d, open(p, 'w'), indent=2)"
+OUT=$("$KB" --kb-dir "$TMP/knowledge-db" check 2>&1)
+if [[ $? -eq 0 ]] && echo "$OUT" | grep -q "^WARN KB014 "; then
+    pass "KB014 warns on version drift without failing"
+else
+    fail "KB014 warns on version drift without failing" "exit=$? output=$OUT"
+fi
+rm -rf "$TMP"
+
+echo "Testing extra_root_files config escape"
+TMP=$(mktemp -d)
+cp -R "$FIXTURES/pass/." "$TMP/"
+echo "# release log" > "$TMP/knowledge-db/RELEASES.md"
+OUT=$("$KB" --kb-dir "$TMP/knowledge-db" check 2>&1)
+if [[ $? -ne 0 ]] && echo "$OUT" | grep -q "^KB002 .*RELEASES.md"; then
+    pass "undeclared root file fails KB002"
+else
+    fail "undeclared root file fails KB002" "$OUT"
+fi
+python3 -c "
+import json
+p = '$TMP/knowledge-db/kb.config.json'
+d = json.load(open(p)); d['extra_root_files'] = ['RELEASES.md']
+json.dump(d, open(p, 'w'), indent=2)"
+if "$KB" --kb-dir "$TMP/knowledge-db" check >/dev/null 2>&1; then
+    pass "declared extra_root_files passes"
+else
+    fail "declared extra_root_files passes" "$("$KB" --kb-dir "$TMP/knowledge-db" check 2>&1)"
+fi
+rm -rf "$TMP"
+
 echo "Testing installer plants rules in all runtime files"
 TMP=$(mktemp -d)
 mkdir -p "$TMP/knowledge-db"

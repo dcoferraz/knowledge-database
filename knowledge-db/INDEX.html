@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:092043787b060b97dc47a1227ff94c3325c9d3fc4d2d397a5fdcd1549dc152b2 -->
+<!-- kb:fingerprint:b1286eda2e19a9069f438870e407aa148916d0b665b0de0edd09186d22c5c0ee -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -61,8 +61,10 @@ section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; m
 <div class="layout"><nav class="side">
 <h2>What we know</h2>
 <a href="#explorations/2026-08-24-multi-runtime-rule-delivery-parity.md"><span class="dot verified"></span>Multi-runtime rule delivery parity (external feedback)</a>
+<a href="#explorations/2026-08-24-downstream-upgrade-field-report.md"><span class="dot verified"></span>Downstream upgrade field report: first real KB upgrade to v0.5.2</a>
 <a href="#explorations/2026-08-20-cli-tool-architecture.md"><span class="dot verified"></span>CLI Tool Architecture</a>
 <h2>What we built</h2>
+<a href="#solutions/2026-08-24-upgrade-experience-v053.md"><span class="dot verified"></span>Upgrade experience: kb version, KB014, extra_root_files, UPGRADING.md</a>
 <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md"><span class="dot verified"></span>Prompt-injected rules and doc write-back (KB013)</a>
 <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md"><span class="dot verified"></span>Multi-runtime rule planting (belt-and-suspenders delivery)</a>
 <a href="#solutions/2026-08-24-kb-enforcement-tooling.md"><span class="dot verified"></span>KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>
@@ -167,6 +169,78 @@ $ grep -rn "cursor\|windsurf\|applyTo" knowledge-db/install.sh
   215          run: $KB_NAME/bin/kb check --diff-base "origin/\${{ github.base_ref }}"</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a>, <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a></p>
+</article>
+<article class="entry" id="explorations/2026-08-24-downstream-upgrade-field-report.md" data-status="verified">
+<h2>Downstream upgrade field report: first real KB upgrade to v0.5.2</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:enforcement, layer:cli</span>
+</div>
+<h3>Summary</h3>
+<p>A downstream project (separate agent, older minimal KB copy) upgraded to v0.5.2 and shared its decision entry. The upgrade succeeded (31 findings -&gt; exit 0, all entries preserved) but was fully manual. It validates the config-driven design and exposes four product gaps: no version marker, no upgrade guide, hardcoded KNOWN_ROOT_FILES, and no guard against recent-but-false verified entries.</p>
+<h3>Context / Question</h3>
+<p>What does the first real-world upgrade of an installed KB to current upstream teach about the upgrade experience?</p>
+<h3>Findings / What We Did</h3>
+<p>Validated by the report (worked as designed):</p>
+<ul>
+<li>Config-driven buckets absorbed project-specific <code>sessions/</code> and <code>releases/</code></li>
+</ul>
+<p>without touching the CLI.</p>
+<ul>
+<li><code>kb check</code> findings served as the migration worklist (31 findings driven to</li>
+</ul>
+<p>zero without suppressing rules).</p>
+<ul>
+<li>Closed status vocabulary correctly rejected a <code>resolved</code> status; they mapped</li>
+</ul>
+<p>it rather than widening the enum, preserving the proof requirement.</p>
+<ul>
+<li>KB004 forced honest downgrades to <code>tentative</code> for unreproducible past-state</li>
+</ul>
+<p>claims instead of manufactured proof.</p>
+<p>Gaps exposed (their words: traps the upgrade actually hit):</p>
+<ul>
+<li><strong>No version marker anywhere.</strong> The old copy carried no version; drift was</li>
+</ul>
+<p>invisible until it hurt. Their follow-up asks for a recorded upstream version per upgrade.</p>
+<ul>
+<li><strong>No upgrade guide.</strong> They derived the order themselves: back up, pin</li>
+</ul>
+<p>version, vendor ONLY tooling (bin/kb, AGENT.md, README.md, _TEMPLATE.md; never upstream entries or generated INDEX), write config from their own tag usage instead of copying, treat check findings as migration list, regenerate index last.</p>
+<ul>
+<li><strong>KNOWN_ROOT_FILES is hardcoded</strong> (knowledge-db/bin/kb:35-37). A stray</li>
+</ul>
+<p>root file fails KB002 with no config escape. Their workaround — a declared bucket — is correct, but "extend config, never patch the vendored CLI" should be possible for root files too.</p>
+<ul>
+<li><strong>Truth-rot outruns staleness.</strong> Entries verified hours earlier carried</li>
+</ul>
+<p>already-false claims (bug listed as open after it was fixed). KB008 is time-based; nothing mechanical catches recent-but-false. Upgrade guidance must include re-reading every verified entry against HEAD.</p>
+<ul>
+<li><strong>install.sh merge deserves an audit-first note.</strong> Their settings.json</li>
+</ul>
+<p>already carried unrelated hooks; the installer merges correctly, but the doc should say run <code>--check</code> and review before installing.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ grep -n "KNOWN_ROOT_FILES" knowledge-db/bin/kb
+34:KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "INDEX.html", "_TEMPLATE.md", "AGENT.md",
+
+$ grep -n "version" knowledge-db/kb.config.json
+(no output — no version field exists in the shipped config)</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:35-37</summary><pre><code>   35  
+   36  MANUAL_START = "&lt;!-- kb:manual:{name}:start --&gt;"
+   37  MANUAL_END = "&lt;!-- kb:manual:{name}:end --&gt;"</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:1-8</summary><pre><code>    1  {
+    2    "kb_version": "0.5.3",
+    3    "buckets": {
+    4      "explorations": "what is true",
+    5      "solutions": "what we did",
+    6      "errors": "what broke + the fix",
+    7      "decisions": "why we chose X"
+    8    },</code></pre></details>
+</div>
+<p class="tags">Related: <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a>, errors/2026-08-24-writeback-gap-doc-only-decisions.md</p>
 </article>
 <article class="entry" id="explorations/2026-08-20-cli-tool-architecture.md" data-status="verified">
 <h2>CLI Tool Architecture</h2>
@@ -458,6 +532,88 @@ All tests passed</code></pre>
 </article>
 </section>
 <section class="bucket"><h2>What we built <span class="tags">(solutions/ &mdash; what we did)</span></h2>
+<article class="entry" id="solutions/2026-08-24-upgrade-experience-v053.md" data-status="verified">
+<h2>Upgrade experience: kb version, KB014, extra_root_files, UPGRADING.md</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-08-24</span>
+<span class="tags">area:tooling, layer:cli, tech:python</span>
+</div>
+<h3>Summary</h3>
+<p>The three gaps from the downstream upgrade field report closed in v0.5.3: version drift is now visible (<code>kb version</code> + warning-only KB014), project files at the KB root have a config escape (<code>extra_root_files</code>), and the upgrade order plus every field-verified trap is documented in UPGRADING.md.</p>
+<h3>Context / Question</h3>
+<p>First real downstream upgrade (older minimal copy to v0.5.2) succeeded but was fully manual: no version marker existed, KNOWN_ROOT_FILES had no config escape, and the safe order had to be derived from scratch. See the related exploration for the full report.</p>
+<h3>Findings / What We Did</h3>
+<ul>
+<li><code>kb_version</code> recorded in kb.config.json; <code>check_version_drift</code></li>
+</ul>
+<p>(knowledge-db/bin/kb:895-916) emits WARN KB014 on missing/mismatched value — warning-only so a mid-upgrade state never hard-fails, and <code>cmd_version</code> prints tool + config versions. All shipped configs and fixtures stamped.</p>
+<ul>
+<li>KB002 root-file check now accepts names declared in the config's</li>
+</ul>
+<p><code>extra_root_files</code> list (knowledge-db/bin/kb:228-231); the finding message names the escape hatch.</p>
+<ul>
+<li>UPGRADING.md (UPGRADING.md:1-10): vendor-tooling / adapt-config /</li>
+</ul>
+<p>migrate-entries order, the trap list (generated INDEX manual regions, strict sources grammar, honest KB004 downgrades, closed statuses, recent-but-false verified entries), and the audit-first install.sh note. Linked from the README guides section.</p>
+<ul>
+<li>Deliberately NOT built: <code>kb upgrade</code> automation (one data point is not a</li>
+</ul>
+<p>pattern) and any status-vocabulary widening (the downstream's <code>resolved</code> mapping was the system working as intended).</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ knowledge-db/bin/kb version
+kb tool version: 0.5.3
+kb.config.json kb_version: 0.5.3
+
+$ tests/run-kb-tests.sh | tail -10
+  kb version output... PASS
+  KB014 warns on version drift without failing... PASS
+  undeclared root file fails KB002... PASS
+  declared extra_root_files passes... PASS
+  ...
+Results: 27 passed, 0 failed
+All KB conformance tests passed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>knowledge-db/bin/kb:895-916</summary><pre><code>  895  def check_version_drift(kb_dir, config, findings):
+  896      # KB014 (warning-only): the installed config records which tool version wrote
+  897      # it; a mismatch means tooling and config were upgraded independently.
+  898      kb_rel = kb_dir.name
+  899      declared = config.get("kb_version")
+  900      if declared is None:
+  901          findings.append(Finding("KB014", f"{kb_rel}/kb.config.json",
+  902                                  f"no kb_version recorded — add \"kb_version\": \"{KB_TOOL_VERSION}\" "
+  903                                  f"so upgrade drift is visible", warning=True))
+  904      elif declared != KB_TOOL_VERSION:
+  905          findings.append(Finding("KB014", f"{kb_rel}/kb.config.json",
+  906                                  f"kb_version {declared} != tool version {KB_TOOL_VERSION} — "
+  907                                  f"finish the upgrade (see UPGRADING.md), then bump kb_version",
+  908                                  warning=True))
+  909  
+  910  
+  911  def cmd_version(kb_dir, repo_root, config, args):
+  912      declared = config.get("kb_version", "unrecorded")
+  913      print(f"kb tool version: {KB_TOOL_VERSION}")
+  914      print(f"kb.config.json kb_version: {declared}")
+  915      return 0
+  916  </code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:228-231</summary><pre><code>  228          elif name not in KNOWN_ROOT_FILES and name not in config.get("extra_root_files", []):
+  229              findings.append(Finding("KB002", f"{kb_dir.name}/{name}",
+  230                                      "unknown file at KB root (not a declared artifact; "
+  231                                      "declare project-specific files in kb.config.json extra_root_files)"))</code></pre></details>
+<details class="src"><summary>UPGRADING.md:1-10</summary><pre><code>    1  # Upgrading an Installed KB
+    2  
+    3  &gt; This guide is for a project that already has a `knowledge-db/` and wants to
+    4  &gt; move to a newer upstream version. It is distilled from a real downstream
+    5  &gt; upgrade (an older minimal copy to v0.5.2) — every trap below was actually hit.
+    6  
+    7  The one-sentence rule: **an upgrade is not a file copy.** Upstream ships its own
+    8  config, its own KB entries (documenting this tool, not your project), and a
+    9  generated INDEX. Copying the tree verbatim silently invalidates your entries.
+   10  </code></pre></details>
+</div>
+<p class="tags">Related: <a href="#explorations/2026-08-24-downstream-upgrade-field-report.md">Downstream upgrade field report: first real KB upgrade to v0.5.2</a></p>
+</article>
 <article class="entry" id="solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md" data-status="verified">
 <h2>Prompt-injected rules and doc write-back (KB013)</h2>
 <div class="meta">
@@ -505,37 +661,37 @@ IN PLACE   CI job (.github/workflows/kb-check.yml)
 IN PLACE   agent hard rules (CLAUDE.md references knowledge-db/AGENT.md)</code></pre>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:867-888</summary><pre><code>  867  def cmd_rules(kb_dir, repo_root, config, args):
-  868      """Print the agent hard-rules block for prompt injection.
+<details class="src"><summary>knowledge-db/bin/kb:867-888</summary><pre><code>  867                                  f"record it (likely bucket: decisions/)"))
+  868  
   869  
-  870      Designed as the command of a UserPromptSubmit hook: stdout is appended to
-  871      the agent's context on EVERY prompt, so the rules are active immediately
-  872      after install and cannot fall out of context mid-session.
-  873      """
-  874      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
-  875      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
-  876      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
-  877  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
-  878  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
-  879  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
-  880  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
-  881     superseding a verified entry needs a stated reason + related: link, never permission.
-  882  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
-  883     debugged errors, explorations, and multi-file work each get an entry NOW
-  884     ({kb_name}/bin/kb new &lt;type&gt; &lt;slug&gt;), not at session end.
-  885  {kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
-  886  &lt;/kb-hard-rules&gt;""")
-  887      return 0
-  888  </code></pre></details>
-<details class="src"><summary>knowledge-db/bin/kb:854-862</summary><pre><code>  854      # KB013: doc write-back trigger (decision-bearing docs)
-  855      doc_hits = [p for p in changed
-  856                  if any(glob_match(g, p) for g in wb.get("docs", []))
-  857                  and not any(glob_match(g, p) for g in wb.get("exempt", []))]
-  858      if doc_hits and not any(p.startswith(kb_prefix) for p in changed):
-  859          findings.append(Finding("KB013", doc_hits[0],
-  860                                  f"decision-bearing doc changed but no {kb_prefix} entry touched — "
-  861                                  f"a doc edit that states a rule, constraint, or choice is a decision: "
-  862                                  f"record it (likely bucket: decisions/)"))</code></pre></details>
+  870  # ---------------------------------------------------------------- commands
+  871  
+  872  def cmd_rules(kb_dir, repo_root, config, args):
+  873      """Print the agent hard-rules block for prompt injection.
+  874  
+  875      Designed as the command of a UserPromptSubmit hook: stdout is appended to
+  876      the agent's context on EVERY prompt, so the rules are active immediately
+  877      after install and cannot fall out of context mid-session.
+  878      """
+  879      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
+  880      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+  881      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
+  882  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
+  883  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
+  884  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
+  885  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
+  886     superseding a verified entry needs a stated reason + related: link, never permission.
+  887  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
+  888     debugged errors, explorations, and multi-file work each get an entry NOW</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:854-862</summary><pre><code>  854          buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+  855          findings.append(Finding("KB011", code_hits[0],
+  856                                  f"code changed but no {kb_prefix} entry touched — "
+  857                                  f"record the work (likely bucket: solutions/ for features, errors/ for fixes; "
+  858                                  f"all buckets: {buckets})"))
+  859      # KB013: doc write-back trigger (decision-bearing docs)
+  860      doc_hits = [p for p in changed
+  861                  if any(glob_match(g, p) for g in wb.get("docs", []))
+  862                  and not any(glob_match(g, p) for g in wb.get("exempt", []))]</code></pre></details>
 <details class="src"><summary>knowledge-db/install.sh:98-140</summary><pre><code>   98      note_changed "agent Stop hook merged into .claude/settings.json"
    99  fi
   100  
@@ -579,20 +735,20 @@ IN PLACE   agent hard rules (CLAUDE.md references knowledge-db/AGENT.md)</code><
   138      f.write("\n")
   139  EOF
   140      note_changed "agent prompt rules hook (UserPromptSubmit: kb rules) merged into .claude/settings.json"</code></pre></details>
-<details class="src"><summary>knowledge-db/kb.config.json:77-90</summary><pre><code>   77    "writeback": {
-   78      "code": [
-   79        "scripts/**",
-   80        "hooks/**",
-   81        "knowledge-db/bin/**"
-   82      ],
-   83      "docs": [
-   84        "CLAUDE.md",
-   85        "AGENTS.md",
-   86        "docs/**",
-   87        "adr/**"
-   88      ],
-   89      "exempt": []
-   90    }</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:77-90</summary><pre><code>   77    ],
+   78    "writeback": {
+   79      "code": [
+   80        "scripts/**",
+   81        "hooks/**",
+   82        "knowledge-db/bin/**"
+   83      ],
+   84      "docs": [
+   85        "CLAUDE.md",
+   86        "AGENTS.md",
+   87        "docs/**",
+   88        "adr/**"
+   89      ],
+   90      "exempt": []</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-inject-rules-every-prompt.md">Inject hard rules every prompt, not only at session start</a></p>
 </article>
@@ -760,59 +916,59 @@ All tests passed</code></pre>
     6    kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
     7    kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
     8    kb rules                  Print the agent hard-rules block (for prompt-injection hooks)
-    9  
-   10  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
-   11    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
-   12    KB002  closed vocabularies (config)        KB008  verified entries go stale
-   13    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
-   14    KB004  verified requires captured proof    KB010  one trap per error entry
-   15    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
-   16           no template residue                 KB012  INDEX.html fresh (fingerprint)
-   17    KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
-   18  
-   19  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
-   20  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
-   21  """
-   22  
-   23  import argparse
-   24  import hashlib
-   25  import json</code></pre></details>
+    9    kb version                Print tool version and the config's recorded kb_version
+   10  
+   11  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
+   12    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
+   13    KB002  closed vocabularies (config)        KB008  verified entries go stale
+   14    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
+   15    KB004  verified requires captured proof    KB010  one trap per error entry
+   16    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
+   17           no template residue                 KB012  INDEX.html fresh (fingerprint)
+   18    KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
+   19                                               KB014  version drift (warning-only)
+   20  
+   21  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
+   22  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
+   23  """
+   24  
+   25  import argparse</code></pre></details>
 <details class="src"><summary>knowledge-db/kb.config.json:1-36</summary><pre><code>    1  {
-    2    "buckets": {
-    3      "explorations": "what is true",
-    4      "solutions": "what we did",
-    5      "errors": "what broke + the fix",
-    6      "decisions": "why we chose X"
-    7    },
-    8    "types": {
-    9      "exploration": "explorations",
-   10      "solution": "solutions",
-   11      "error": "errors",
-   12      "decision": "decisions"
-   13    },
-   14    "statuses": [
-   15      "verified",
-   16      "tentative",
-   17      "superseded"
-   18    ],
-   19    "tags": {
-   20      "area": [
-   21        "auth",
-   22        "api",
-   23        "ui",
-   24        "db",
-   25        "payments",
-   26        "infra",
-   27        "test",
-   28        "tooling",
-   29        "security",
-   30        "release"
-   31      ],
-   32      "layer": [
-   33        "controller",
-   34        "service",
-   35        "model",
-   36        "middleware",</code></pre></details>
+    2    "kb_version": "0.5.3",
+    3    "buckets": {
+    4      "explorations": "what is true",
+    5      "solutions": "what we did",
+    6      "errors": "what broke + the fix",
+    7      "decisions": "why we chose X"
+    8    },
+    9    "types": {
+   10      "exploration": "explorations",
+   11      "solution": "solutions",
+   12      "error": "errors",
+   13      "decision": "decisions"
+   14    },
+   15    "statuses": [
+   16      "verified",
+   17      "tentative",
+   18      "superseded"
+   19    ],
+   20    "tags": {
+   21      "area": [
+   22        "auth",
+   23        "api",
+   24        "ui",
+   25        "db",
+   26        "payments",
+   27        "infra",
+   28        "test",
+   29        "tooling",
+   30        "security",
+   31        "release"
+   32      ],
+   33      "layer": [
+   34        "controller",
+   35        "service",
+   36        "model",</code></pre></details>
 <details class="src"><summary>knowledge-db/install.sh:1-30</summary><pre><code>    1  #!/bin/bash
     2  # knowledge-db enforcement installer. Idempotent and merging: re-runnable,
     3  # never clobbers existing agent settings, hooks, or CI.
@@ -873,55 +1029,55 @@ All tests passed</code></pre>
    28      pass "pass/ exits 0"
    29  else
    30      fail "pass/ exits 0" "$OUT"</code></pre></details>
-<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56  ```
-   57  
-   58  Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fails `kb check`.
-   59  
-   60  ## The Rules
-   61  
-   62  | ID | Rule |
-   63  |----|------|
-   64  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
-   65  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
-   66  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
-   67  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
-   68  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
-   69  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
-   70  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |
-   71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
-<details class="src"><summary>CHANGELOG.md:8-40</summary><pre><code>    8  ## [0.5.1] - 2026-08-24
+<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56    decisions/       &lt;- "why we chose X"
+   57  ```
+   58  
+   59  Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fails `kb check`.
+   60  
+   61  ## The Rules
+   62  
+   63  | ID | Rule |
+   64  |----|------|
+   65  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+   66  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
+   67  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
+   68  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
+   69  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
+   70  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
+   71  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |</code></pre></details>
+<details class="src"><summary>CHANGELOG.md:8-40</summary><pre><code>    8  ## [0.5.3] - 2026-08-24
     9  
-   10  ### Fixed
-   11  - CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
-   12    kills the script on bash &gt;= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
-   13    All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
-   14    as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
-   15  
-   16  ## [0.5.0] - 2026-08-24
-   17  
-   18  Response to field failure and external parity feedback: enforcement content
-   19  existed, but the delivery mechanism auto-loaded for only one agent runtime and
-   20  only from session start. v0.5.0 makes the rules reach every major agent runtime
-   21  with zero human steps, and closes the doc-only-decision write-back gap.
-   22  
-   23  ### Added
-   24  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
-   25    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
-   26    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
-   27    active immediately after a mid-session install, immune to context loss.
-   28  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
-   29    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
-   30    `AGENTS.md`, `.github/copilot-instructions.md`,
-   31    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
-   32    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
-   33    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
-   34    loses the block. Replaces the single-host-file behavior.
-   35  - **KB013 — doc write-back trigger**: a staged/PR diff touching
-   36    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
-   37    without touching `knowledge-db/**` fails — a doc edit that states a rule,
-   38    constraint, or choice is a decision and belongs in `decisions/` too.
-   39    Conformance fixture included.
-   40  - Installer conformance tests: all-6-files planted, frontmatter shapes,</code></pre></details>
+   10  Response to the first real downstream upgrade (field report from a project
+   11  moving an older minimal KB copy to v0.5.2): the upgrade worked but was fully
+   12  manual, version drift was invisible, and a project-specific root file had no
+   13  config escape.
+   14  
+   15  ### Added
+   16  - **`kb version` + KB014 (warning-only)**: `kb.config.json` now records the
+   17    tool version that wrote it (`kb_version`); `kb check` warns on a missing or
+   18    mismatched value so independently-upgraded tooling and config are visible.
+   19    `kb version` prints both.
+   20  - **`extra_root_files` config key**: project-specific files at the KB root
+   21    (e.g. `RELEASES.md`) can be declared instead of failing KB002 — extend the
+   22    config, never patch `KNOWN_ROOT_FILES` in the vendored CLI.
+   23  - **UPGRADING.md**: field-verified upgrade guide — vendor the tooling, adapt
+   24    the config, migrate the entries; the trap list (generated INDEX, strict
+   25    sources grammar, honest KB004 downgrades, closed statuses, recent-but-false
+   26    verified entries) and the audit-first note for `install.sh`.
+   27  - Conformance tests: `kb version` output, KB014 drift warning, KB002
+   28    root-file escape (suite now 27 tests).
+   29  
+   30  ## [0.5.2] - 2026-08-24
+   31  
+   32  ### Added
+   33  - **ENFORCEMENT.md**: dedicated guide for the six-layer enforcement machinery —
+   34    layer table with what each catches, per-prompt rules injection mechanics,
+   35    multi-runtime rule planting semantics and `RULE_TARGETS` tuning, KB011/KB013
+   36    write-back gate configuration, drift audit/repair, timing caveats, and the
+   37    bash errexit portability rule. Linked from the README guides section.
+   38  - **ADVANCED.md "The Human Window"**: INDEX.html section for non-technical
+   39    stakeholders — zero-tooling browsing, plain-language navigation, proof
+   40    navigation down to cited source lines, decision attribution, single-file</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-derive-index-from-front-matter.md">Derive INDEX.md from front-matter instead of hand-maintaining it</a>, <a href="#decisions/2026-08-24-python-stdlib-for-kb-cli.md">Python 3 stdlib (not bash, not Node) for the kb enforcement CLI</a>, <a href="#decisions/2026-08-24-enforce-or-delete-rule-ids.md">Enforce-or-delete: every hard rule gets an ID or leaves the README</a>, <a href="#decisions/2026-08-24-writeback-trigger-not-checklist.md">Write-back as a diff-driven trigger (KB011), not an end-of-task checklist</a>, <a href="#solutions/2026-08-21-kb-v2-improvements.md">KB v2: Security, tests, mandatory auto-capture, releases</a></p>
 </article>
@@ -954,98 +1110,98 @@ Results: 16 passed, 0 failed</code></pre>
 <p>Structural check of generated page (2026-08-24): fingerprint present, 18 entry articles, 56 expandable source snippets, 18 proof boxes, 1 superseded banner, 0 external URL references (fully self-contained). All key tags balanced (article/details/section/table/pre/ul). KB012 fixture: <code>kb check</code> exits 1 naming KB012.</p>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:685-810</summary><pre><code>  685  
-  686  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
-  687      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
-  688      parsed_entries = []
-  689      for bucket, path in entries:
-  690          parsed = parse_entry(path)
-  691          parsed_entries.append((bucket, path, parsed))
-  692  
-  693      def entry_titles():
-  694          t = {}
-  695          for bucket, path, parsed in parsed_entries:
-  696              t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
-  697          return t
-  698      titles = entry_titles()
-  699  
-  700      ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)
-  701  
-  702      out = []
-  703      out.append("&lt;!DOCTYPE html&gt;")
-  704      out.append('&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;')
-  705      out.append('&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;')
-  706      out.append("&lt;title&gt;Knowledge Database&lt;/title&gt;")
-  707      out.append("&lt;style&gt;" + HTML_CSS + "&lt;/style&gt;&lt;/head&gt;&lt;body&gt;")
-  708      out.append('&lt;header class="top"&gt;&lt;h1&gt;Knowledge Database&lt;/h1&gt;')
-  709      out.append('&lt;input id="q" type="search" placeholder="Search titles, text, tags..."&gt;')
-  710      out.append('&lt;select id="st"&gt;&lt;option value=""&gt;all statuses&lt;/option&gt;'
-  711                 '&lt;option value="verified"&gt;verified (proven)&lt;/option&gt;'
-  712                 '&lt;option value="tentative"&gt;tentative (unconfirmed)&lt;/option&gt;'
-  713                 '&lt;option value="superseded"&gt;superseded (replaced)&lt;/option&gt;&lt;/select&gt;')
-  714      out.append("&lt;/header&gt;")
-  715      out.append('&lt;div class="layout"&gt;&lt;nav class="side"&gt;')
-  716      for bucket in config.get("buckets", {}):
-  717          rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
-  718          rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
-  719          out.append(f"&lt;h2&gt;{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}&lt;/h2&gt;")
-  720          if not rows:
-  721              out.append('&lt;span class="empty"&gt;nothing yet&lt;/span&gt;')
-  722          for b, p, pr in rows:
-  723              rel = f"{b}/{p.name}"
-  724              status = pr["front"].get("status", "")
-  725              out.append(f'&lt;a href="#{rel}"&gt;&lt;span class="dot {_esc(str(status))}"&gt;&lt;/span&gt;'
-  726                         f"{_esc(str(pr['front'].get('title', p.name)))}&lt;/a&gt;")
-  727      out.append("&lt;/nav&gt;&lt;main&gt;")
-  728  
-  729      out.append("&lt;h2&gt;Start here: ready answers&lt;/h2&gt;")
-  730      out.append('&lt;p class="bucket-blurb"&gt;Topic &amp;rarr; the one place to look first.&lt;/p&gt;')
-  731      out.append(_md_to_html(ready, entry_ids))
-  732  
-  733      out.append('&lt;h2&gt;How to read this page&lt;/h2&gt;')
-  734      out.append('&lt;p class="bucket-blurb"&gt;&lt;span class="badge verified"&gt;verified&lt;/span&gt; proven, with captured '
-  735                 'evidence shown in the Proof box &amp;nbsp;&lt;span class="badge tentative"&gt;tentative&lt;/span&gt; best '
-  736                 'understanding, not yet proven &amp;nbsp;&lt;span class="badge superseded"&gt;superseded&lt;/span&gt; outdated, '
-  737                 'links to its replacement. Every claim cites real files: expand a source to see the exact lines '
-  738                 'it is grounded in (captured when this page was generated).&lt;/p&gt;')
-  739  
-  740      for bucket, blurb in config.get("buckets", {}).items():
-  741          rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
-  742          rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
-  743          out.append(f'&lt;section class="bucket"&gt;&lt;h2&gt;{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}'
-  744                     f' &lt;span class="tags"&gt;({_esc(bucket)}/ &amp;mdash; {_esc(blurb)})&lt;/span&gt;&lt;/h2&gt;')</code></pre></details>
-<details class="src"><summary>knowledge-db/bin/kb:592-610</summary><pre><code>  592  
-  593  def _source_snippet(repo_root, src):
-  594      m = SOURCE_RE.match(src)
-  595      if not m:
-  596          return None
-  597      path = repo_root / m.group("path")
-  598      if not path.is_file():
-  599          return "(source file not found)"
-  600      try:
-  601          lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
-  602      except OSError:
-  603          return "(source file unreadable)"
-  604      start = int(m.group("start"))
-  605      end = int(m.group("end") or m.group("start"))
-  606      end = min(end, start + SNIPPET_MAX_LINES - 1, len(lines))
-  607      if start &gt; len(lines):
-  608          return "(cited lines beyond end of file)"
-  609      sel = lines[start - 1:end]
-  610      return "\n".join(f"{i:&gt;5}  {l}" for i, l in enumerate(sel, start))</code></pre></details>
-<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
-  876      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
-  877  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
-  878  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
-  879  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
-  880  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
-  881     superseding a verified entry needs a stated reason + related: link, never permission.
-  882  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
-  883     debugged errors, explorations, and multi-file work each get an entry NOW
-  884     ({kb_name}/bin/kb new &lt;type&gt; &lt;slug&gt;), not at session end.
-  885  {kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
-  886  &lt;/kb-hard-rules&gt;""")</code></pre></details>
-<details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:685-810</summary><pre><code>  685  }
+  686  q.addEventListener('input', apply);
+  687  st.addEventListener('change', apply);
+  688  """
+  689  
+  690  
+  691  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
+  692      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
+  693      parsed_entries = []
+  694      for bucket, path in entries:
+  695          parsed = parse_entry(path)
+  696          parsed_entries.append((bucket, path, parsed))
+  697  
+  698      def entry_titles():
+  699          t = {}
+  700          for bucket, path, parsed in parsed_entries:
+  701              t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
+  702          return t
+  703      titles = entry_titles()
+  704  
+  705      ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)
+  706  
+  707      out = []
+  708      out.append("&lt;!DOCTYPE html&gt;")
+  709      out.append('&lt;html lang="en"&gt;&lt;head&gt;&lt;meta charset="utf-8"&gt;')
+  710      out.append('&lt;meta name="viewport" content="width=device-width, initial-scale=1"&gt;')
+  711      out.append("&lt;title&gt;Knowledge Database&lt;/title&gt;")
+  712      out.append("&lt;style&gt;" + HTML_CSS + "&lt;/style&gt;&lt;/head&gt;&lt;body&gt;")
+  713      out.append('&lt;header class="top"&gt;&lt;h1&gt;Knowledge Database&lt;/h1&gt;')
+  714      out.append('&lt;input id="q" type="search" placeholder="Search titles, text, tags..."&gt;')
+  715      out.append('&lt;select id="st"&gt;&lt;option value=""&gt;all statuses&lt;/option&gt;'
+  716                 '&lt;option value="verified"&gt;verified (proven)&lt;/option&gt;'
+  717                 '&lt;option value="tentative"&gt;tentative (unconfirmed)&lt;/option&gt;'
+  718                 '&lt;option value="superseded"&gt;superseded (replaced)&lt;/option&gt;&lt;/select&gt;')
+  719      out.append("&lt;/header&gt;")
+  720      out.append('&lt;div class="layout"&gt;&lt;nav class="side"&gt;')
+  721      for bucket in config.get("buckets", {}):
+  722          rows = [(b, p, pr) for b, p, pr in parsed_entries if b == bucket]
+  723          rows.sort(key=lambda r: (str(r[2]["front"].get("date", "")), r[1].name), reverse=True)
+  724          out.append(f"&lt;h2&gt;{_esc(HTML_BUCKET_LABELS.get(bucket, bucket))}&lt;/h2&gt;")
+  725          if not rows:
+  726              out.append('&lt;span class="empty"&gt;nothing yet&lt;/span&gt;')
+  727          for b, p, pr in rows:
+  728              rel = f"{b}/{p.name}"
+  729              status = pr["front"].get("status", "")
+  730              out.append(f'&lt;a href="#{rel}"&gt;&lt;span class="dot {_esc(str(status))}"&gt;&lt;/span&gt;'
+  731                         f"{_esc(str(pr['front'].get('title', p.name)))}&lt;/a&gt;")
+  732      out.append("&lt;/nav&gt;&lt;main&gt;")
+  733  
+  734      out.append("&lt;h2&gt;Start here: ready answers&lt;/h2&gt;")
+  735      out.append('&lt;p class="bucket-blurb"&gt;Topic &amp;rarr; the one place to look first.&lt;/p&gt;')
+  736      out.append(_md_to_html(ready, entry_ids))
+  737  
+  738      out.append('&lt;h2&gt;How to read this page&lt;/h2&gt;')
+  739      out.append('&lt;p class="bucket-blurb"&gt;&lt;span class="badge verified"&gt;verified&lt;/span&gt; proven, with captured '
+  740                 'evidence shown in the Proof box &amp;nbsp;&lt;span class="badge tentative"&gt;tentative&lt;/span&gt; best '
+  741                 'understanding, not yet proven &amp;nbsp;&lt;span class="badge superseded"&gt;superseded&lt;/span&gt; outdated, '
+  742                 'links to its replacement. Every claim cites real files: expand a source to see the exact lines '
+  743                 'it is grounded in (captured when this page was generated).&lt;/p&gt;')
+  744  </code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:592-610</summary><pre><code>  592      if fence is not None:
+  593          out.append("&lt;pre&gt;&lt;code&gt;" + _esc("\n".join(fence)) + "&lt;/code&gt;&lt;/pre&gt;")
+  594      flush_para(); flush_table(); close_ul()
+  595      return "\n".join(out)
+  596  
+  597  
+  598  def _source_snippet(repo_root, src):
+  599      m = SOURCE_RE.match(src)
+  600      if not m:
+  601          return None
+  602      path = repo_root / m.group("path")
+  603      if not path.is_file():
+  604          return "(source file not found)"
+  605      try:
+  606          lines = path.read_text(encoding="utf-8", errors="replace").split("\n")
+  607      except OSError:
+  608          return "(source file unreadable)"
+  609      start = int(m.group("start"))
+  610      end = int(m.group("end") or m.group("start"))</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      Designed as the command of a UserPromptSubmit hook: stdout is appended to
+  876      the agent's context on EVERY prompt, so the rules are active immediately
+  877      after install and cannot fall out of context mid-session.
+  878      """
+  879      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
+  880      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+  881      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
+  882  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
+  883  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
+  884  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
+  885  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
+  886     superseding a verified entry needs a stated reason + related: link, never permission.</code></pre></details>
+<details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |</code></pre></details>
 <details class="src"><summary>ADVANCED.md:211-240</summary><pre><code>  211  ## The Human Window: INDEX.html
   212  
   213  Everything above assumes someone comfortable in a repo. Most stakeholders are not.
@@ -1114,13 +1270,13 @@ $ grep -n "ENFORCEMENT.md" README.md
     5  &gt; exists, and how to tune it. For the context-workspace pattern, see
     6  &gt; [ADVANCED.md](ADVANCED.md).</code></pre></details>
 <details class="src"><summary>README.md:465-472</summary><pre><code>  465  
-  466  **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**
+  466  **Upgrading an existing KB to a newer version: [UPGRADING.md](UPGRADING.md)**
   467  
-  468  It covers:
-  469  - The six enforcement layers and what each one catches
-  470  - Per-prompt rules injection (`kb rules` + UserPromptSubmit hook)
-  471  - Multi-runtime rule planting (Claude Code, Codex, Copilot, Cursor, Windsurf)
-  472  - Tuning the write-back gates (KB011 code, KB013 docs)</code></pre></details>
+  468  Vendor the tooling, adapt the config, migrate the entries — never overwrite the
+  469  KB wholesale. Field-verified order and traps, `kb version` / KB014 drift
+  470  warning, `extra_root_files`, and when (not) to run `install.sh`.
+  471  
+  472  **How the enforcement machinery works: [ENFORCEMENT.md](ENFORCEMENT.md)**</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a>, <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a></p>
 </article>
@@ -1615,59 +1771,59 @@ v0.2.2</code></pre>
     5  The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
     6  and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     7  
-    8  ## [0.5.1] - 2026-08-24
+    8  ## [0.5.3] - 2026-08-24
     9  
-   10  ### Fixed
-   11  - CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
-   12    kills the script on bash &gt;= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
-   13    All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
-   14    as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
-   15  
-   16  ## [0.5.0] - 2026-08-24
-   17  
-   18  Response to field failure and external parity feedback: enforcement content
-   19  existed, but the delivery mechanism auto-loaded for only one agent runtime and
-   20  only from session start. v0.5.0 makes the rules reach every major agent runtime
-   21  with zero human steps, and closes the doc-only-decision write-back gap.
-   22  
-   23  ### Added
-   24  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
-   25    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it
-   26    into `.claude/settings.json`. Rules enter agent context on EVERY prompt —
-   27    active immediately after a mid-session install, immune to context loss.
-   28  - **Multi-runtime rule planting**: `install.sh` now plants the HARD RULE block
-   29    into every runtime file the major agents auto-ingest — `CLAUDE.md`,
-   30    `AGENTS.md`, `.github/copilot-instructions.md`,
-   31    `.github/instructions/kb.instructions.md` (with `applyTo: '**'` frontmatter),
-   32    `.cursor/rules/knowledge-db.mdc` (with `alwaysApply: true`), `.windsurfrules`.
-   33    Marker-guarded create-or-merge, idempotent; `--check` fails if any target
-   34    loses the block. Replaces the single-host-file behavior.
-   35  - **KB013 — doc write-back trigger**: a staged/PR diff touching
-   36    `writeback.docs` paths (default: CLAUDE.md, AGENTS.md, `docs/**`, `adr/**`)
-   37    without touching `knowledge-db/**` fails — a doc edit that states a rule,
-   38    constraint, or choice is a decision and belongs in `decisions/` too.
-   39    Conformance fixture included.
-   40  - Installer conformance tests: all-6-files planted, frontmatter shapes,
-   41    idempotent rerun, drift detection (suite now 23 tests).
+   10  Response to the first real downstream upgrade (field report from a project
+   11  moving an older minimal KB copy to v0.5.2): the upgrade worked but was fully
+   12  manual, version drift was invisible, and a project-specific root file had no
+   13  config escape.
+   14  
+   15  ### Added
+   16  - **`kb version` + KB014 (warning-only)**: `kb.config.json` now records the
+   17    tool version that wrote it (`kb_version`); `kb check` warns on a missing or
+   18    mismatched value so independently-upgraded tooling and config are visible.
+   19    `kb version` prints both.
+   20  - **`extra_root_files` config key**: project-specific files at the KB root
+   21    (e.g. `RELEASES.md`) can be declared instead of failing KB002 — extend the
+   22    config, never patch `KNOWN_ROOT_FILES` in the vendored CLI.
+   23  - **UPGRADING.md**: field-verified upgrade guide — vendor the tooling, adapt
+   24    the config, migrate the entries; the trap list (generated INDEX, strict
+   25    sources grammar, honest KB004 downgrades, closed statuses, recent-but-false
+   26    verified entries) and the audit-first note for `install.sh`.
+   27  - Conformance tests: `kb version` output, KB014 drift warning, KB002
+   28    root-file escape (suite now 27 tests).
+   29  
+   30  ## [0.5.2] - 2026-08-24
+   31  
+   32  ### Added
+   33  - **ENFORCEMENT.md**: dedicated guide for the six-layer enforcement machinery —
+   34    layer table with what each catches, per-prompt rules injection mechanics,
+   35    multi-runtime rule planting semantics and `RULE_TARGETS` tuning, KB011/KB013
+   36    write-back gate configuration, drift audit/repair, timing caveats, and the
+   37    bash errexit portability rule. Linked from the README guides section.
+   38  - **ADVANCED.md "The Human Window"**: INDEX.html section for non-technical
+   39    stakeholders — zero-tooling browsing, plain-language navigation, proof
+   40    navigation down to cited source lines, decision attribution, single-file
+   41    sharing, KB012 freshness guarantee.
    42  
-   43  ### Changed
-   44  - `install.sh` output notes that planted rule files load at each agent's next
-   45    session start while the UserPromptSubmit hook covers the current Claude Code
-   46    session from the next prompt.
-   47  - `kb.config.json` `writeback` gains a `docs` glob list alongside `code`.
-   48  
-   49  ## [0.4.1] - 2026-08-24
+   43  ## [0.5.1] - 2026-08-24
+   44  
+   45  ### Fixed
+   46  - CI-only failure of the legacy kb-lint suite: `set -e` + `((VAR++))` from zero
+   47    kills the script on bash &gt;= 4.1 (ubuntu CI) while macOS bash 3.2 tolerates it.
+   48    All counter increments in `scripts/kb-lint` and `scripts/kb-ingest` rewritten
+   49    as errexit-safe `VAR=$((VAR + 1))` assignments. Red since v0.4.1.
    50  
-   51  ### Added
-   52  - **`INDEX.html` — self-contained human-facing KB browser** for non-technical readers, generated by `kb index` alongside INDEX.md. Double-click to open; zero dependencies, no server, no external assets, works offline and survives email/Slack as a single file.
-   53    - Every entry inlined with plain-language bucket labels, search box, status filter
-   54    - **Proof navigation**: Verification evidence rendered per entry; every `sources:` citation expandable to the actual cited source lines (embedded at build time)
-   55    - Decisions show `decided by:` attribution; superseded entries carry a "replaced by" banner linking the replacement; related entries cross-link as in-page anchors
-   56  - **KB012**: `INDEX.html` freshness enforced via embedded fingerprint of KB content (generated INDEX.md + entry files). Embedded source snippets are deliberately outside the fingerprint — a KB007-style byte check would fail on every unrelated code edit. Conformance fixture included (suite now 16 tests).
+   51  ## [0.5.0] - 2026-08-24
+   52  
+   53  Response to field failure and external parity feedback: enforcement content
+   54  existed, but the delivery mechanism auto-loaded for only one agent runtime and
+   55  only from session start. v0.5.0 makes the rules reach every major agent runtime
+   56  with zero human steps, and closes the doc-only-decision write-back gap.
    57  
-   58  ## [0.4.0] - 2026-08-24
-   59  
-   60  Response to external evaluator feedback: conventions that were "enforced by</code></pre></details>
+   58  ### Added
+   59  - **Per-prompt rules injection**: new `kb rules` subcommand prints a compact
+   60    `&lt;kb-hard-rules&gt;` block; `install.sh` merges a UserPromptSubmit hook running it</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#explorations/2026-08-20-cli-tool-architecture.md">CLI Tool Architecture</a>, <a href="#errors/2026-08-20-fix-flag-not-implemented.md">kb-lint --fix flag documented but not implemented</a>, <a href="#decisions/2026-08-21-mandatory-vs-optional-auto-capture.md">Mandatory vs optional auto-capture</a>, <a href="#decisions/2026-08-21-consent-only-for-superseding.md">Consent only for superseding verified entries</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a>, <a href="#decisions/2026-08-21-one-entry-per-choice.md">decisions/ bucket: one entry per choice</a></p>
 </article>
@@ -2044,33 +2200,33 @@ Testing kb-lint
 Results: 14 passed, 0 failed</code></pre>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:488-510</summary><pre><code>  488  
-  489  
-  490  def kb_fingerprint(index_md_text, entry_pairs):
-  491      h = hashlib.sha256()
-  492      h.update(index_md_text.encode("utf-8"))
-  493      for rel, content in sorted(entry_pairs):
-  494          h.update(rel.encode("utf-8"))
-  495          h.update(b"\x00")
-  496          h.update(content.encode("utf-8"))
-  497      return h.hexdigest()
-  498  
-  499  
-  500  def _esc(s):
-  501      return s.replace("&amp;", "&amp;amp;").replace("&lt;", "&amp;lt;").replace("&gt;", "&amp;gt;")
-  502  
+<details class="src"><summary>knowledge-db/bin/kb:488-510</summary><pre><code>  488      "errors": "What broke + the fix",
+  489      "decisions": "Why we chose things",
+  490  }
+  491  
+  492  SNIPPET_MAX_LINES = 60
+  493  
+  494  
+  495  def kb_fingerprint(index_md_text, entry_pairs):
+  496      h = hashlib.sha256()
+  497      h.update(index_md_text.encode("utf-8"))
+  498      for rel, content in sorted(entry_pairs):
+  499          h.update(rel.encode("utf-8"))
+  500          h.update(b"\x00")
+  501          h.update(content.encode("utf-8"))
+  502      return h.hexdigest()
   503  
-  504  def _inline(s, entry_ids):
-  505      # input must already be HTML-escaped
-  506      s = re.sub(r"`([^`]+)`", r"&lt;code&gt;\1&lt;/code&gt;", s)
-  507      s = re.sub(r"\*\*(.+?)\*\*", r"&lt;strong&gt;\1&lt;/strong&gt;", s)
+  504  
+  505  def _esc(s):
+  506      return s.replace("&amp;", "&amp;amp;").replace("&lt;", "&amp;lt;").replace("&gt;", "&amp;gt;")
+  507  
   508  
-  509      def link(m):
-  510          text, href = m.group(1), m.group(2)</code></pre></details>
-<details class="src"><summary>knowledge-db/kb.config.json:32-35</summary><pre><code>   32      "layer": [
-   33        "controller",
-   34        "service",
-   35        "model",</code></pre></details>
+  509  def _inline(s, entry_ids):
+  510      # input must already be HTML-escaped</code></pre></details>
+<details class="src"><summary>knowledge-db/kb.config.json:32-35</summary><pre><code>   32      ],
+   33      "layer": [
+   34        "controller",
+   35        "service",</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a>, <a href="#decisions/2026-08-21-incremental-vs-batched-capture.md">Incremental capture vs batched at session end</a></p>
 </article>
@@ -2110,74 +2266,74 @@ All KB conformance tests passed</code></pre>
     6    kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
     7    kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
     8    kb rules                  Print the agent hard-rules block (for prompt-injection hooks)
-    9  
-   10  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
-   11    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
-   12    KB002  closed vocabularies (config)        KB008  verified entries go stale
-   13    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
-   14    KB004  verified requires captured proof    KB010  one trap per error entry
-   15    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
-   16           no template residue                 KB012  INDEX.html fresh (fingerprint)
-   17    KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
-   18  
-   19  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
-   20  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
-   21  """
-   22  
-   23  import argparse
-   24  import hashlib
-   25  import json
-   26  import re
-   27  import subprocess
-   28  import sys
-   29  from datetime import date, datetime, timedelta
-   30  from pathlib import Path
-   31  
-   32  MANUAL_START = "&lt;!-- kb:manual:{name}:start --&gt;"
-   33  MANUAL_END = "&lt;!-- kb:manual:{name}:end --&gt;"
-   34  
-   35  KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "INDEX.html", "_TEMPLATE.md", "AGENT.md",
-   36                      "kb.config.json", "install.sh"}
-   37  KNOWN_ROOT_DIRS = {"bin"}
-   38  REQUIRED_KEYS = ["title", "type", "status", "date", "tags", "sources"]
-   39  OPTIONAL_KEYS = ["related", "last_verified", "decision_by"]
-   40  SOURCE_RE = re.compile(r"^(?P&lt;path&gt;[^:\s][^:]*):(?P&lt;start&gt;\d+)(-(?P&lt;end&gt;\d+))?(@(?P&lt;rev&gt;[0-9a-fA-F]{6,40}))?$")</code></pre></details>
+    9    kb version                Print tool version and the config's recorded kb_version
+   10  
+   11  Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
+   12    KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
+   13    KB002  closed vocabularies (config)        KB008  verified entries go stale
+   14    KB003  sources grammar + existence         KB009  lockstep pairs (diff mode)
+   15    KB004  verified requires captured proof    KB010  one trap per error entry
+   16    KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
+   17           no template residue                 KB012  INDEX.html fresh (fingerprint)
+   18    KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
+   19                                               KB014  version drift (warning-only)
+   20  
+   21  Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
+   22  documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
+   23  """
+   24  
+   25  import argparse
+   26  import hashlib
+   27  import json
+   28  import re
+   29  import subprocess
+   30  import sys
+   31  from datetime import date, datetime, timedelta
+   32  from pathlib import Path
+   33  
+   34  KB_TOOL_VERSION = "0.5.3"
+   35  
+   36  MANUAL_START = "&lt;!-- kb:manual:{name}:start --&gt;"
+   37  MANUAL_END = "&lt;!-- kb:manual:{name}:end --&gt;"
+   38  
+   39  KNOWN_ROOT_FILES = {"README.md", "INDEX.md", "INDEX.html", "_TEMPLATE.md", "AGENT.md",
+   40                      "kb.config.json", "install.sh"}</code></pre></details>
 <details class="src"><summary>knowledge-db/kb.config.json:1-36</summary><pre><code>    1  {
-    2    "buckets": {
-    3      "explorations": "what is true",
-    4      "solutions": "what we did",
-    5      "errors": "what broke + the fix",
-    6      "decisions": "why we chose X"
-    7    },
-    8    "types": {
-    9      "exploration": "explorations",
-   10      "solution": "solutions",
-   11      "error": "errors",
-   12      "decision": "decisions"
-   13    },
-   14    "statuses": [
-   15      "verified",
-   16      "tentative",
-   17      "superseded"
-   18    ],
-   19    "tags": {
-   20      "area": [
-   21        "auth",
-   22        "api",
-   23        "ui",
-   24        "db",
-   25        "payments",
-   26        "infra",
-   27        "test",
-   28        "tooling",
-   29        "security",
-   30        "release"
-   31      ],
-   32      "layer": [
-   33        "controller",
-   34        "service",
-   35        "model",
-   36        "middleware",</code></pre></details>
+    2    "kb_version": "0.5.3",
+    3    "buckets": {
+    4      "explorations": "what is true",
+    5      "solutions": "what we did",
+    6      "errors": "what broke + the fix",
+    7      "decisions": "why we chose X"
+    8    },
+    9    "types": {
+   10      "exploration": "explorations",
+   11      "solution": "solutions",
+   12      "error": "errors",
+   13      "decision": "decisions"
+   14    },
+   15    "statuses": [
+   16      "verified",
+   17      "tentative",
+   18      "superseded"
+   19    ],
+   20    "tags": {
+   21      "area": [
+   22        "auth",
+   23        "api",
+   24        "ui",
+   25        "db",
+   26        "payments",
+   27        "infra",
+   28        "test",
+   29        "tooling",
+   30        "security",
+   31        "release"
+   32      ],
+   33      "layer": [
+   34        "controller",
+   35        "service",
+   36        "model",</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-20-bash-for-cli-tools.md">Bash for Phase 1 CLI tools</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
 </article>
@@ -2202,27 +2358,27 @@ $ tests/run-kb-tests.sh
 Results: 16 passed, 0 failed</code></pre>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:489-497</summary><pre><code>  489  
-  490  def kb_fingerprint(index_md_text, entry_pairs):
-  491      h = hashlib.sha256()
-  492      h.update(index_md_text.encode("utf-8"))
-  493      for rel, content in sorted(entry_pairs):
-  494          h.update(rel.encode("utf-8"))
-  495          h.update(b"\x00")
-  496          h.update(content.encode("utf-8"))
-  497      return h.hexdigest()</code></pre></details>
-<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
-  876      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
-  877  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
-  878  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
-  879  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
-  880  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
-  881     superseding a verified entry needs a stated reason + related: link, never permission.
-  882  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
-  883     debugged errors, explorations, and multi-file work each get an entry NOW
-  884     ({kb_name}/bin/kb new &lt;type&gt; &lt;slug&gt;), not at session end.
-  885  {kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
-  886  &lt;/kb-hard-rules&gt;""")</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:489-497</summary><pre><code>  489      "decisions": "Why we chose things",
+  490  }
+  491  
+  492  SNIPPET_MAX_LINES = 60
+  493  
+  494  
+  495  def kb_fingerprint(index_md_text, entry_pairs):
+  496      h = hashlib.sha256()
+  497      h.update(index_md_text.encode("utf-8"))</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:875-886</summary><pre><code>  875      Designed as the command of a UserPromptSubmit hook: stdout is appended to
+  876      the agent's context on EVERY prompt, so the rules are active immediately
+  877      after install and cannot fall out of context mid-session.
+  878      """
+  879      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
+  880      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+  881      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
+  882  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
+  883  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
+  884  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
+  885  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
+  886     superseding a verified entry needs a stated reason + related: link, never permission.</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-index-html-evidence-browser.md">INDEX.html: self-contained evidence browser for non-technical readers</a>, <a href="#decisions/2026-08-24-derive-index-from-front-matter.md">Derive INDEX.md from front-matter instead of hand-maintaining it</a></p>
 </article>
@@ -2378,28 +2534,28 @@ IN PLACE   agent prompt rules hook (.claude/settings.json UserPromptSubmit)</cod
   138      f.write("\n")
   139  EOF
   140      note_changed "agent prompt rules hook (UserPromptSubmit: kb rules) merged into .claude/settings.json"</code></pre></details>
-<details class="src"><summary>knowledge-db/bin/kb:867-888</summary><pre><code>  867  def cmd_rules(kb_dir, repo_root, config, args):
-  868      """Print the agent hard-rules block for prompt injection.
+<details class="src"><summary>knowledge-db/bin/kb:867-888</summary><pre><code>  867                                  f"record it (likely bucket: decisions/)"))
+  868  
   869  
-  870      Designed as the command of a UserPromptSubmit hook: stdout is appended to
-  871      the agent's context on EVERY prompt, so the rules are active immediately
-  872      after install and cannot fall out of context mid-session.
-  873      """
-  874      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
-  875      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
-  876      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
-  877  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
-  878  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
-  879  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
-  880  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
-  881     superseding a verified entry needs a stated reason + related: link, never permission.
-  882  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
-  883     debugged errors, explorations, and multi-file work each get an entry NOW
-  884     ({kb_name}/bin/kb new &lt;type&gt; &lt;slug&gt;), not at session end.
-  885  {kb_name}/bin/kb check must exit 0 before finishing. Full rules: {kb_name}/AGENT.md.
-  886  &lt;/kb-hard-rules&gt;""")
-  887      return 0
-  888  </code></pre></details>
+  870  # ---------------------------------------------------------------- commands
+  871  
+  872  def cmd_rules(kb_dir, repo_root, config, args):
+  873      """Print the agent hard-rules block for prompt injection.
+  874  
+  875      Designed as the command of a UserPromptSubmit hook: stdout is appended to
+  876      the agent's context on EVERY prompt, so the rules are active immediately
+  877      after install and cannot fall out of context mid-session.
+  878      """
+  879      kb_name = kb_dir.name if kb_dir.parent == repo_root else str(kb_dir.relative_to(repo_root))
+  880      buckets = ", ".join(f"{b}/" for b in config.get("buckets", {}))
+  881      print(f"""&lt;kb-hard-rules source="{kb_name}/AGENT.md"&gt;
+  882  Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-trivial task:
+  883  1. READ FIRST — check {kb_name}/INDEX.md before exploring; reuse verified entries.
+  884  2. EMPTY KB — if nothing relevant exists, say so, suggest bootstrap (exploration or ingest), continue.
+  885  3. NEVER PROMPT, NEVER WITHHOLD — create/update/supersede entries autonomously as insights occur;
+  886     superseding a verified entry needs a stated reason + related: link, never permission.
+  887  4. WRITE BACK AT THE MOMENT OF INSIGHT — decisions (incl. doc-only edits to CLAUDE.md/ADRs),
+  888     debugged errors, explorations, and multi-file work each get an entry NOW</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a></p>
 </article>
@@ -2424,30 +2580,30 @@ IN PLACE   agent prompt rules hook (.claude/settings.json UserPromptSubmit)</cod
 107:## Guidance (not checked)</code></pre>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56  ```
-   57  
-   58  Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fails `kb check`.
-   59  
-   60  ## The Rules
-   61  
-   62  | ID | Rule |
-   63  |----|------|
-   64  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
-   65  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
-   66  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
-   67  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
-   68  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
-   69  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
-   70  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |
-   71  | KB008 | A `verified` entry older than `staleness_days` (per `kb.config.json`) fails until re-verified (bump `last_verified` with fresh proof in Verification) or downgraded to `tentative`. |</code></pre></details>
-<details class="src"><summary>knowledge-db/README.md:107-115</summary><pre><code>  107  
-  108  **Superseding is autonomous**: never ask permission — supersede a VERIFIED entry the
-  109  moment evidence invalidates it, with reason stated and replacement linked in `related:`
-  110  (KB005 enforces the link). See AGENT.md ("Never prompt, never withhold").
-  111  
-  112  ## Guidance (not checked)
+<details class="src"><summary>knowledge-db/README.md:56-71</summary><pre><code>   56    decisions/       &lt;- "why we chose X"
+   57  ```
+   58  
+   59  Bucket set is closed (KB002): an undeclared directory under `knowledge-db/` fails `kb check`.
+   60  
+   61  ## The Rules
+   62  
+   63  | ID | Rule |
+   64  |----|------|
+   65  | KB001 | Every entry is `&lt;bucket&gt;/YYYY-MM-DD-&lt;kebab-slug&gt;.md` with front-matter keys `title`, `type`, `status`, `date`, `tags`, `sources`. `type` matches its directory. Filename date equals the `date` field. |
+   66  | KB002 | `type`, `status`, and every tag are values declared in `kb.config.json`. Unknown bucket directory or unknown root file = failure. |
+   67  | KB003 | Every `sources:` item matches `path:Lstart[-Lend][@rev]` and the path exists. Bare paths and directories are rejected. A `verified` entry cites at least one source. With `@rev`, `kb check` warns when the file changed since that rev (line ranges rot loudly, not silently). |
+   68  | KB004 | `status: verified` requires a `## Verification` section containing a fenced block with captured output. Hypothetical markers (`# should`, `# todo`, `# expected`, `# works`) and empty blocks are rejected. |
+   69  | KB005 | `status: superseded` requires a non-empty `related:` linking the replacement. No template residue (bare `-` under any list key) anywhere. |
+   70  | KB006 | Buckets listed in `required_sections` have all their sections. For `errors/`: Symptom, Root Cause, Fix, Prevention. |
+   71  | KB007 | `INDEX.md` matches `kb index` output byte-for-byte. INDEX is build output; hand-edits go only inside `kb:manual` fenced regions. |</code></pre></details>
+<details class="src"><summary>knowledge-db/README.md:107-115</summary><pre><code>  107  | `verified` | Proven true: Verification section with captured command output. | KB003, KB004, KB008 |
+  108  | `superseded` | Outdated; `related:` links the replacement. | KB005 |
+  109  
+  110  **Superseding is autonomous**: never ask permission — supersede a VERIFIED entry the
+  111  moment evidence invalidates it, with reason stated and replacement linked in `related:`
+  112  (KB005 enforces the link). See AGENT.md ("Never prompt, never withhold").
   113  
-  114  These improve the KB but have no rule ID because they cannot be mechanically enforced:
+  114  ## Guidance (not checked)
   115  </code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
@@ -2476,66 +2632,66 @@ $ knowledge-db/bin/kb index &amp;&amp; knowledge-db/bin/kb check; echo $?
 <p>Idempotency covered by tests/run-kb-tests.sh ("index twice produces no diff... PASS").</p>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:377-460</summary><pre><code>  377  }
-  378  
-  379  
-  380  def generate_index(kb_dir, repo_root, config, entry_fronts):
-  381      existing = ""
-  382      index_path = kb_dir / "INDEX.md"
-  383      if index_path.is_file():
-  384          existing = index_path.read_text(encoding="utf-8")
-  385      ready = read_manual_region(existing, "ready-answers", DEFAULT_READY)
-  386      external = read_manual_region(existing, "external-docs", DEFAULT_EXTERNAL)
-  387  
-  388      out = []
-  389      out.append("# Knowledge Database Index")
-  390      out.append("")
-  391      out.append("The front door to project memory. **Search here BEFORE investigating.**")
-  392      out.append("")
-  393      out.append("GENERATED by `bin/kb index` from entry front-matter (rule KB007).")
-  394      out.append("Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.")
+<details class="src"><summary>knowledge-db/bin/kb:377-460</summary><pre><code>  377  BUCKET_HEADINGS = {
+  378      "explorations": ("Explorations", '_"What is true" — findings from investigating existing behavior_'),
+  379      "solutions": ("Solutions", '_"What we did" — how changes/features/fixes were implemented_'),
+  380      "errors": ("Errors", '_"What broke + the fix" — reproducible traps and their resolution_'),
+  381      "decisions": ("Decisions", '_"Why we chose X" — design/architecture choices and trade-offs_'),
+  382  }
+  383  
+  384  
+  385  def generate_index(kb_dir, repo_root, config, entry_fronts):
+  386      existing = ""
+  387      index_path = kb_dir / "INDEX.md"
+  388      if index_path.is_file():
+  389          existing = index_path.read_text(encoding="utf-8")
+  390      ready = read_manual_region(existing, "ready-answers", DEFAULT_READY)
+  391      external = read_manual_region(existing, "external-docs", DEFAULT_EXTERNAL)
+  392  
+  393      out = []
+  394      out.append("# Knowledge Database Index")
   395      out.append("")
-  396      out.append("---")
+  396      out.append("The front door to project memory. **Search here BEFORE investigating.**")
   397      out.append("")
-  398      out.append("## Ready-Answer Table")
-  399      out.append("")
-  400      out.append("_Topic → the ONE doc to read. Check these BEFORE exploring._")
-  401      out.append("")
-  402      out.append(MANUAL_START.format(name="ready-answers"))
-  403      out.append(ready)
-  404      out.append(MANUAL_END.format(name="ready-answers"))
-  405      out.append("")
-  406      out.append("---")
-  407      out.append("")
-  408      out.append("## Lock-Step Invariants")
-  409      out.append("")
-  410      out.append("_Declared in `kb.config.json` (`lockstep`), enforced by KB009 in diff mode._")
-  411      out.append("")
-  412      out.append("| When This Changes | Must Also Update |")
-  413      out.append("|-------------------|------------------|")
-  414      for pair in config.get("lockstep", []):
-  415          out.append(f"| {pair.get('source', '')} | {pair.get('doc', '')} |")
+  398      out.append("GENERATED by `bin/kb index` from entry front-matter (rule KB007).")
+  399      out.append("Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.")
+  400      out.append("")
+  401      out.append("---")
+  402      out.append("")
+  403      out.append("## Ready-Answer Table")
+  404      out.append("")
+  405      out.append("_Topic → the ONE doc to read. Check these BEFORE exploring._")
+  406      out.append("")
+  407      out.append(MANUAL_START.format(name="ready-answers"))
+  408      out.append(ready)
+  409      out.append(MANUAL_END.format(name="ready-answers"))
+  410      out.append("")
+  411      out.append("---")
+  412      out.append("")
+  413      out.append("## Lock-Step Invariants")
+  414      out.append("")
+  415      out.append("_Declared in `kb.config.json` (`lockstep`), enforced by KB009 in diff mode._")
   416      out.append("")
-  417      out.append("---")
-  418      out.append("")
-  419      out.append("## Source-of-Truth Hierarchy")
-  420      out.append("")
-  421      out.append("_When sources disagree, trust the higher rank. Note stale sources._")
-  422      out.append("")
-  423      out.append("1. **Real source assets** — Code, actual configs, runtime behavior")
-  424      out.append("2. **Generated definitions** — ETL outputs, compiled schemas")
-  425      out.append("3. **Outbound feeds** — API responses, exports")
-  426      out.append("4. **Documentation** — READMEs, design docs (can drift)")
+  417      out.append("| When This Changes | Must Also Update |")
+  418      out.append("|-------------------|------------------|")
+  419      for pair in config.get("lockstep", []):
+  420          out.append(f"| {pair.get('source', '')} | {pair.get('doc', '')} |")
+  421      out.append("")
+  422      out.append("---")
+  423      out.append("")
+  424      out.append("## Source-of-Truth Hierarchy")
+  425      out.append("")
+  426      out.append("_When sources disagree, trust the higher rank. Note stale sources._")
   427      out.append("")
-  428  
-  429      for bucket in config.get("buckets", {}):
-  430          title, blurb = BUCKET_HEADINGS.get(bucket, (bucket.title(), f"_{config['buckets'][bucket]}_"))
-  431          out.append("---")
-  432          out.append("")
-  433          out.append(f"## {title}")
-  434          out.append("")
-  435          out.append(blurb)
-  436          out.append("")</code></pre></details>
+  428      out.append("1. **Real source assets** — Code, actual configs, runtime behavior")
+  429      out.append("2. **Generated definitions** — ETL outputs, compiled schemas")
+  430      out.append("3. **Outbound feeds** — API responses, exports")
+  431      out.append("4. **Documentation** — READMEs, design docs (can drift)")
+  432      out.append("")
+  433  
+  434      for bucket in config.get("buckets", {}):
+  435          title, blurb = BUCKET_HEADINGS.get(bucket, (bucket.title(), f"_{config['buckets'][bucket]}_"))
+  436          out.append("---")</code></pre></details>
 <details class="src"><summary>knowledge-db/INDEX.md:5-6</summary><pre><code>    5  GENERATED by `bin/kb index` from entry front-matter (rule KB007).
     6  Hand-edit ONLY inside the `kb:manual` fenced regions; everything else is overwritten.</code></pre></details>
 </div>
@@ -2561,22 +2717,22 @@ $ knowledge-db/bin/kb index &amp;&amp; knowledge-db/bin/kb check; echo $?
 external refs: 0</code></pre>
 </div>
 <div class="proof"><h3>Grounded in (cited source lines)</h3>
-<details class="src"><summary>knowledge-db/bin/kb:685-700</summary><pre><code>  685  
-  686  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
-  687      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
-  688      parsed_entries = []
-  689      for bucket, path in entries:
-  690          parsed = parse_entry(path)
-  691          parsed_entries.append((bucket, path, parsed))
-  692  
-  693      def entry_titles():
-  694          t = {}
-  695          for bucket, path, parsed in parsed_entries:
-  696              t[f"{bucket}/{path.name}"] = parsed["front"].get("title", path.name) or path.name
-  697          return t
-  698      titles = entry_titles()
-  699  
-  700      ready = read_manual_region(index_md_text, "ready-answers", DEFAULT_READY)</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:685-700</summary><pre><code>  685  }
+  686  q.addEventListener('input', apply);
+  687  st.addEventListener('change', apply);
+  688  """
+  689  
+  690  
+  691  def generate_html(kb_dir, repo_root, config, entries, index_md_text):
+  692      entry_ids = {f"{bucket}/{path.name}" for bucket, path in entries}
+  693      parsed_entries = []
+  694      for bucket, path in entries:
+  695          parsed = parse_entry(path)
+  696          parsed_entries.append((bucket, path, parsed))
+  697  
+  698      def entry_titles():
+  699          t = {}
+  700          for bucket, path, parsed in parsed_entries:</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-index-html-evidence-browser.md">INDEX.html: self-contained evidence browser for non-technical readers</a></p>
 </article>

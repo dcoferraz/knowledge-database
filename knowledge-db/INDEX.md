@@ -49,6 +49,7 @@ _"What is true" — findings from investigating existing behavior_
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
 | 2026-08-24 | Multi-runtime rule delivery parity (external feedback) | verified | [area:tooling, layer:enforcement] | explorations/2026-08-24-multi-runtime-rule-delivery-parity.md |
+| 2026-08-24 | Downstream upgrade field report: first real KB upgrade to v0.5.2 | verified | [area:tooling, layer:enforcement, layer:cli] | explorations/2026-08-24-downstream-upgrade-field-report.md |
 | 2026-08-20 | CLI Tool Architecture | verified | [area:tooling, layer:cli] | explorations/2026-08-20-cli-tool-architecture.md |
 
 ---
@@ -59,6 +60,7 @@ _"What we did" — how changes/features/fixes were implemented_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-08-24 | Upgrade experience: kb version, KB014, extra_root_files, UPGRADING.md | verified | [area:tooling, layer:cli, tech:python] | solutions/2026-08-24-upgrade-experience-v053.md |
 | 2026-08-24 | Prompt-injected rules and doc write-back (KB013) | verified | [area:tooling, layer:enforcement, tech:python, tech:bash] | solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md |
 | 2026-08-24 | Multi-runtime rule planting (belt-and-suspenders delivery) | verified | [area:tooling, layer:enforcement, tech:bash] | solutions/2026-08-24-multi-runtime-rule-planting.md |
 | 2026-08-24 | KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI | verified | [area:tooling, layer:cli, layer:enforcement, area:test] | solutions/2026-08-24-kb-enforcement-tooling.md |

@@ -1,4 +1,5 @@
 {
+  "kb_version": "0.5.3",
   "buckets": {
     "explorations": "what is true",
     "solutions": "what we did",

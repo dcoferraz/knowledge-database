@@ -6,6 +6,7 @@ Subcommands:
   kb index                  Regenerate INDEX.md + INDEX.html entirely from entry front-matter
   kb check                  Validate the KB; exit non-zero with "RULE_ID file: message" lines
   kb rules                  Print the agent hard-rules block (for prompt-injection hooks)
+  kb version                Print tool version and the config's recorded kb_version
 
 Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
   KB001  entry path/front-matter shape       KB007  INDEX.md matches generated output
@@ -15,6 +16,7 @@ Rules (each implemented in `check`, each with a fixture in tests/fixtures/):
   KB005  superseded links replacement;       KB011  write-back trigger (diff mode)
          no template residue                 KB012  INDEX.html fresh (fingerprint)
   KB006  required sections per bucket        KB013  doc write-back trigger (diff mode)
+                                             KB014  version drift (warning-only)
 
 Python 3 stdlib only. No YAML dependency: parses the flat front-matter schema
 documented in README.md (scalar keys, inline [a, b] lists, block "- item" lists).
@@ -28,6 +30,8 @@ import subprocess
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
+
+KB_TOOL_VERSION = "0.5.3"
 
 MANUAL_START = "<!-- kb:manual:{name}:start -->"
 MANUAL_END = "<!-- kb:manual:{name}:end -->"
@@ -221,9 +225,10 @@ def collect_entries(kb_dir, config, findings):
                                             "non-markdown file in bucket"))
                     continue
                 entries.append((name, f))
-        elif name not in KNOWN_ROOT_FILES:
+        elif name not in KNOWN_ROOT_FILES and name not in config.get("extra_root_files", []):
             findings.append(Finding("KB002", f"{kb_dir.name}/{name}",
-                                    "unknown file at KB root (not a declared artifact)"))
+                                    "unknown file at KB root (not a declared artifact; "
+                                    "declare project-specific files in kb.config.json extra_root_files)"))
     return entries
 
 
@@ -887,9 +892,33 @@ Durable memory lives in {kb_name}/ (buckets: {buckets}). MANDATORY on every non-
     return 0
 
 
+def check_version_drift(kb_dir, config, findings):
+    # KB014 (warning-only): the installed config records which tool version wrote
+    # it; a mismatch means tooling and config were upgraded independently.
+    kb_rel = kb_dir.name
+    declared = config.get("kb_version")
+    if declared is None:
+        findings.append(Finding("KB014", f"{kb_rel}/kb.config.json",
+                                f"no kb_version recorded — add \"kb_version\": \"{KB_TOOL_VERSION}\" "
+                                f"so upgrade drift is visible", warning=True))
+    elif declared != KB_TOOL_VERSION:
+        findings.append(Finding("KB014", f"{kb_rel}/kb.config.json",
+                                f"kb_version {declared} != tool version {KB_TOOL_VERSION} — "
+                                f"finish the upgrade (see UPGRADING.md), then bump kb_version",
+                                warning=True))
+
+
+def cmd_version(kb_dir, repo_root, config, args):
+    declared = config.get("kb_version", "unrecorded")
+    print(f"kb tool version: {KB_TOOL_VERSION}")
+    print(f"kb.config.json kb_version: {declared}")
+    return 0
+
+
 def cmd_check(kb_dir, repo_root, config, args):
     findings = []
     today = date.today()
+    check_version_drift(kb_dir, config, findings)
     entries = collect_entries(kb_dir, config, findings)
     fronts = []
     for bucket, path in entries:
@@ -1050,6 +1079,8 @@ def main():
 
     sub.add_parser("rules", help="print agent hard-rules block (for prompt-injection hooks)")
 
+    sub.add_parser("version", help="print tool version and the config's recorded kb_version")
+
     args = parser.parse_args()
     kb_dir = find_kb_dir(args.kb_dir)
     repo_root = kb_dir.parent
@@ -1063,6 +1094,8 @@ def main():
         return cmd_check(kb_dir, repo_root, config, args)
     if args.cmd == "rules":
         return cmd_rules(kb_dir, repo_root, config, args)
+    if args.cmd == "version":
+        return cmd_version(kb_dir, repo_root, config, args)
     return 2
 
 
