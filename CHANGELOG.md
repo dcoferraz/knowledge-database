@@ -5,6 +5,29 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## ![pika](images/changelog/v0.9.1-pika.svg) [0.9.1] - 2026-09-09
+
+`kb find` answered correctly and then talked its caller out of the answer. Hits
+served by the body-scan tier carried the note `(deep scan: no title/tag/summary
+match)`; an agent read "no ... match" as the verdict, ignored the `verified`
+entries listed directly above it, and went off to re-derive something the KB
+already held — the exact failure this tool exists to prevent.
+
+### Fixed
+- **`kb find` fallback note no longer reads as a miss.** The tier note is
+  provenance, not a result, and now says so:
+  `(full-text scan: matched entry bodies, not title/tag/summary)`. Which tier
+  answers is largely keyword luck — the same question phrased two ways lands on
+  different tiers — so the wording must never imply zero hits while hits are on
+  screen. The two conformance assertions that grepped the old string moved with
+  it, and the test name now states the requirement rather than the mechanism.
+
+### Changed
+- README version badge bumped to 0.9.1. It had read `0.6.0` since August: it was
+  never moved for 0.7.0, 0.8.0 or 0.9.0. Strictly outside this patch, included
+  because a release whose own README advertises a three-versions-old number
+  misleads exactly the person who is deciding whether to install it.
+
 ## ![lynx](images/changelog/v0.9.0-lynx.svg) [0.9.0] - 2026-09-08
 
 v0.8.0 gave agents `kb find`, but it never consulted the index it ships: every

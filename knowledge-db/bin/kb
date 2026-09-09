@@ -47,7 +47,7 @@ from pathlib import Path
 # them. Every kb invocation pays import cost, so this is the cheapest win there
 # is; see knowledge-db/explorations/ for the measurements.
 
-KB_TOOL_VERSION = "0.9.0"
+KB_TOOL_VERSION = "0.9.1"
 
 # Implemented rule IDs. Single source of truth for the "KB001-KBnnn" range that
 # appears in planted rule blocks and docs, so the range can never drift (KB014).
@@ -1428,7 +1428,11 @@ def cmd_find(kb_dir, repo_root, config, args):
     if args.full:
         return 0
 
-    note = "" if tier == "index" else "  (deep scan: no title/tag/summary match)"
+    # Provenance, not a verdict: this says WHICH tier answered, while hits are
+    # on screen. Worded as a negative ("no ... match") an agent read it as "no
+    # results" and re-derived a bug the KB already held.
+    note = ("" if tier == "index" else
+            "  (full-text scan: matched entry bodies, not title/tag/summary)")
     if args.show:
         # One invocation instead of two: every `kb` call pays ~55ms of startup,
         # so an agent that needs the fix should not have to spawn `show` as well.

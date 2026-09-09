@@ -884,7 +884,7 @@ fi
 
 # A metadata hit must be served from the index, WITHOUT the deep-scan notice.
 OUT=$("$KB" --kb-dir "$TMP/knowledge-db" find "cache key drift" -n 2 2>&1)
-if echo "$OUT" | grep -q "cache-key-drift.md" && ! echo "$OUT" | grep -q "deep scan"; then
+if echo "$OUT" | grep -q "cache-key-drift.md" && ! echo "$OUT" | grep -q "full-text scan"; then
     pass "a title hit is served from the index, no body scan"
 else
     fail "a title hit is served from the index, no body scan" "$OUT"
@@ -892,10 +892,10 @@ fi
 
 # A body-only term must still be found, by automatic fallback, and say so.
 OUT=$("$KB" --kb-dir "$TMP/knowledge-db" find "gribblenaut" -n 2 2>&1)
-if echo "$OUT" | grep -q "cache-key-drift.md" && echo "$OUT" | grep -q "deep scan"; then
-    pass "a body-only term falls back to a deep scan and reports it"
+if echo "$OUT" | grep -q "cache-key-drift.md" && echo "$OUT" | grep -q "full-text scan"; then
+    pass "a body-only term falls back to a full-text scan and says so, not implying zero hits"
 else
-    fail "a body-only term falls back to a deep scan and reports it" "$OUT"
+    fail "a body-only term falls back to a full-text scan and says so" "$OUT"
 fi
 if "$KB" --kb-dir "$TMP/knowledge-db" find "gribblenaut" --deep 2>&1 | grep -q "cache-key-drift.md"; then
     pass "--deep forces the body scan explicitly"

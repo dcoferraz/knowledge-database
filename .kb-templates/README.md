@@ -85,7 +85,9 @@ Every non-trivial task:
 ```bash
 knowledge-db/bin/kb find "<keywords>" -s   # search + the top hit's fix in ONE call — START HERE
 knowledge-db/bin/kb find "<keywords>"      # hits only
-knowledge-db/bin/kb find "<keywords>" --deep  # force a body scan (automatic if the index misses)
+knowledge-db/bin/kb find "<keywords>" --deep  # force a full-text scan of entry bodies
+#                                             (automatic when the index misses; the hit
+#                                             list then says which tier answered)
 knowledge-db/bin/kb show <entry>        # one entry's actionable core (summary + fix + sources)
 knowledge-db/bin/kb show <entry> --all  # the entry verbatim
 knowledge-db/bin/kb new <type> <slug>   # scaffold a valid entry (status: tentative), regen INDEX
