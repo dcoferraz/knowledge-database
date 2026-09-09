@@ -84,6 +84,7 @@ _"What broke + the fix" — reproducible traps and their resolution_
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
 | 2026-09-09 | kb find's fallback note was read as a miss, and the KB got bypassed | verified | [area:tooling, layer:cli, severity:high] | errors/2026-09-09-find-fallback-note-read-as-miss.md |
+| 2026-09-09 | The roadmap told readers the enforcement did not exist | verified | [area:tooling, severity:medium] | errors/2026-09-09-docs-drifted-behind-the-tool.md |
 | 2026-08-24 | set -e kills ((VAR++)) from zero on bash >= 4.1 (CI-only failure) | verified | [area:test, layer:cli, tech:bash, severity:high] | errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md |
 | 2026-08-20 | kb-lint --fix flag documented but not implemented | verified | [area:tooling, layer:cli, severity:high] | errors/2026-08-20-fix-flag-not-implemented.md |
 

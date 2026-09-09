@@ -121,6 +121,9 @@ Use whatever numbering makes sense for your project. The point is: impose order.
 Here is where it gets powerful. The CLI tools work on *any* folder, not just code:
 
 ```bash
+# Look up before exploring - one call, hits plus the top hit's fix
+knowledge-db/bin/kb find "month boundary utc" -s
+
 # Discover boundaries from specs (not just code)
 knowledge-db/bin/kb discover ./01-specs/
 

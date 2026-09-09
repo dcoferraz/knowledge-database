@@ -219,8 +219,11 @@ agents and scripts are unaffected:
 ```bash
 knowledge-db/install.sh                   # wizard when interactive
 knowledge-db/install.sh --yes             # no questions, full default set
+knowledge-db/install.sh --wizard          # force the wizard even when piped
 knowledge-db/install.sh --mode workspace  # in-repo | workspace | local
 knowledge-db/install.sh --check           # audit: fails if a chosen layer is missing or stale
+# opt out of individual layers:
+#   --no-agent-hooks  --no-git-hooks  --no-ci  --no-rule-files
 ```
 
 Answers are recorded in `knowledge-db/.install.json`, so `--check` audits what
@@ -231,7 +234,7 @@ block left over from an older version.
 ### Updating
 
 ```bash
-knowledge-db/bin/kb version           # "upstream: 0.8.0 available" when a newer tool is around
+knowledge-db/bin/kb version           # prints "upstream: X available" when a newer tool is around
 knowledge-db/bin/kb upgrade --dry-run # what would change
 knowledge-db/bin/kb upgrade           # backup -> vendor tooling -> bump kb_version
                                       # -> reindex -> replant rules -> kb check
@@ -279,8 +282,11 @@ Everything an installed KB needs is in `knowledge-db/bin/kb` — one
 zero-dependency Python 3 stdlib CLI that ships inside the KB folder:
 
 ```bash
-knowledge-db/bin/kb find "half cent rounding"  # search; prints hits only - START HERE
+knowledge-db/bin/kb find "half cent rounding" -s   # hits + the top hit's fix, ONE call - START HERE
+knowledge-db/bin/kb find "half cent rounding"     # hits only (-n N to cap, --full for whole entries)
+knowledge-db/bin/kb find "half cent rounding" --deep  # force a full-text scan of entry bodies
 knowledge-db/bin/kb show <entry>               # one entry's actionable core (summary + fix + sources)
+knowledge-db/bin/kb show <entry> --all         # the entry verbatim (--lines N caps each section)
 knowledge-db/bin/kb new error yaml-injection   # scaffold a valid entry, regen INDEX
 knowledge-db/bin/kb index                      # regenerate INDEX.md + INDEX.html from front-matter
 knowledge-db/bin/kb check                      # validate: "RULE_ID file: message", non-zero exit
@@ -442,7 +448,12 @@ One entry per task. File under dominant intent, cross-link the rest.
 knowledge-database/
 ├── README.md                  You are here
 ├── LICENSE
+├── CHANGELOG.md               Every release, with its animal (KB015)
 ├── CLAUDE.md                  HARD RULE + enforcement mechanisms
+├── AGENTS.md                  Same rules, for Codex and agents-md runtimes
+├── ADVANCED.md                The context-workspace pattern
+├── ENFORCEMENT.md             How the six layers work, and how to tune them
+├── UPGRADING.md               Moving an installed KB to a newer version
 ├── .claude-plugin/
 │   └── marketplace.json       Plugin marketplace metadata
 ├── knowledge-database/        The published plugin/skill payload
@@ -454,12 +465,20 @@ knowledge-database/
 │   ├── kb-ingest              Shim -> `bin/kb ingest`
 │   ├── kb-discover            Shim -> `bin/kb discover`
 │   └── kb-lint                Legacy lint (superseded by `bin/kb check`)
-├── .kb-templates/
+├── .kb-templates/             What init-knowledge-db.sh copies into a new KB
 │   ├── README.md
 │   ├── AGENT.md
 │   ├── kb.config.json
 │   └── _TEMPLATE.md
-└── roadmap/                   Future evolution plans
+├── knowledge-db/              This repo's own KB — worked examples, and dogfooding
+├── tests/                     run-tests.sh + run-kb-tests.sh, one fixture per rule
+├── demo/token-demo/           The same bug twice: a live demo of reuse vs discovery
+├── images/changelog/          One SVG per release (KB015 checks it exists and is unique)
+├── .githooks/pre-commit       Installed by install.sh via core.hooksPath
+├── .github/workflows/         kb-check.yml
+├── .cursor/rules/             Planted rule file (alwaysApply)
+├── .windsurfrules             Planted rule file
+└── roadmap/                   Phase history and what is genuinely still open
 ```
 
 ---

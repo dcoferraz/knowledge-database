@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- kb:fingerprint:5178cb19038583985b15d486b72f39a2e36785bd37c3d9e56abb764716542c11 -->
+<!-- kb:fingerprint:a4378786412c87d94594f7a8e6678a436eacb0d3e2d5fdcdec9e0c1806865a61 -->
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Knowledge Database</title>
@@ -79,6 +79,7 @@ section.bucket > h2 { border-bottom:1px solid var(--line); padding-bottom:6px; m
 <a href="#solutions/2026-08-20-test-suite-implementation.md"><span class="dot verified"></span>Test Suite for CLI Tools</a>
 <h2>What broke + the fix</h2>
 <a href="#errors/2026-09-09-find-fallback-note-read-as-miss.md"><span class="dot verified"></span>kb find's fallback note was read as a miss, and the KB got bypassed</a>
+<a href="#errors/2026-09-09-docs-drifted-behind-the-tool.md"><span class="dot verified"></span>The roadmap told readers the enforcement did not exist</a>
 <a href="#errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md"><span class="dot verified"></span>set -e kills ((VAR++)) from zero on bash &gt;= 4.1 (CI-only failure)</a>
 <a href="#errors/2026-08-20-fix-flag-not-implemented.md"><span class="dot verified"></span>kb-lint --fix flag documented but not implemented</a>
 <h2>Why we chose things</h2>
@@ -734,7 +735,7 @@ All tests passed</code></pre>
 <div class="meta">
 <span class="badge verified">verified</span>
 <span class="badge">2026-09-08</span>
-<span class="badge">re-verified 2026-09-08</span>
+<span class="badge">re-verified 2026-09-09</span>
 <span class="tags">area:tooling, layer:cli, area:test</span>
 </div>
 <h3>Summary</h3>
@@ -745,7 +746,8 @@ All tests passed</code></pre>
 <h3>Findings / What We Did</h3>
 <p><strong>The index tier.</strong> <code>kb index</code> now writes <code>.search-index.json</code>: one row per entry with title, bucket, status, date, tags, cited sources, and the first of Summary/Fix/Symptom trimmed to 400 chars. <code>kb find</code> reads that single file and ranks title (8), tags (4), slug (3), summary (2 per hit, capped), sources (1). Dot-prefixed so KB002 skips it, like <code>.install.json</code>.</p>
 <p><strong>Never stale.</strong> The digest carries a fingerprint over every entry's <code>(path, mtime_ns, size)</code> — stats only, no reads. If it does not match, <code>find</code> rebuilds before answering. So a hand-edited entry, a fresh clone, or a deleted digest all self-heal instead of returning a wrong answer.</p>
-<p><strong>Recall kept.</strong> Bodies are not in the digest (that would be a second copy of the KB). If the index tier scores nothing, <code>find</code> automatically scans bodies and prints <code>(deep scan: no title/tag/summary match)</code>. Deep scores are index scores plus body counts, so the tiers can never disagree on ordering. <code>--deep</code> forces it.</p>
+<p><strong>Recall kept.</strong> Bodies are not in the digest (that would be a second copy of the KB). If the index tier scores nothing, <code>find</code> automatically scans bodies and prints a note naming the tier that answered. Deep scores are index scores plus body counts, so the tiers can never disagree on ordering. <code>--deep</code> forces it.</p>
+<p><strong>Superseded wording (v0.9.1).</strong> That note originally read <code>(deep scan: no title/tag/summary match)</code>, which an agent read as "no results" while hits were on screen. It is now <code>(full-text scan: matched entry bodies, not title/tag/summary)</code> — see [[2026-09-09-find-fallback-note-read-as-miss]].</p>
 <p><strong>What actually cost the time.</strong> Profiling first, optimising second:</p>
 <div class="tblwrap"><table>
 <tr><th></th><th>40 entries</th><th>1,000 entries</th></tr>
@@ -939,7 +941,7 @@ exit=0</code></pre>
    39  import sys
    40  import time</code></pre></details>
 </div>
-<p class="tags">Related: 2026-09-05-reuse-ends-the-task, 2026-09-05-lookup-path-and-purpose-v080</p>
+<p class="tags">Related: 2026-09-09-find-fallback-note-read-as-miss, 2026-09-05-reuse-ends-the-task, 2026-09-05-lookup-path-and-purpose-v080</p>
 </article>
 <article class="entry" id="solutions/2026-09-05-lookup-path-and-purpose-v080.md" data-status="verified">
 <h2>v0.8.0: cheap lookup path, reuse rule, and a README that states the purpose</h2>
@@ -2046,36 +2048,36 @@ Results: 16 passed, 0 failed</code></pre>
   885              out.append("&lt;/article&gt;")
   886          out.append("&lt;/section&gt;")</code></pre></details>
 <details class="src"><summary>knowledge-db/README.md:71</summary><pre><code>   71  1. **LOOK UP FIRST** — one call: `kb find "&lt;keywords&gt;" -s`. Not `ls`, not `grep -r`,</code></pre></details>
-<details class="src"><summary>ADVANCED.md:211-240</summary><pre><code>  211  ## For Project Managers and Team Leads
-  212  
-  213  If you are a PM or lead reading this, understand what the context workspace enables:
-  214  
-  215  1. **Decision traceability** - Every architectural choice traced to a person, meeting, and rationale
-  216  2. **Spec compliance** - Agent checks implementations against actual requirements
-  217  3. **Onboarding acceleration** - New team members (human or AI) get full context instantly
-  218  4. **Institutional memory** - When people leave, their decisions stay documented
-  219  5. **Audit trail** - For regulated industries, you have a knowledge trail
-  220  
-  221  You are not just helping developers code faster. You are building a **project brain** that persists across people, sessions, and time.
-  222  
-  223  ---
-  224  
-  225  ## The Human Window: INDEX.html
-  226  
-  227  Everything above assumes someone comfortable in a repo. Most stakeholders are not.
-  228  `kb index` generates `INDEX.html` alongside `INDEX.md` for exactly that audience:
-  229  a self-contained knowledge browser that needs **no server, no dependencies, no
-  230  tooling — double-click the file and it opens in any browser**.
-  231  
-  232  What a non-technical reader gets:
-  233  
-  234  1. **Plain-language navigation** - Buckets labeled in human terms ("what broke and
-  235     how we fixed it", not `errors/`), with a search box and a status filter
-  236     (verified / tentative / superseded).
-  237  2. **Proof, not claims** - Every verified entry shows its Verification evidence,
-  238     and every source citation expands to the actual cited lines, embedded at build
-  239     time. A skeptical stakeholder can check the receipts without opening an editor.
-  240  3. **Decision accountability** - Decision entries show who decided; superseded</code></pre></details>
+<details class="src"><summary>ADVANCED.md:211-240</summary><pre><code>  211  
+  212  ---
+  213  
+  214  ## For Project Managers and Team Leads
+  215  
+  216  If you are a PM or lead reading this, understand what the context workspace enables:
+  217  
+  218  1. **Decision traceability** - Every architectural choice traced to a person, meeting, and rationale
+  219  2. **Spec compliance** - Agent checks implementations against actual requirements
+  220  3. **Onboarding acceleration** - New team members (human or AI) get full context instantly
+  221  4. **Institutional memory** - When people leave, their decisions stay documented
+  222  5. **Audit trail** - For regulated industries, you have a knowledge trail
+  223  
+  224  You are not just helping developers code faster. You are building a **project brain** that persists across people, sessions, and time.
+  225  
+  226  ---
+  227  
+  228  ## The Human Window: INDEX.html
+  229  
+  230  Everything above assumes someone comfortable in a repo. Most stakeholders are not.
+  231  `kb index` generates `INDEX.html` alongside `INDEX.md` for exactly that audience:
+  232  a self-contained knowledge browser that needs **no server, no dependencies, no
+  233  tooling — double-click the file and it opens in any browser**.
+  234  
+  235  What a non-technical reader gets:
+  236  
+  237  1. **Plain-language navigation** - Buckets labeled in human terms ("what broke and
+  238     how we fixed it", not `errors/`), with a search box and a status filter
+  239     (verified / tentative / superseded).
+  240  2. **Proof, not claims** - Every verified entry shows its Verification evidence,</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#decisions/2026-08-24-build-time-embed-vs-runtime-fetch.md">HTML view: build-time embedding, not runtime fetch or hosted docs</a>, <a href="#decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md">KB012 freshness via content fingerprint, not KB007-style byte check</a>, <a href="#solutions/2026-08-24-kb-enforcement-tooling.md">KB v0.4.0: rule IDs KB001-KB011 enforced by zero-dependency kb CLI</a></p>
 </article>
@@ -2113,14 +2115,14 @@ $ grep -n "ENFORCEMENT.md" README.md
     4  &gt; This document explains how the enforcement machinery works, why each layer
     5  &gt; exists, and how to tune it. For the context-workspace pattern, see
     6  &gt; [ADVANCED.md](ADVANCED.md).</code></pre></details>
-<details class="src"><summary>README.md:465-472</summary><pre><code>  465  ---
-  466  
-  467  ## Compatibility
-  468  
-  469  `knowledge-db/install.sh` plants the HARD RULE block into every runtime file the
-  470  major agents auto-ingest — zero copy-paste, belt-and-suspenders (whichever agent is
-  471  active still sees it):
-  472  </code></pre></details>
+<details class="src"><summary>README.md:465-472</summary><pre><code>  465  │   ├── kb-ingest              Shim -&gt; `bin/kb ingest`
+  466  │   ├── kb-discover            Shim -&gt; `bin/kb discover`
+  467  │   └── kb-lint                Legacy lint (superseded by `bin/kb check`)
+  468  ├── .kb-templates/             What init-knowledge-db.sh copies into a new KB
+  469  │   ├── README.md
+  470  │   ├── AGENT.md
+  471  │   ├── kb.config.json
+  472  │   └── _TEMPLATE.md</code></pre></details>
 </div>
 <p class="tags">Related: <a href="#solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md">Prompt-injected rules and doc write-back (KB013)</a>, <a href="#solutions/2026-08-24-multi-runtime-rule-planting.md">Multi-runtime rule planting (belt-and-suspenders delivery)</a></p>
 </article>
@@ -2955,6 +2957,159 @@ All KB conformance tests passed</code></pre>
 </div>
 <p class="tags">Related: 2026-09-08-indexed-lookup-fast-path, 2026-09-05-reuse-ends-the-task</p>
 </article>
+<article class="entry" id="errors/2026-09-09-docs-drifted-behind-the-tool.md" data-status="verified">
+<h2>The roadmap told readers the enforcement did not exist</h2>
+<div class="meta">
+<span class="badge verified">verified</span>
+<span class="badge">2026-09-09</span>
+<span class="tags">area:tooling, severity:medium</span>
+</div>
+<h3>Summary</h3>
+<p>A documentation audit against the tool's actual surface found <code>roadmap/README.md</code> still advertising four shipped enforcement features as "not started" or "documented only", and stating outright that the mechanisms in CLAUDE.md "are currently <strong>conventions</strong> ... not enforced by hooks or CI gates yet". Every one of those had shipped between v0.4.0 and v0.7.0.</p>
+<h3>Symptom</h3>
+<p>A reader following the repo's own docs would conclude the product does not do the thing it is built to do:</p>
+<pre><code>| Auto-append to agent configs    | Documented only | Phase 2 |
+| Lock-step validation (automated)| Manual checklist| Phase 2 |
+| Git hooks for KB suggestions    | Not started     | Phase 2 |
+| GitHub Action for shared KB     | Not started     | Phase 3 |
+
+The "Eight Enforcement Mechanisms" in CLAUDE.md are currently **conventions**
+that agents follow by reading the file. They are not enforced by hooks or CI
+gates yet.</code></pre>
+<p>Meanwhile <code>README.md</code>, <code>CLAUDE.md</code> and <code>ENFORCEMENT.md</code> all describe fifteen enforced rules and six delivery layers. The docs contradicted each other, and the most pessimistic one was the one a newcomer reaches from the roadmap link.</p>
+<h3>Root Cause</h3>
+<p>Nothing keeps prose in step with the tool. The mechanised couplings only cover some artefacts:</p>
+<ul>
+<li>KB007/KB012 pin <code>INDEX.md</code> and <code>INDEX.html</code> to the entries.</li>
+<li>KB014 pins the planted rule blocks to <code>kb rules --plant</code>, and <code>kb_version</code> to</li>
+</ul>
+<p>the tool version.</p>
+<ul>
+<li>KB009 pins declared lockstep pairs — in this repo, <code>bin/kb</code> to</li>
+</ul>
+<p><code>knowledge-db/README.md</code>.</p>
+<p><code>roadmap/</code>, <code>README.md</code>, <code>ADVANCED.md</code> and <code>ENFORCEMENT.md</code> are in none of those, so they drift silently. The roadmap drifted worst because nothing routes a reader back to it during normal work: it is written once, at the start.</p>
+<h3>Fix</h3>
+<p>Audited every doc mechanically against the tool rather than by reading, and corrected what diverged:</p>
+<ul>
+<li><code>roadmap/README.md:33-58</code> — status table rewritten with what shipped and in</li>
+</ul>
+<p>which version; the "conventions" paragraph replaced with the actual count (KB001-KB015) and the six delivery layers.</p>
+<ul>
+<li><code>README.md</code> — repo tree was missing every supporting guide plus</li>
+</ul>
+<p><code>knowledge-db/</code>, <code>tests/</code>, <code>demo/</code>, <code>images/</code>, <code>.githooks/</code>, <code>.github/</code>, <code>.cursor/</code> and <code>.windsurfrules</code>; the CLI block never taught <code>find -s</code>, <code>--deep</code>, <code>--full</code>, <code>-n</code> or <code>--lines</code>; a worked example was pinned to "upstream: 0.8.0 available"; four installer opt-out flags were undocumented.</p>
+<ul>
+<li><code>ADVANCED.md</code> — the workspace CLI examples never mentioned the lookup path,</li>
+</ul>
+<p>which is where an agent most needs it.</p>
+<ul>
+<li><code>knowledge-db/solutions/2026-09-08-indexed-lookup-fast-path.md:50</code> — described</li>
+</ul>
+<p>the v0.9.0 tier note as current output after v0.9.1 changed it; now carries a superseded-wording note and links forward.</p>
+<h3>Prevention</h3>
+<p>The audit is four greps, and it is worth re-running before any release:</p>
+<pre><code># 1. subcommands and flags the tool has, versus what the docs teach
+knowledge-db/bin/kb --help
+for c in find show new index check rules discover ingest stop-hook upgrade version; do
+  knowledge-db/bin/kb $c --help; done
+
+# 2. vocabulary the tool no longer uses, still in the prose
+grep -rn "deep scan" --include="*.md" .
+
+# 3. the README tree versus the real top level
+python3 - &lt;&lt;'PY'
+import pathlib, re
+tree = re.search(r"knowledge-database/\n(.*?)```", pathlib.Path("README.md").read_text(), re.S).group(1)
+print([p.name for p in pathlib.Path(".").iterdir()
+       if not p.name.startswith(".git") and p.name not in (".DS_Store", "__pycache__")
+       and p.name not in tree])
+PY
+
+# 4. the rule table versus the rules that exist
+python3 -c "
+import re, pathlib
+tool = set(re.findall(r'KB0\\d\\d', pathlib.Path('knowledge-db/bin/kb').read_text()))
+doc  = set(re.findall(r'^\\| (KB0\\d\\d)', pathlib.Path('knowledge-db/README.md').read_text(), re.M))
+print('undocumented:', sorted(tool - doc), 'phantom:', sorted(doc - tool))"</code></pre>
+<p>Not adding a lockstep pair for <code>roadmap/</code> — a roadmap that must change whenever <code>bin/kb</code> does would be noise, and KB009 fires on the diff, not on staleness. The honest control is running the audit above at release time.</p>
+<div class="proof"><h3>Proof (verification evidence)</h3>
+<pre><code>$ grep -c 'are currently \*\*conventions\*\*' roadmap/README.md
+0
+
+$ for fl in '-s ' '--deep' '--full' '--lines' '-n '; do
+&gt;   printf '%-9s %s\n' "$fl" "$(grep -q -- "$fl" README.md &amp;&amp; echo Y || echo n)"; done
+-s        Y
+--deep    Y
+--full    Y
+--lines   Y
+-n        Y
+
+$ python3 -c "
+import pathlib, re
+tree = re.search(r'knowledge-database/\n(.*?)\`\`\`', pathlib.Path('README.md').read_text(), re.S).group(1)
+actual = {p.name for p in pathlib.Path('.').iterdir()
+          if not p.name.startswith('.git') and p.name not in ('.DS_Store','__pycache__')}
+print('tree missing:', [a for a in sorted(actual) if a not in tree] or 'none')"
+tree missing: none
+
+$ python3 -c "
+import re, pathlib
+tool = set(re.findall(r'KB0\d\d', pathlib.Path('knowledge-db/bin/kb').read_text()))
+doc  = set(re.findall(r'^\| (KB0\d\d)', pathlib.Path('knowledge-db/README.md').read_text(), re.M))
+print('implemented', len(tool), 'documented', len(doc))"
+implemented 15 documented 15
+
+$ bash tests/run-tests.sh | grep Results:
+Results: 33/33 passed
+$ bash tests/run-kb-tests.sh | tail -2
+Results: 91 passed, 0 failed
+All KB conformance tests passed</code></pre>
+</div>
+<div class="proof"><h3>Grounded in (cited source lines)</h3>
+<details class="src"><summary>roadmap/README.md:33-58</summary><pre><code>   33  ## Status of the Original Gaps
+   34  
+   35  This page used to list five gaps and say the enforcement did not exist. Four of
+   36  the five shipped; the table was months out of date.
+   37  
+   38  | Feature | Status | Shipped in |
+   39  |---------|--------|------------|
+   40  | Auto-append to agent configs | **Done** — planted into 6 agent runtime files, replanted when stale | v0.5.0, refreshed v0.7.0 |
+   41  | Lock-step validation (automated) | **Done** — KB009, checked against the diff | v0.4.0 |
+   42  | Git hooks for KB suggestions | **Done** — `.githooks/pre-commit` runs `kb check --staged`; workspace mode also plants a hook inside each nested repo | v0.4.0, nested repos v0.7.0 |
+   43  | GitHub Action for shared KB | **Done** — `.github/workflows/kb-check.yml` | v0.4.0 |
+   44  | User-scope memory (`~/.kb/user/`) | Not started, and no longer obviously wanted | — |
+   45  
+   46  The enforcement mechanisms in CLAUDE.md are **not** conventions. Fifteen rules
+   47  (KB001-KB015) are implemented in `knowledge-db/bin/kb check`, each with a
+   48  conformance fixture, and they reach the agent from six places: per-prompt rule
+   49  injection, Stop and SubagentStop hooks, the planted rule blocks, git pre-commit,
+   50  and CI. What cannot be checked mechanically is labelled "Guidance (not checked)"
+   51  in `knowledge-db/README.md` and carries no rule ID.
+   52  
+   53  See [ENFORCEMENT.md](../ENFORCEMENT.md) for how the layers fit together and
+   54  [CHANGELOG.md](../CHANGELOG.md) for what landed when.
+   55  
+   56  ## Quick Links
+   57  
+   58  - [Phase 1: Local Tooling](phases/phase-1-local-tooling.md)</code></pre></details>
+<details class="src"><summary>README.md:280-292</summary><pre><code>  280  
+  281  Everything an installed KB needs is in `knowledge-db/bin/kb` — one
+  282  zero-dependency Python 3 stdlib CLI that ships inside the KB folder:
+  283  
+  284  ```bash
+  285  knowledge-db/bin/kb find "half cent rounding" -s   # hits + the top hit's fix, ONE call - START HERE
+  286  knowledge-db/bin/kb find "half cent rounding"     # hits only (-n N to cap, --full for whole entries)
+  287  knowledge-db/bin/kb find "half cent rounding" --deep  # force a full-text scan of entry bodies
+  288  knowledge-db/bin/kb show &lt;entry&gt;               # one entry's actionable core (summary + fix + sources)
+  289  knowledge-db/bin/kb show &lt;entry&gt; --all         # the entry verbatim (--lines N caps each section)
+  290  knowledge-db/bin/kb new error yaml-injection   # scaffold a valid entry, regen INDEX
+  291  knowledge-db/bin/kb index                      # regenerate INDEX.md + INDEX.html from front-matter
+  292  knowledge-db/bin/kb check                      # validate: "RULE_ID file: message", non-zero exit</code></pre></details>
+<details class="src"><summary>knowledge-db/bin/kb:50</summary><pre><code>   50  KB_TOOL_VERSION = "0.9.1"</code></pre></details>
+</div>
+<p class="tags">Related: 2026-09-09-find-fallback-note-read-as-miss, 2026-09-08-indexed-lookup-fast-path</p>
+</article>
 <article class="entry" id="errors/2026-08-24-errexit-arithmetic-increment-ci-failure.md" data-status="verified">
 <h2>set -e kills ((VAR++)) from zero on bash &gt;= 4.1 (CI-only failure)</h2>
 <div class="meta">
@@ -3362,37 +3517,37 @@ $ git rev-list --count HEAD
   928      """
   929      if not cross_repo:
   930          return any(p.startswith(kb_prefix) for p in changed)</code></pre></details>
-<details class="src"><summary>ADVANCED.md:300-330</summary><pre><code>  300  cat &gt;&gt; CLAUDE.md &lt;&lt; 'EOF'
+<details class="src"><summary>ADVANCED.md:300-330</summary><pre><code>  300  block into `CLAUDE.md` for you; this is the project-specific half):
   301  
-  302  # Project Workspace
-  303  
-  304  ## Structure
-  305  - app/           - The codebase (its own git repo, gitignored here)
-  306  - knowledge-db/  - Project memory (KB)
-  307  - 01-specs/      - Requirements and designs (read-only reference)
-  308  - 02-meetings/   - Meeting notes and transcripts
-  309  - 03-references/ - Related code and prior art
-  310  - 04-vendor-docs/- External API documentation
-  311  
-  312  ## Rules
-  313  - Always run agent from this workspace root
-  314  - Check knowledge-db/ before exploring
-  315  - Validate implementations against 01-specs/
-  316  - Record decisions with WHO and WHY
-  317  - Meeting transcripts are source of truth for verbal decisions
-  318  EOF
-  319  
-  320  # Now always run your agent from my-project-workspace/
-  321  claude  # or cursor, copilot, etc.
-  322  ```
-  323  
-  324  ## What Enforcement Looks Like in a Workspace
-  325  
-  326  Workspace mode is not just a folder layout — it changes where the gates live,
-  327  because the code and the memory are in different repositories.
+  302  ```bash
+  303  cat &gt;&gt; CLAUDE.md &lt;&lt; 'EOF'
+  304  
+  305  # Project Workspace
+  306  
+  307  ## Structure
+  308  - app/           - The codebase (its own git repo, gitignored here)
+  309  - knowledge-db/  - Project memory (KB)
+  310  - 01-specs/      - Requirements and designs (read-only reference)
+  311  - 02-meetings/   - Meeting notes and transcripts
+  312  - 03-references/ - Related code and prior art
+  313  - 04-vendor-docs/- External API documentation
+  314  
+  315  ## Rules
+  316  - Always run agent from this workspace root
+  317  - Check knowledge-db/ before exploring
+  318  - Validate implementations against 01-specs/
+  319  - Record decisions with WHO and WHY
+  320  - Meeting transcripts are source of truth for verbal decisions
+  321  EOF
+  322  
+  323  # Now always run your agent from my-project-workspace/
+  324  claude  # or cursor, copilot, etc.
+  325  ```
+  326  
+  327  ## What Enforcement Looks Like in a Workspace
   328  
-  329  | Gate | In-repo mode | Workspace mode |
-  330  |------|--------------|----------------|</code></pre></details>
+  329  Workspace mode is not just a folder layout — it changes where the gates live,
+  330  because the code and the memory are in different repositories.</code></pre></details>
 </div>
 <p class="tags">Related: 2026-09-04-audit-fixes-v070</p>
 </article>

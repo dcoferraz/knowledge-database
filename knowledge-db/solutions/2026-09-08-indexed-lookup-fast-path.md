@@ -3,13 +3,14 @@ title: "v0.9.0: indexed lookup — one file read, one process, never stale"
 type: solution
 status: verified
 date: 2026-09-08
-last_verified: 2026-09-08
+last_verified: 2026-09-09
 tags: [area:tooling, layer:cli, area:test]
 sources:
   - knowledge-db/bin/kb:1291-1360
   - knowledge-db/bin/kb:1395-1470
   - knowledge-db/bin/kb:24-40
 related:
+  - 2026-09-09-find-fallback-note-read-as-miss
   - 2026-09-05-reuse-ends-the-task
   - 2026-09-05-lookup-path-and-purpose-v080
 ---
@@ -47,8 +48,14 @@ digest all self-heal instead of returning a wrong answer.
 
 **Recall kept.** Bodies are not in the digest (that would be a second copy of
 the KB). If the index tier scores nothing, `find` automatically scans bodies and
-prints `(deep scan: no title/tag/summary match)`. Deep scores are index scores
-plus body counts, so the tiers can never disagree on ordering. `--deep` forces it.
+prints a note naming the tier that answered. Deep scores are index scores plus
+body counts, so the tiers can never disagree on ordering. `--deep` forces it.
+
+**Superseded wording (v0.9.1).** That note originally read
+`(deep scan: no title/tag/summary match)`, which an agent read as "no results"
+while hits were on screen. It is now
+`(full-text scan: matched entry bodies, not title/tag/summary)` — see
+[[2026-09-09-find-fallback-note-read-as-miss]].
 
 **What actually cost the time.** Profiling first, optimising second:
 
