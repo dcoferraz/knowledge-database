@@ -1,0 +1,10 @@
+{
+  "mode": "in-repo",
+  "layers": {
+    "agent_hooks": true,
+    "git_hooks": true,
+    "ci": true,
+    "rule_files": true
+  },
+  "nested_repos": []
+}

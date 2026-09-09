@@ -29,7 +29,8 @@
     ]
   },
   "staleness_days": {
-    "verified": 30
+    "verified": 90,
+    "mode": "error"
   },
   "required_sections": {
     "errors": [

@@ -2,23 +2,36 @@
 # Initialize Knowledge Database structure
 # Safe to run multiple times - never overwrites existing files
 #
-# Usage: init-knowledge-db.sh [KB_DIR] [--local]
-#   KB_DIR   target folder (default: knowledge-db)
-#   --local  gitignore the KB (personal memory, not committed).
-#            DEFAULT IS TRACKED: a committed KB is the point — shared memory,
-#            and the write-back trigger (KB011) only works when KB files
-#            appear in diffs.
+# Usage: init-knowledge-db.sh [KB_DIR] [--local] [--yes] [--no-install]
+#   KB_DIR       target folder (default: knowledge-db)
+#   --local      gitignore the KB (personal memory, not committed).
+#                DEFAULT IS TRACKED: a committed KB is the point — shared memory,
+#                and the write-back trigger (KB011) only works when KB files
+#                appear in diffs.
+#   --yes        hand --yes to the installer (no wizard, default layers)
+#   --no-install scaffold only; do not run <KB_DIR>/install.sh
+#
+# By default this hands over to <KB_DIR>/install.sh when it finishes, so every
+# install path ends in the same setup wizard (interactive) or the same default
+# install (piped/CI). Nothing is half-wired.
 
 set -e
 
 KB_DIR="knowledge-db"
 LOCAL_KB=false
+RUN_INSTALL=true
+INSTALL_ARGS=()
 for arg in "$@"; do
     case "$arg" in
-        --local) LOCAL_KB=true ;;
-        *) KB_DIR="$arg" ;;
+        --local)      LOCAL_KB=true ;;
+        --no-install) RUN_INSTALL=false ;;
+        --yes|-y)     INSTALL_ARGS+=("--yes") ;;
+        --mode=*)     INSTALL_ARGS+=("$arg") ;;
+        -*)           echo "init-knowledge-db.sh: unknown option '$arg'" >&2; exit 2 ;;
+        *)            KB_DIR="$arg" ;;
     esac
 done
+$LOCAL_KB && INSTALL_ARGS+=("--mode=local")
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -100,20 +113,24 @@ update_gitignore() {
     fi
 }
 
-if $LOCAL_KB && [[ ! "$KB_DIR" = /* ]]; then
+if $LOCAL_KB && ! $RUN_INSTALL && [[ ! "$KB_DIR" = /* ]]; then
     update_gitignore
 fi
+
+RULE_RANGE="$("$KB_DIR/bin/kb" --kb-dir "$KB_DIR" rules --plant 2>/dev/null \
+    | sed -n 's/.*Rule table (\(KB[0-9]*-KB[0-9]*\)).*/\1/p' | head -1)"
+[[ -z "$RULE_RANGE" ]] && RULE_RANGE="the rule table"
 
 echo ""
 echo "Knowledge Database initialized."
 echo ""
 echo "Structure:"
 echo "  $KB_DIR/"
-echo "    README.md      - Rules KB001-KB011 and usage"
+echo "    README.md      - Rules $RULE_RANGE and usage"
 echo "    AGENT.md       - Portable agent hard rules"
 echo "    INDEX.md       - GENERATED catalog (search here first)"
 echo "    kb.config.json - Vocabularies (single source of truth)"
-echo "    bin/kb         - CLI: new / index / check"
+echo "    bin/kb         - CLI: new / index / check / rules / discover / ingest"
 echo "    install.sh     - Enforcement installer"
 echo "    _TEMPLATE.md   - Entry format reference"
 echo "    explorations/  - 'What is true'"
@@ -121,5 +138,16 @@ echo "    solutions/     - 'What we did'"
 echo "    errors/        - 'What broke + fix'"
 echo "    decisions/     - 'Why we chose X'"
 echo ""
-echo "Next: run $KB_DIR/install.sh to wire enforcement"
-echo "      (agent hook + HARD RULE block + git pre-commit + CI)."
+
+if $RUN_INSTALL; then
+    echo "Wiring enforcement ($KB_DIR/install.sh)..."
+    echo ""
+    if [[ ${#INSTALL_ARGS[@]} -gt 0 ]]; then
+        "$KB_DIR/install.sh" "${INSTALL_ARGS[@]}"
+    else
+        "$KB_DIR/install.sh"
+    fi
+else
+    echo "Next: run $KB_DIR/install.sh to wire enforcement"
+    echo "      (agent hooks + HARD RULE block + git pre-commit + CI)."
+fi

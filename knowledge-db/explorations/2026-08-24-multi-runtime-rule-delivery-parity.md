@@ -10,6 +10,7 @@ sources:
 related:
   - solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md
   - solutions/2026-08-24-multi-runtime-rule-planting.md
+  - 2026-09-04-audit-fixes-v070
 ---
 
 ## Summary
@@ -52,6 +53,13 @@ plain-append targets (CLAUDE.md, AGENTS.md, copilot-instructions.md, .windsurfru
 generator, `--check` auditing every target. All planted by default; restricting =
 editing the registry (planned `--agents` flag dropped as unneeded surface). See
 solutions/2026-08-24-multi-runtime-rule-planting.md.
+
+STILL TRUE AS OF v0.7.0, with two changes: the `RULE_TARGETS` registry moved from
+`install.sh` into `knowledge-db/bin/kb` (so the tool owns both the target list and
+the block text, and drift is detectable), and a planted block is now replanted when
+it no longer matches the tool instead of being skipped on the marker. The @rev-pinned
+citations below describe the v0.5.0 code and are kept as history. See
+solutions/2026-09-04-audit-fixes-v070.md.
 
 ## Verification
 

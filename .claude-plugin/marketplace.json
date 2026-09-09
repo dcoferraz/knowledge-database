@@ -5,13 +5,13 @@
     "email": "dcoferraz@gmail.com"
   },
   "metadata": {
-    "description": "Durable memory pattern for AI coding agents. Never investigate twice, never re-introduce fixed bugs."
+    "description": "Durable memory for AI coding agents: your agents converge on one answer and can show the proof. Verified entries, cited sources, enforced write-back."
   },
   "plugins": [
     {
       "name": "knowledge-database",
       "source": "./knowledge-database",
-      "description": "Build and maintain a repo's durable memory. Triggers on: 'knowledge base', 'durable memory', 'never explore twice', 'record what I learned', 'log this bug', 'bootstrap knowledge database', 'initialize KB', 'before exploring'."
+      "description": "Build and maintain a repo's durable memory so agents reuse the proven answer instead of inventing an equivalent one. Triggers on: 'knowledge base', 'durable memory', 'never explore twice', 'record what I learned', 'log this bug', 'bootstrap knowledge database', 'initialize KB', 'before exploring'."
     }
   ]
 }

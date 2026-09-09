@@ -122,17 +122,21 @@ Here is where it gets powerful. The CLI tools work on *any* folder, not just cod
 
 ```bash
 # Discover boundaries from specs (not just code)
-kb-discover ./01-specs/ --output knowledge-db/explorations/
+knowledge-db/bin/kb discover ./01-specs/
 
 # Ingest a meeting transcript into a decision entry
-cat 02-meetings/2026-08-15-kickoff.md | kb-ingest --bucket decisions
+knowledge-db/bin/kb ingest --bucket decisions --input 02-meetings/2026-08-15-kickoff.md
 
-# Generate exploration from vendor documentation
-kb-discover ./04-vendor-docs/stripe-api.md --output knowledge-db/explorations/
+# Same thing from a pipe, letting the bucket be detected
+cat 04-vendor-docs/stripe-api.md | knowledge-db/bin/kb ingest
 
-# Validate the entire workspace KB (rules KB001-KB011)
+# Validate the entire workspace KB (rules KB001-KB015)
 knowledge-db/bin/kb check
 ```
+
+Both commands ship inside `knowledge-db/bin/kb`, so they exist in every install,
+and both write entries that already pass `kb check` (tentative, tags filtered to
+the declared vocabulary, sources cited as `path:line`).
 
 Think about what this means:
 
@@ -154,39 +158,49 @@ title: Use Stripe over PayPal for payments
 type: decision
 status: verified
 date: 2026-08-15
-tags: [area:payments, stakeholder:product]
+tags: [area:payments]
 sources:
   - 02-meetings/2026-08-15-kickoff.md:42-58
   - 01-specs/product-requirements.md:120-135
 decision_by: Sarah Chen (Product Lead)
-participants: [John (Eng), Maria (Finance), Alex (CTO)]
 ---
 
-## Context
+## Summary
 
-Needed to choose payment processor for v2 launch.
+Stripe for v2 payments: developer velocity beats the 0.5% fee difference at our
+scale. Decided by Sarah Chen (Product) in the kickoff; John (Eng), Maria
+(Finance) and Alex (CTO) in the room.
 
-## Options Considered
+## Context / Question
 
-1. **Stripe** - Better API, higher fees (2.9%)
-2. **PayPal** - Brand recognition, clunky integration
-3. **Square** - Good for in-person, weak online
+Needed to choose a payment processor for the v2 launch.
 
-## Decision
+## Findings / What We Did
 
-Stripe. Developer velocity more valuable than 0.5% fee difference at our scale.
+Options considered:
 
-## Consequences
+1. **Stripe** - better API, higher fees (2.9%)
+2. **PayPal** - brand recognition, clunky integration
+3. **Square** - good for in-person, weak online
 
-- Must handle Stripe webhooks (see solutions/2026-08-16-stripe-webhooks.md)
-- Finance needs Stripe dashboard access
-- Revisit at 10k transactions/month
+Consequences: we must handle Stripe webhooks, Finance needs dashboard access,
+and the choice is revisited at 10k transactions/month.
 
 ## Verification
 
-Decision recorded in kickoff meeting (02-meetings/2026-08-15-kickoff.md:55).
-Approved by Alex (CTO) same day.
 ```
+$ sed -n '55p' 02-meetings/2026-08-15-kickoff.md
+Sarah: going with Stripe for v2 — Alex signed off, revisit at 10k/mo.
+```
+```
+
+Two things that entry does deliberately, because `kb check` enforces them:
+`stakeholder:product` and a `participants:` key are NOT used (tags come from the
+closed vocabulary in `kb.config.json` — KB002 — and unknown front-matter keys
+warn; put the names in the body, or declare a `stakeholder` dimension in the
+config first), and the Verification section carries a **fenced block with real
+captured output** rather than a prose claim (KB004). `decision_by:` is a
+declared optional key, so it stays.
 
 Now when someone asks "why are we using Stripe?", the agent does not guess. The agent cites Sarah Chen, the kickoff meeting, and the exact reasoning.
 
@@ -247,21 +261,48 @@ thing the developers do" and becomes the project's shared source of truth.
 mkdir my-project-workspace
 cd my-project-workspace
 
-# Clone your actual repo into app/
-git clone git@github.com:yourorg/yourapp.git app
+# Make the WORKSPACE a git repo of its own. Do not skip this: the KB's history
+# is what makes decisions auditable, and the write-back gate needs a diff.
+git init
 
-# Initialize KB at workspace level
-./path/to/scripts/init-knowledge-db.sh knowledge-db
+# Clone your actual repo into app/ and keep it out of the workspace history
+git clone git@github.com:yourorg/yourapp.git app
+echo "app/" >> .gitignore
 
 # Create context folders
 mkdir 01-specs 02-meetings 03-references 04-vendor-docs
 
-# Create workspace-level CLAUDE.md
-cat > CLAUDE.md << 'EOF'
+# Initialize the KB at workspace level, then let the wizard wire it.
+# Pick [2] workspace, and say yes when it offers to gate app/.
+./path/to/scripts/init-knowledge-db.sh knowledge-db
+```
+
+The wizard prints something like:
+
+```
+  1) How do you want to use the knowledge base?
+     [1] in-repo    KB committed inside this repo, shared with the team (default)
+     [2] workspace  KB lives above one or more nested app repos, alongside
+                    specs/meetings/references (the context-workspace pattern)
+     [3] local      personal memory, gitignored, never committed
+  choice [1] 2
+  ...
+  4) Nested repos to gate (code commits there require a KB entry here)
+     wire app/? (y/n) [y] y
+
+CHANGED    nested repo gate installed in app/ (hooks/pre-commit)
+```
+
+Then add the workspace-level instructions (the installer plants the HARD RULE
+block into `CLAUDE.md` for you; this is the project-specific half):
+
+```bash
+cat >> CLAUDE.md << 'EOF'
+
 # Project Workspace
 
 ## Structure
-- app/           - The codebase (git repo)
+- app/           - The codebase (its own git repo, gitignored here)
 - knowledge-db/  - Project memory (KB)
 - 01-specs/      - Requirements and designs (read-only reference)
 - 02-meetings/   - Meeting notes and transcripts
@@ -277,9 +318,36 @@ cat > CLAUDE.md << 'EOF'
 EOF
 
 # Now always run your agent from my-project-workspace/
-cd my-project-workspace
 claude  # or cursor, copilot, etc.
 ```
+
+## What Enforcement Looks Like in a Workspace
+
+Workspace mode is not just a folder layout — it changes where the gates live,
+because the code and the memory are in different repositories.
+
+| Gate | In-repo mode | Workspace mode |
+|------|--------------|----------------|
+| Hard rules injected into the agent | `.claude/settings.json` UserPromptSubmit hook | same (workspace root) |
+| KB validity on session end | Stop + SubagentStop hooks | same |
+| Write-back on code commits | pre-commit in the same repo | pre-commit planted **inside each nested repo**, running the workspace KB's `kb check --staged --repo <nested>` |
+| Evidence of write-back | the KB shows up in the same diff | pending KB changes in the workspace, or a KB commit inside `writeback.grace_hours` (default 24) |
+| CI | `.github/workflows/kb-check.yml` on the repo | on the workspace repo; the app repo's own CI does not see this KB |
+
+Practical consequences:
+
+- **Record the entry before you commit code.** The nested hook looks for KB
+  movement in the workspace, so writing the entry after the commit is too late
+  for that commit.
+- **The nested hook is local.** It lives in that repo's `.git/hooks/`, which is
+  not committed, so each clone runs `install.sh --wizard` once. It is also
+  bypassable with `--no-verify`, exactly like any pre-commit hook.
+- **Cite nested sources with the nested path** (`app/src/thing.ts:12-40`). If you
+  pin `@rev`, the rev must exist in the repo that owns the file — `kb check`
+  resolves it there.
+- **If you never wire a nested repo**, workspace mode still gives you the agent
+  hooks and the planted rules, but nothing gates a `git commit` inside `app/`.
+  The installer says so rather than pretending otherwise.
 
 ---
 

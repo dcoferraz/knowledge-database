@@ -1,0 +1,380 @@
+#!/usr/bin/env python3
+"""kb-benchmark — what the KB costs, and what it saves, measured not asserted.
+
+Three measurements, kept separate because they have different evidence quality:
+
+  1. COST OF USING THE KB (measured exactly, from the KB itself)
+     The per-prompt rules injection, INDEX.md, and the average entry: what an
+     agent has to read to reuse an answer.
+
+  2. LOWER BOUND ON RE-DERIVING IT (measured from the KB's own citations)
+     Every entry cites `path:Lstart-Lend` sources (KB003). An agent that does
+     not have the entry must, at minimum, read those files to reach the same
+     finding. Real exploration costs more — greps, directory listings, files
+     opened and discarded — so this is a floor, never a ceiling.
+
+  3. WHAT SESSIONS ACTUALLY SPEND (measured from Claude Code transcripts)
+     Billed tokens per session, and how much of that was read-only discovery
+     (tool results from Read/Grep/Glob/Bash). Pass --transcripts <dir>.
+
+Token counts are characters / TOKENS_PER_CHAR unless a transcript supplies real
+numbers; the ratio is printed so every figure can be rescaled. No network, no
+dependencies beyond the Python 3 stdlib.
+
+Usage:
+  scripts/kb-benchmark                          # this repo's KB
+  scripts/kb-benchmark --kb-dir knowledge-db
+  scripts/kb-benchmark --transcripts ~/.claude/projects/<project-dir>
+  scripts/kb-benchmark --json
+"""
+
+import argparse
+import json
+import re
+import sys
+from pathlib import Path
+
+CHARS_PER_TOKEN = 4.0          # standard English/code approximation
+SOURCE_RE = re.compile(r"^(?P<path>[^:\s][^:]*):(?P<start>\d+)(-(?P<end>\d+))?(@(?P<rev>[0-9a-fA-F]{6,40}))?$")
+DISCOVERY_TOOLS = {"Read", "Grep", "Glob", "Bash", "Explore", "Task", "NotebookRead"}
+WRITE_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
+
+
+def tokens(text):
+    return int(len(text) / CHARS_PER_TOKEN)
+
+
+def file_tokens(path):
+    try:
+        return tokens(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return 0
+
+
+def range_tokens(path, start, end):
+    """Tokens in just the cited line range."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return 0
+    return tokens("\n".join(lines[max(0, start - 1):end]))
+
+
+# ---------------------------------------------------------------- the KB side
+
+def parse_front_matter(text):
+    lines = text.split("\n")
+    if not lines or lines[0].strip() != "---":
+        return {}
+    out, key = {}, None
+    for raw in lines[1:]:
+        if raw.strip() == "---":
+            break
+        m = re.match(r"^([A-Za-z_][A-Za-z0-9_]*):(.*)$", raw)
+        if m:
+            key, rest = m.group(1), m.group(2).strip()
+            if rest.startswith("[") and rest.endswith("]"):
+                inner = rest[1:-1].strip()
+                out[key] = [v.strip() for v in inner.split(",") if v.strip()]
+            elif rest:
+                out[key] = rest
+            else:
+                out[key] = []
+        elif re.match(r"^\s+-", raw) and key:
+            item = re.sub(r"^\s+-\s*", "", raw).strip()
+            if item and isinstance(out.get(key), list):
+                out[key].append(item)
+    return out
+
+
+def measure_kb(kb_dir, repo_root, buckets):
+    entries = []
+    for bucket in buckets:
+        bucket_dir = kb_dir / bucket
+        if not bucket_dir.is_dir():
+            continue
+        for path in sorted(bucket_dir.glob("*.md")):
+            text = path.read_text(encoding="utf-8", errors="replace")
+            front = parse_front_matter(text)
+            sources, missing = [], 0
+            for raw in front.get("sources", []) if isinstance(front.get("sources"), list) else []:
+                m = SOURCE_RE.match(raw)
+                if not m:
+                    continue
+                src = repo_root / m.group("path")
+                if src.is_file():
+                    start = int(m.group("start"))
+                    end = int(m.group("end")) if m.group("end") else start
+                    sources.append((src, start, end))
+                else:
+                    missing += 1
+            # Unique files only: two citations into one file are one read.
+            unique = {}
+            for src, start, end in sources:
+                unique.setdefault(src.resolve(), src)
+            # Two bounds, because "what re-deriving costs" has two honest floors:
+            #  - ranges: only the cited lines, i.e. if you already knew exactly
+            #    where to look. Nobody does — that knowledge IS the entry.
+            #  - files: every cited file opened in full, which is what actually
+            #    happens when you have to find the range yourself.
+            range_cost = sum(range_tokens(src, start, end) for src, start, end in sources)
+            file_cost = sum(file_tokens(src) for src in unique.values())
+            entries.append({
+                "entry": f"{bucket}/{path.name}",
+                "status": front.get("status", ""),
+                "entry_tokens": tokens(text),
+                "cited_files": len(unique),
+                "missing_sources": missing,
+                "source_tokens": file_cost,
+                "range_tokens": range_cost,
+            })
+    return entries
+
+
+# ---------------------------------------------------------------- transcripts
+
+def measure_transcripts(directory):
+    sessions = []
+    for path in sorted(Path(directory).glob("*.jsonl")):
+        billed = {"input": 0, "cache_creation": 0, "cache_read": 0, "output": 0}
+        discovery_tokens = 0
+        write_tokens = 0
+        tool_calls = {}
+        prompts = 0
+        tool_result_tokens = 0
+        try:
+            lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            msg = rec.get("message")
+            if rec.get("type") == "user" and isinstance(msg, dict):
+                body = msg.get("content")
+                if isinstance(body, str) and body.strip():
+                    prompts += 1
+                elif isinstance(body, list) and any(
+                        isinstance(b, dict) and b.get("type") == "text" for b in body):
+                    prompts += 1
+            if not isinstance(msg, dict):
+                continue
+            usage = msg.get("usage")
+            if isinstance(usage, dict):
+                billed["input"] += usage.get("input_tokens") or 0
+                billed["cache_creation"] += usage.get("cache_creation_input_tokens") or 0
+                billed["cache_read"] += usage.get("cache_read_input_tokens") or 0
+                billed["output"] += usage.get("output_tokens") or 0
+            content = msg.get("content")
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if not isinstance(block, dict):
+                    continue
+                if block.get("type") == "tool_use":
+                    name = block.get("name", "?")
+                    tool_calls[name] = tool_calls.get(name, 0) + 1
+                elif block.get("type") == "tool_result":
+                    body = block.get("content")
+                    if isinstance(body, list):
+                        body = "".join(part.get("text", "") for part in body
+                                       if isinstance(part, dict))
+                    if not isinstance(body, str):
+                        body = str(body or "")
+                    tool_result_tokens += tokens(body)
+        # Attribute tool-result payload by the mix of calls made: a session that
+        # only reads is all discovery, one that only edits is none.
+        discovery_calls = sum(n for name, n in tool_calls.items() if name in DISCOVERY_TOOLS)
+        write_calls = sum(n for name, n in tool_calls.items() if name in WRITE_TOOLS)
+        total_calls = discovery_calls + write_calls
+        if total_calls:
+            discovery_tokens = int(tool_result_tokens * discovery_calls / total_calls)
+            write_tokens = tool_result_tokens - discovery_tokens
+        fresh = billed["input"] + billed["cache_creation"]
+        # A token that enters context is billed once as fresh input, then again
+        # as a cache read on every later turn. That multiplier is why the cost
+        # of exploration is not the size of what you read: it is the size of
+        # what you read times how long you carry it.
+        amplification = round(sum(billed.values()) / fresh, 1) if fresh else 0
+        sessions.append({
+            "session": path.stem[:8],
+            "prompts": prompts,
+            "amplification": amplification,
+            "billed": billed,
+            "billed_total": sum(billed.values()),
+            "fresh_input": billed["input"] + billed["cache_creation"],
+            "tool_result_tokens": tool_result_tokens,
+            "discovery_tokens": discovery_tokens,
+            "write_tokens": write_tokens,
+            "discovery_calls": discovery_calls,
+            "write_calls": write_calls,
+        })
+    return sessions
+
+
+# ---------------------------------------------------------------- report
+
+def human(n):
+    if n >= 1_000_000:
+        return f"{n / 1_000_000:.2f}M"
+    if n >= 1_000:
+        return f"{n / 1_000:.1f}k"
+    return str(n)
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--kb-dir", default="knowledge-db")
+    ap.add_argument("--transcripts", help="a Claude Code project dir of *.jsonl transcripts")
+    ap.add_argument("--prompts-per-session", type=int, default=30,
+                    help="prompts assumed when pricing the per-prompt rules injection (default 30)")
+    ap.add_argument("--json", action="store_true", dest="as_json")
+    args = ap.parse_args()
+
+    kb_dir = Path(args.kb_dir).resolve()
+    if not (kb_dir / "kb.config.json").is_file():
+        print(f"kb-benchmark: no kb.config.json in {kb_dir}", file=sys.stderr)
+        return 2
+    repo_root = kb_dir.parent
+    config = json.loads((kb_dir / "kb.config.json").read_text(encoding="utf-8"))
+    buckets = list(config.get("buckets", {}))
+
+    entries = measure_kb(kb_dir, repo_root, buckets)
+    index_tokens = file_tokens(kb_dir / "INDEX.md")
+    agent_md_tokens = file_tokens(kb_dir / "AGENT.md")
+
+    # The per-prompt injection, measured by running the tool that produces it.
+    rules_tokens = 0
+    tool = kb_dir / "bin" / "kb"
+    if tool.is_file():
+        import subprocess
+        proc = subprocess.run([str(tool), "--kb-dir", str(kb_dir), "rules"],
+                              capture_output=True, text=True)
+        rules_tokens = tokens(proc.stdout)
+
+    sourced = [e for e in entries if e["cited_files"]]
+    total_entry = sum(e["entry_tokens"] for e in entries)
+    total_source = sum(e["source_tokens"] for e in sourced)
+    total_range = sum(e["range_tokens"] for e in sourced)
+    avg_entry = int(total_entry / len(entries)) if entries else 0
+    avg_source = int(total_source / len(sourced)) if sourced else 0
+    avg_range = int(total_range / len(sourced)) if sourced else 0
+
+    # Reuse economics. Two different clocks, and conflating them is how a
+    # benchmark like this lies:
+    #   ONCE per session : the rules injection + one INDEX.md scan
+    #   PER reused answer: one entry read, instead of re-deriving it
+    reuse_cost = avg_entry
+    reuse_saving = avg_source - reuse_cost
+    reuse_saving_narrow = avg_range - reuse_cost
+    session_overhead = rules_tokens * args.prompts_per_session + index_tokens
+
+    sessions = measure_transcripts(args.transcripts) if args.transcripts else []
+
+    payload = {
+        "chars_per_token": CHARS_PER_TOKEN,
+        "kb": {
+            "entries": len(entries),
+            "entries_with_sources": len(sourced),
+            "index_tokens": index_tokens,
+            "agent_md_tokens": agent_md_tokens,
+            "rules_injection_tokens": rules_tokens,
+            "avg_entry_tokens": avg_entry,
+            "avg_cited_source_tokens": avg_source,
+            "avg_cited_range_tokens": avg_range,
+            "total_entry_tokens": total_entry,
+            "total_cited_source_tokens": total_source,
+            "total_cited_range_tokens": total_range,
+        },
+        "reuse": {
+            "cost_per_reuse": reuse_cost,
+            "session_fixed_cost": session_overhead,
+            "floor_saving_per_reuse": reuse_saving,
+            "narrow_saving_per_reuse": reuse_saving_narrow,
+            "compression_ratio": round(avg_source / avg_entry, 1) if avg_entry else None,
+            "session_injection_overhead": session_overhead,
+            "reuses_to_break_even": (max(1, -(-session_overhead // reuse_saving))
+                                     if reuse_saving > 0 else None),
+        },
+        "per_entry": entries,
+        "sessions": sessions,
+    }
+
+    if args.as_json:
+        print(json.dumps(payload, indent=2))
+        return 0
+
+    print("kb-benchmark")
+    print(f"  KB: {kb_dir}")
+    print(f"  token estimates = characters / {CHARS_PER_TOKEN} (rescale any figure with this)")
+    print()
+    print("1. COST OF USING THE KB (measured from the KB)")
+    print(f"  rules injected per prompt      {rules_tokens:>8} tokens")
+    print(f"  INDEX.md (the scan)            {index_tokens:>8} tokens")
+    print(f"  AGENT.md (full rules, on demand){agent_md_tokens:>7} tokens")
+    print(f"  average entry                  {avg_entry:>8} tokens")
+    print(f"  -> fixed, once per session     {session_overhead:>8} tokens "
+          f"({rules_tokens} x {args.prompts_per_session} prompts + one INDEX scan)")
+    print(f"  -> per answer reused           {reuse_cost:>8} tokens (one entry)")
+    print()
+    print("2. COST OF RE-DERIVING IT (measured from each entry's citations, two bounds)")
+    print(f"  entries                        {len(entries):>8}")
+    print(f"  entries citing real files      {len(sourced):>8}")
+    print(f"  narrow: cited line ranges only {avg_range:>8} tokens per entry")
+    print(f"  wide:   cited files, in full   {avg_source:>8} tokens per entry")
+    print(f"  all cited ranges               {human(total_range):>8} tokens")
+    print(f"  all cited files                {human(total_source):>8} tokens")
+    print(f"  all entries                    {human(total_entry):>8} tokens")
+    if avg_entry:
+        print(f"  -> compression                 {avg_range / avg_entry:>7.1f}x narrow, "
+              f"{avg_source / avg_entry:.1f}x wide")
+    print()
+    print("3. NET")
+    print(f"  saved per reuse, narrow bound  {reuse_saving_narrow:>8} tokens")
+    print(f"  saved per reuse, wide bound    {reuse_saving:>8} tokens")
+    print(f"  fixed cost to recover          {session_overhead:>8} tokens per session")
+    for label, saving in (("narrow", reuse_saving_narrow), ("wide", reuse_saving)):
+        if saving > 0:
+            n = max(1, -(-session_overhead // saving))
+            print(f"  -> break-even ({label:<6})         {n:>8} reused answer(s) per session")
+        else:
+            print(f"  -> break-even ({label:<6})              never on this bound")
+    print("  narrow assumes you already know which lines to open — that knowledge IS")
+    print("  the entry. Wide assumes you open each cited file to find them. Real")
+    print("  exploration also greps, lists, and reads files it discards.")
+
+    if sessions:
+        print()
+        print("4. WHAT REAL SESSIONS SPENT (measured from Claude Code transcripts)")
+        active = [x for x in sessions if x["billed_total"]]
+        print(f"  {'session':<10}{'prompts':>8}{'discovery':>11}{'edits':>9}"
+              f"{'fresh in':>10}{'billed':>10}{'amplify':>9}")
+        for x in active:
+            print(f"  {x['session']:<10}{x['prompts']:>8}{human(x['discovery_tokens']):>11}"
+                  f"{human(x['write_tokens']):>9}{human(x['fresh_input']):>10}"
+                  f"{human(x['billed_total']):>10}{x['amplification']:>8.1f}x")
+        tot_disc = sum(x["discovery_tokens"] for x in active)
+        tot_fresh = sum(x["fresh_input"] for x in active)
+        tot_billed = sum(x["billed_total"] for x in active)
+        amp = tot_billed / tot_fresh if tot_fresh else 0
+        print(f"  {'TOTAL':<10}{sum(x['prompts'] for x in active):>8}{human(tot_disc):>11}"
+              f"{human(sum(x['write_tokens'] for x in active)):>9}"
+              f"{human(tot_fresh):>10}{human(tot_billed):>10}{amp:>8.1f}x")
+        print()
+        print("  discovery payload  = tool results from read-only calls (Read/Grep/Glob/Bash),")
+        print("                       apportioned by the read-vs-edit mix of each session")
+        print(f"  amplification      = billed / fresh input: each token that enters context is")
+        print(f"                       re-read on every later turn ({amp:.1f}x here)")
+        print(f"  carried cost of that discovery payload: up to "
+              f"{human(int(tot_disc * amp))} billed tokens")
+        if reuse_cost:
+            print(f"  same payload as KB reads: {tot_disc / reuse_cost:.0f} entries "
+                  f"({human(int(tot_disc * amp / reuse_cost))} entries at carried cost)")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

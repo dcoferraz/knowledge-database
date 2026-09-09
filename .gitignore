@@ -15,3 +15,11 @@ Thumbs.db
 # Claude Code: personal overrides stay local; project settings (hooks) are committed
 .claude/*
 !.claude/settings.json
+
+# Generated, self-healing caches: kb rebuilds them whenever entries change, and
+# they are per-machine. INDEX.md/INDEX.html stay tracked because KB007/KB012
+# enforce their freshness; nothing enforces these.
+**/.search-index.json
+**/.upgrade-cache.json
+__pycache__/
+*.pyc

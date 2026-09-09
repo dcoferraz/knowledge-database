@@ -15,7 +15,7 @@ _Topic → the ONE doc to read. Check these BEFORE exploring._
 | Topic | Canonical Source | Last Verified |
 |-------|------------------|---------------|
 | CLI tools | explorations/2026-08-20-cli-tool-architecture.md | 2026-08-20 |
-| KB enforcement rules (KB001-KB011) | knowledge-db/README.md | 2026-08-24 |
+| KB enforcement rules (KB001-KB015) | knowledge-db/README.md | 2026-09-04 |
 <!-- kb:manual:ready-answers:end -->
 
 ---
@@ -28,6 +28,7 @@ _Declared in `kb.config.json` (`lockstep`), enforced by KB009 in diff mode._
 |-------------------|------------------|
 | knowledge-db/bin/kb | tests/ |
 | knowledge-db/kb.config.json | knowledge-db/INDEX.md |
+| knowledge-db/bin/kb | knowledge-db/README.md |
 
 ---
 
@@ -48,6 +49,7 @@ _"What is true" — findings from investigating existing behavior_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-09-04 | Token benchmark: what the KB costs vs what re-deriving costs | verified | [area:tooling, area:test, layer:cli] | explorations/2026-09-04-token-cost-benchmark.md |
 | 2026-08-24 | Multi-runtime rule delivery parity (external feedback) | verified | [area:tooling, layer:enforcement] | explorations/2026-08-24-multi-runtime-rule-delivery-parity.md |
 | 2026-08-24 | Downstream upgrade field report: first real KB upgrade to v0.5.2 | verified | [area:tooling, layer:enforcement, layer:cli] | explorations/2026-08-24-downstream-upgrade-field-report.md |
 | 2026-08-20 | CLI Tool Architecture | verified | [area:tooling, layer:cli] | explorations/2026-08-20-cli-tool-architecture.md |
@@ -60,6 +62,9 @@ _"What we did" — how changes/features/fixes were implemented_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-09-08 | v0.9.0: indexed lookup — one file read, one process, never stale | verified | [area:tooling, layer:cli, area:test] | solutions/2026-09-08-indexed-lookup-fast-path.md |
+| 2026-09-05 | v0.8.0: cheap lookup path, reuse rule, and a README that states the purpose | verified | [area:tooling, area:release, layer:cli] | solutions/2026-09-05-lookup-path-and-purpose-v080.md |
+| 2026-09-04 | v0.7.0: setup wizard + the thirteen audit fixes | verified | [area:tooling, area:release, layer:enforcement] | solutions/2026-09-04-audit-fixes-v070.md |
 | 2026-08-24 | Upgrade experience: kb version, KB014, extra_root_files, UPGRADING.md | verified | [area:tooling, layer:cli, tech:python] | solutions/2026-08-24-upgrade-experience-v053.md |
 | 2026-08-24 | Prompt-injected rules and doc write-back (KB013) | verified | [area:tooling, layer:enforcement, tech:python, tech:bash] | solutions/2026-08-24-prompt-injected-rules-and-doc-writeback.md |
 | 2026-08-24 | Multi-runtime rule planting (belt-and-suspenders delivery) | verified | [area:tooling, layer:enforcement, tech:bash] | solutions/2026-08-24-multi-runtime-rule-planting.md |
@@ -89,6 +94,13 @@ _"Why we chose X" — design/architecture choices and trade-offs_
 
 | Date | Title | Status | Tags | Entry |
 |------|-------|--------|------|-------|
+| 2026-09-05 | Reuse ends the task, and lookup goes through kb find/show | verified | [area:tooling, layer:enforcement, layer:cli] | decisions/2026-09-05-reuse-ends-the-task.md |
+| 2026-09-04 | Workspace write-back gate: plant a hook inside each nested repo | verified | [area:tooling, layer:enforcement] | decisions/2026-09-04-workspace-gate-via-nested-hooks.md |
+| 2026-09-04 | Setup wizard lives in install.sh and runs on every install path | verified | [area:tooling, layer:cli] | decisions/2026-09-04-wizard-on-every-install-path.md |
+| 2026-09-04 | Update path: kb upgrade vendors tooling only, plus a passive notice | verified | [area:tooling, area:release, layer:cli] | decisions/2026-09-04-self-update-via-kb-upgrade.md |
+| 2026-09-04 | KB008 staleness is opt-in and warns by default | verified | [area:tooling, layer:enforcement] | decisions/2026-09-04-kb008-staleness-opt-in.md |
+| 2026-09-04 | Wizard answers live in .install.json, not in kb.config.json | verified | [area:tooling, layer:enforcement] | decisions/2026-09-04-install-state-outside-kb-config.md |
+| 2026-09-04 | kb-discover and kb-ingest folded into bin/kb instead of shipping scripts | verified | [area:tooling, layer:cli] | decisions/2026-09-04-discover-ingest-into-bin-kb.md |
 | 2026-08-24 | Write-back as a diff-driven trigger (KB011), not an end-of-task checklist | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-writeback-trigger-not-checklist.md |
 | 2026-08-24 | Python 3 stdlib (not bash, not Node) for the kb enforcement CLI | verified | [area:tooling, layer:cli, tech:python] | decisions/2026-08-24-python-stdlib-for-kb-cli.md |
 | 2026-08-24 | KB012 freshness via content fingerprint, not KB007-style byte check | verified | [area:tooling, layer:enforcement] | decisions/2026-08-24-kb012-fingerprint-vs-byte-check.md |

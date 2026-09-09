@@ -181,25 +181,78 @@ GOOD: Work -> Record -> Work -> Record -> Session ends -> Nothing lost
 
 ### Install (pick one)
 
-```bash
-# Claude Plugin Marketplace
-claude plugin marketplace add dcoferraz/knowledge-database
+Every path ends in the same setup wizard, so there is no half-wired install.
 
-# Manual
+```bash
+# 1. Claude Code plugin (skill + bootstrap)
+claude plugin marketplace add dcoferraz/knowledge-database
+claude plugin install knowledge-database@knowledge-database
+# then, from the repo you want a KB in:
+~/.claude/plugins/marketplaces/knowledge-database/knowledge-database/bootstrap.sh
+# (or just ask Claude: "bootstrap the knowledge database")
+
+# 2. Standalone, any agent
+git clone https://github.com/dcoferraz/knowledge-database.git /tmp/kb-src
+cd /path/to/your/repo
+/tmp/kb-src/scripts/init-knowledge-db.sh          # scaffold + wizard
+
+# 3. Skill only, no plugin manager
 git clone https://github.com/dcoferraz/knowledge-database.git
 cp -r knowledge-database/knowledge-database ~/.claude/skills/
-
-# Standalone (any agent)
-git clone https://github.com/dcoferraz/knowledge-database.git
-./scripts/init-knowledge-db.sh
 ```
 
-Then wire enforcement (idempotent; merges into existing settings/hooks/CI):
+The wizard asks three questions and installs exactly what you pick:
+
+```
+  1) How do you want to use the knowledge base?
+     [1] in-repo    KB committed inside this repo, shared with the team (default)
+     [2] workspace  KB lives above one or more nested app repos, alongside
+                    specs/meetings/references (the context-workspace pattern)
+     [3] local      personal memory, gitignored, never committed
+  2) Agent wiring   .claude/settings.json hooks? HARD RULE block in agent files?
+  3) Git-time gates pre-commit write-back gate? CI job?
+```
+
+Piped, in CI, or with `--yes` it asks nothing and installs the default set, so
+agents and scripts are unaffected:
 
 ```bash
-knowledge-db/install.sh          # rules planted in 6 agent runtime files + per-prompt injection + Stop hook + git pre-commit + CI job
-knowledge-db/install.sh --check  # audit: fails if any enforcement layer is missing
+knowledge-db/install.sh                   # wizard when interactive
+knowledge-db/install.sh --yes             # no questions, full default set
+knowledge-db/install.sh --mode workspace  # in-repo | workspace | local
+knowledge-db/install.sh --check           # audit: fails if a chosen layer is missing or stale
 ```
+
+Answers are recorded in `knowledge-db/.install.json`, so `--check` audits what
+this project asked for instead of a fixed ideal. Re-running is safe: it
+merges into existing settings/hooks/CI, never clobbers, and replants a rule
+block left over from an older version.
+
+### Updating
+
+```bash
+knowledge-db/bin/kb version           # "upstream: 0.8.0 available" when a newer tool is around
+knowledge-db/bin/kb upgrade --dry-run # what would change
+knowledge-db/bin/kb upgrade           # backup -> vendor tooling -> bump kb_version
+                                      # -> reindex -> replant rules -> kb check
+```
+
+`upgrade` vendors **tooling only** (`bin/kb`, `install.sh`, `AGENT.md`,
+`README.md`, `_TEMPLATE.md`) and never touches your entries, your
+`kb.config.json` vocabulary or the generated `INDEX.*`. It backs the KB up
+first, and prints any `kb check` findings as a migration list rather than
+failing. Sources are searched newest-first: plugin marketplace clone, sibling
+checkout, then a shallow clone (`--no-network` to stay offline, `--source
+<path>` to pin one).
+
+A KB installed **before v0.7.0** has no `upgrade` subcommand, so run the new
+tool against it — `bootstrap.sh` detects an existing KB and does this for you:
+
+```bash
+~/.claude/plugins/marketplaces/knowledge-database/knowledge-database/bootstrap.sh
+```
+
+Details and the manual fallback: [UPGRADING.md](UPGRADING.md).
 
 ### What Gets Created
 
@@ -209,8 +262,8 @@ knowledge-db/
 ├── INDEX.html         GENERATED human-facing view — double-click, browse entries + proof
 ├── AGENT.md           Portable agent hard rules (read-first, empty-KB, never-prompt)
 ├── kb.config.json     Single source of truth: buckets, statuses, tags, budgets
-├── bin/kb             Zero-dependency CLI: new / index / check / rules (rules KB001-KB015)
-├── install.sh         Idempotent enforcement installer
+├── bin/kb             Zero-dependency CLI: new / index / check / rules / discover / ingest (rules KB001-KB015)
+├── install.sh         Idempotent enforcement installer + setup wizard
 ├── _TEMPLATE.md       Reference layout (prefer `bin/kb new`)
 ├── explorations/      "How does X work?"
 ├── solutions/         "How we built Y"
@@ -222,29 +275,46 @@ knowledge-db/
 
 ## CLI Tools
 
+Everything an installed KB needs is in `knowledge-db/bin/kb` — one
+zero-dependency Python 3 stdlib CLI that ships inside the KB folder:
+
 ```bash
-# Enforcement CLI (zero dependencies, Python 3 stdlib)
+knowledge-db/bin/kb find "half cent rounding"  # search; prints hits only - START HERE
+knowledge-db/bin/kb show <entry>               # one entry's actionable core (summary + fix + sources)
 knowledge-db/bin/kb new error yaml-injection   # scaffold a valid entry, regen INDEX
 knowledge-db/bin/kb index                      # regenerate INDEX.md + INDEX.html from front-matter
 knowledge-db/bin/kb check                      # validate: "RULE_ID file: message", non-zero exit
 knowledge-db/bin/kb check --staged             # + lockstep (KB009) and write-back (KB011 code, KB013 docs) rules
+knowledge-db/bin/kb check --staged --repo app  # diff a NESTED repo against this KB (workspace mode)
 knowledge-db/bin/kb rules                      # hard-rules block for prompt-injection hooks
+knowledge-db/bin/kb rules --plant              # canonical HARD RULE block install.sh plants
+knowledge-db/bin/kb discover ./legacy-app      # scan a codebase into a tentative exploration entry
+knowledge-db/bin/kb ingest --input notes.txt   # turn a doc/transcript into a draft entry
+knowledge-db/bin/kb stop-hook                  # loop-safe check for Stop/SubagentStop hooks
+```
 
-# Helpers (bash)
-./scripts/init-knowledge-db.sh                 # initialize KB structure
-./scripts/kb-ingest --input notes.txt --auto   # ingest text/transcripts into KB entries
-./scripts/kb-discover ./legacy-app             # discover codebase boundaries
+Repo-side helpers (not part of an install):
+
+```bash
+./scripts/init-knowledge-db.sh                 # scaffold a KB, then run the wizard
+./scripts/kb-lint --fix                        # legacy health check, superseded by `kb check`
 ```
 
 ### Tool Overview
 
 | Tool | Purpose | Example |
 |------|---------|---------|
-| `bin/kb` | Scaffold, index, validate (rules KB001-KB015), print rules | `kb check --json` |
-| `install.sh` | Plant rules in 6 runtime files + agent hooks (Stop + per-prompt) + pre-commit + CI | `install.sh --check` |
-| `kb-ingest` | Parse text into KB entry | `cat notes.txt \| kb-ingest --auto` |
-| `kb-discover` | Scan codebase, generate exploration | `kb-discover ./legacy-app` |
+| `bin/kb` | Look up (`find`/`show`), scaffold, index, validate (rules KB001-KB015), print rules, discover, ingest | `kb find "auth token"` |
+| `install.sh` | Setup wizard + plant rules in 6 runtime files, agent hooks (Stop, SubagentStop, per-prompt), pre-commit, CI | `install.sh --check` |
+| `kb find` / `kb show` | The cheap lookup path: hits only, then one entry's fix | `kb show 2026-01-20-half-cent` |
+| `kb discover` | Scan a codebase into an exploration entry | `kb discover ./legacy-app` |
+| `kb ingest` | Turn text/transcripts into a draft entry | `cat notes.txt \| kb ingest` |
+| `kb-benchmark` | Measure what the KB costs vs what re-deriving it costs | `scripts/kb-benchmark --transcripts <dir>` |
 | `kb-lint` | Legacy health check (superseded by `bin/kb check`) | `kb-lint --fix` |
+
+`kb discover` and `kb ingest` were `scripts/kb-discover` and `scripts/kb-ingest`
+before v0.7.0 — scripts that no install ever copied, so the rules pointed at
+tools that were not there. The shims still work and forward to the CLI.
 
 Every rule has a stable ID and a conformance fixture (`tests/run-kb-tests.sh`).
 The full rule table lives in [knowledge-db/README.md](knowledge-db/README.md).
@@ -375,16 +445,19 @@ knowledge-database/
 ├── CLAUDE.md                  HARD RULE + enforcement mechanisms
 ├── .claude-plugin/
 │   └── marketplace.json       Plugin marketplace metadata
-├── knowledge-database/
-│   └── SKILL.md               Skill definition
+├── knowledge-database/        The published plugin/skill payload
+│   ├── SKILL.md               Skill definition
+│   └── bootstrap.sh           Finds a scaffold source, scaffolds, runs the wizard
 ├── scripts/
-│   ├── init-knowledge-db.sh   Initialize KB structure
-│   ├── kb-ingest              Parse text into entries
-│   ├── kb-discover            Scan codebase
-│   └── kb-lint                Lint KB for issues
+│   ├── init-knowledge-db.sh   Scaffold a KB, then hand over to the wizard
+│   ├── kb-benchmark           Token cost/saving measurement
+│   ├── kb-ingest              Shim -> `bin/kb ingest`
+│   ├── kb-discover            Shim -> `bin/kb discover`
+│   └── kb-lint                Legacy lint (superseded by `bin/kb check`)
 ├── .kb-templates/
 │   ├── README.md
-│   ├── INDEX.md
+│   ├── AGENT.md
+│   ├── kb.config.json
 │   └── _TEMPLATE.md
 └── roadmap/                   Future evolution plans
 ```
@@ -399,16 +472,19 @@ active still sees it):
 
 | Agent | Auto-loaded rule file (planted by install.sh) |
 |-------|-----------------------------------------------|
-| Claude Code | `CLAUDE.md` + per-prompt injection (UserPromptSubmit hook running `kb rules`) + Stop hook |
+| Claude Code | `CLAUDE.md` + per-prompt injection (UserPromptSubmit hook running `kb rules`) + Stop and SubagentStop hooks (`kb stop-hook`) |
 | Codex / agents-md runtimes | `AGENTS.md` |
 | GitHub Copilot | `.github/copilot-instructions.md` + `.github/instructions/kb.instructions.md` (`applyTo: '**'`) |
 | Cursor | `.cursor/rules/knowledge-db.mdc` (`alwaysApply: true`) |
 | Windsurf | `.windsurfrules` |
-| Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config |
+| Any other | Run `init-knowledge-db.sh` + add HARD RULE to agent config (`kb rules --plant` prints it) |
 
-Each target is marker-guarded (create-or-merge, idempotent); `install.sh --check`
-fails if any of them loses the block. To restrict targets, edit `RULE_TARGETS` in
-`install.sh`.
+Each target is marker-guarded (create-or-merge, idempotent). A rerun compares the
+planted block against `kb rules --plant` and replants it in place when it is
+stale, so a repo upgraded across versions does not keep old rule text.
+`install.sh --check` fails if a target loses the block or carries a stale one,
+and `kb check` reports the same as a KB014 warning. To restrict targets, edit
+`RULE_TARGETS` in `knowledge-db/bin/kb`.
 
 ---
 

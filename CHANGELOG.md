@@ -5,6 +5,195 @@ All notable changes to Knowledge Database will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## ![lynx](images/changelog/v0.9.0-lynx.svg) [0.9.0] - 2026-09-08
+
+v0.8.0 gave agents `kb find`, but it never consulted the index it ships: every
+search opened every entry, twice (`read_text` plus `parse_entry`) — 80 file reads
+for 40 entries. Profiling then showed the reads were not even the problem: ~55ms
+of a 58ms lookup was interpreter startup. Both are fixed, and the fast path is
+now the documented one.
+
+### Added
+- **`.search-index.json`** — a generated search index (title, tags, slug, status,
+  summary, cited paths) written by `kb index`. `kb find` reads that ONE file
+  instead of N entries. Dot-prefixed, so KB002 ignores it. Fingerprinted by
+  entry stats: a hand-edited or newly cloned KB rebuilds it automatically rather
+  than serving a stale answer.
+- **`kb find --deep`** — force a body scan. It also happens automatically when
+  the index yields nothing, and the output says so, so recall never drops
+  silently: a term living only in a body section is still found.
+- **`kb find -s` / `--show`** — hits plus the top hit's actionable core in one
+  invocation. Measured: `find` then `show` cost 105ms; `find -s` costs 55ms,
+  because each `kb` call pays ~55ms of Python startup.
+
+### Changed
+- **Lazy imports.** `shutil`, `subprocess`, `tempfile`, `io` and `contextlib`
+  now load inside the functions that need them (upgrade, git access, the stop
+  hook). The lookup path imports none of them.
+- **`parse_text()`** split out of `parse_entry()`, so a caller holding the file
+  contents no longer re-reads the file. `find` and `show` are single-read.
+- The rules now name the one-call path — `kb find "<keywords>" -s` — and rule out
+  `ls`, `grep -r` and full INDEX.md reads explicitly. The injected block got
+  *smaller* doing it: 238 tokens, against 241 in v0.8.0.
+
+### Measured
+
+| | 40-entry KB | 1,000-entry KB |
+|---|---|---|
+| startup floor (`kb version`) | 53ms | 56ms |
+| `kb find`, index hit | 54ms (1 read) | 59ms (1 read) |
+| `kb find --deep` | 62ms | 108ms (1,000 reads) |
+| body-only term (auto fallback) | — | 86ms, found |
+| `find` + `show` as two calls | 105ms | — |
+| `find -s`, one call | 55ms | — |
+
+At 1,000 entries the index cuts search work from ~52ms to ~3ms. At 40 entries it
+saves ~4ms and startup dominates — which is why `-s` and the lazy imports matter
+more than the index for a small KB, and the index matters more as it grows.
+
+## ![heron](images/changelog/v0.8.0-heron.svg) [0.8.0] - 2026-09-05
+
+A three-arm experiment (same bug twice, with and without the KB, plus a control)
+measured what reuse actually costs. The KB-equipped agent cost MORE than the
+control, and the trace showed why: nothing in the rules told an agent what
+"done" looks like when the KB already had the answer, so it re-authored one; and
+the documented lookup path was "read INDEX.md", which is thousands of tokens
+before you reach the answer. Both are fixed here.
+
+### Added
+- **`kb find "<keywords>"`** — searches titles, tags, slugs and bodies and prints
+  only the hits (entry, status, title, summary, sources). Measured against this
+  repo's KB: 134-360 tokens versus 2,360 to read `INDEX.md`.
+- **`kb show <entry>`** — prints an entry's actionable core (summary, fix,
+  prevention, sources) rather than the whole file: 279 tokens versus 709.
+  `--all` for the verbatim entry, `--lines N` to cap each section.
+  Together: **a reuse costs ~400-650 tokens instead of ~3,000 (79-87% less).**
+- **Rule 2, REUSE ENDS IT** — if an entry already answered the task, it is
+  finished by refreshing THAT entry (bump `last_verified` with fresh proof, or
+  add a one-line reuse note), never by authoring a duplicate. Touching the
+  reused entry already satisfies KB011/KB013; nothing had ever said so.
+
+### Changed
+- The injected rules now lead with `kb find` / `kb show` and explicitly forbid
+  opening `ls`, `find` or all of `INDEX.md` first — the waste seen in the trace.
+  Rewritten to stay the same size: 241 tokens per prompt, against 236 before.
+- `AGENT.md` gains "LOOK UP FIRST (and cheaply)" with the measured costs, a
+  "REUSE ENDS THE TASK" section, and the instruction to state a fix as a diff or
+  `file:line` list so the next agent need not reopen the modules.
+- **The KB README now says what the thing is FOR** — convergence, proof,
+  citations that audit the code, the "why", prevention, continuity — plus where
+  it does *not* pay (facts one grep away, solo short projects, fast-churning
+  code) and what it costs. The old header claim ("never investigate the same
+  thing twice") promised token savings the measurements do not support at small
+  scale; the honest version is that agents converge on one answer and can show
+  the proof, with token savings as a conditional benefit.
+
+## ![otter](images/changelog/v0.7.0-otter.svg) [0.7.0] - 2026-09-04
+
+An end-to-end audit of v0.6.0 against Claude Code — installing it fresh, in a
+non-git workspace, through the plugin, and reading the docs as a new user —
+turned up thirteen findings. Everything mechanically enforced worked; everything
+at the edges did not. This release fixes all of them, and the installer now asks
+how you want to use the KB instead of assuming.
+
+### Added
+- **Setup wizard.** `install.sh` run in a terminal asks three questions —
+  layout (`in-repo` / `workspace` / `local`), agent wiring, git-time gates — and
+  installs exactly that. Answers are recorded in `knowledge-db/.install.json`
+  (not in `kb.config.json`, which projects put under lockstep rules), so
+  `install.sh --check` audits what the project asked for instead of a fixed
+  ideal. Piped, in CI, or with `--yes` it asks nothing and
+  installs the default set. Flags: `--mode`, `--wizard`, `--yes`, `--no-ci`,
+  `--no-git-hooks`, `--no-agent-hooks`, `--no-rule-files`.
+  Every install path (`init-knowledge-db.sh`, the plugin's `bootstrap.sh`,
+  a bare `install.sh`) now ends in the same wizard, so there is no half-wired
+  install.
+- **`kb discover <dir>` and `kb ingest`** are part of the CLI that ships inside
+  every KB folder. AGENT.md had told agents to run `scripts/kb-discover` and
+  `scripts/kb-ingest` since v0.2.0, but no install ever copied those scripts —
+  the rules pointed at tools that were not there. Both now also emit entries
+  that pass `kb check` unchanged (tags filtered to the declared vocabulary,
+  sources cited as `path:line`, no template residue); the old scripts remain as
+  forwarding shims.
+- **`kb stop-hook`**: the loop-safe wrapper the Stop hook runs. Exit 2 makes
+  Claude Code hand the findings back to the model and keep working, but the hook
+  payload's `stop_hook_active` is honored, so a finding the model cannot fix
+  reports once instead of looping forever.
+- **`SubagentStop` hook**: work delegated to a subagent is held to the same
+  standard as work in the main thread. Only `Stop` was wired before.
+- **Workspace-mode write-back gate.** In the context-workspace pattern the app
+  lives in a nested repo the workspace ignores, so the KB could never appear in
+  that repo's diff and KB011/KB013 silently passed forever. `install.sh --mode
+  workspace` now plants a hook inside each nested repo running
+  `kb check --staged --repo <that repo>`; evidence of write-back is pending KB
+  changes in the workspace, or a KB commit inside `writeback.grace_hours`
+  (default 24).
+- **`kb upgrade` + an update notice — an actual update path.** Until now the
+  only way to move an installed KB to a newer version was the manual 8-step
+  walkthrough in UPGRADING.md, and nothing ever told you a new version existed:
+  `kb version`/KB014 only compared the vendored tool against your own config,
+  and `claude plugin update` refreshes the plugin payload while leaving the
+  `knowledge-db/` folder — where the tool actually lives — untouched.
+  `kb upgrade` backs the KB up, vendors tooling only (`bin/kb`, `install.sh`,
+  `AGENT.md`, `README.md`, `_TEMPLATE.md`), bumps `kb_version`, regenerates the
+  index, reruns `install.sh` (so stale rule blocks are replanted and hooks
+  migrated), and prints `kb check` findings as a migration list instead of
+  failing. `--dry-run`, `--source`, `--no-network`, `--no-install`, `--force`
+  and `--strict` are all supported. Sources are resolved newest-first (plugin
+  marketplace clone, sibling checkout, then a shallow clone), never
+  first-found. `kb version` now reports an available update from local
+  checkouts, `kb version --check` probes upstream, and `kb check` carries the
+  same notice as a warning-only KB014 line — neither ever blocks, and `check`
+  stays read-only.
+- **`bootstrap.sh` is get-or-refresh.** With no KB it scaffolds and runs the
+  wizard; with a KB present it upgrades the tooling in place. That is the only
+  way to update an install from before v0.7.0, whose `bin/kb` has no `upgrade`
+  subcommand and so cannot update itself.
+- **`kb rules --plant` / `--targets`**: the canonical HARD RULE block and the
+  runtime-file list, generated by the tool.
+- **`knowledge-database/bootstrap.sh`** in the plugin payload. The published
+  plugin ships the skill only, so the skill's old instruction ("copy the FULL
+  knowledge-db/ skeleton", including the 1000-line CLI) had no source to copy
+  from. The script finds one — the plugin's marketplace clone, a sibling
+  checkout, else a shallow clone — and hands over to the wizard.
+
+### Changed
+- **Planted rule blocks are refreshed, not frozen.** The marker guard that made
+  planting idempotent also froze the text: a repo upgraded across versions kept
+  whatever an old installer wrote, while `install.sh --check` reported "IN
+  PLACE". The block now comes from `kb rules --plant` and a stale region is
+  replanted in place; `--check` names stale files, and KB014 warns about them.
+- **KB008 (staleness) is opt-in and warns by default.** It used to fail hard at
+  90 days, so a KB written on one day began blocking every commit and every
+  agent Stop hook on the same later day, all at once. No `staleness_days.verified`
+  in the config means nothing expires; a declared budget warns; `"mode": "error"`
+  restores the gate. Shipped configs declare no budget.
+- **KB003 resolves `@rev` in the repo that owns the file.** A pinned source
+  inside a nested repo used to produce no drift warning ever, because the
+  workspace-level `git diff` returns empty for untracked nested paths.
+- **`install.sh` survives a non-git project.** It used to die at
+  `git config core.hooksPath` with `fatal: not in a git directory` (exit 128)
+  under `set -e`, half-installed, with the CI and rule-planting layers never
+  reached and the report never printed — and every rerun died at the same line,
+  so those layers could never be repaired. This is exactly the shape ADVANCED.md
+  recommends for a context workspace. Git-time layers are now skipped with a
+  reason, and the report prints from an EXIT trap.
+- **`supersede_with_consent` is a real switch.** It was documented in CLAUDE.md
+  and implemented nowhere; it now lives in `kb.config.json` and `kb rules`
+  injects the consent wording into every prompt when set.
+- Documentation: ADVANCED.md's workspace recipe now creates a git repo and runs
+  the wizard (it previously produced a workspace with zero enforcement layers),
+  and its example decision entry passes `kb check` (it failed KB002 and KB004);
+  the upgrade guide covers replanting and the KB008 change; stale `KB001-KB011`
+  / `KB001-KB013` rule ranges are corrected, and the planted range is generated
+  from the tool so it cannot drift again.
+
+### Removed
+- `hooks/kb-session-check.sh`: referenced by nothing, depended on `jq` against
+  the project's zero-dependency claim, and emitted
+  `hookSpecificOutput.additionalContext` for the Stop event, which is not a
+  Stop-hook field. `kb stop-hook` replaces the idea properly.
+
 ## ![toucan](images/changelog/v0.6.0-toucan.svg) [0.6.0] - 2026-08-24
 
 ### Added

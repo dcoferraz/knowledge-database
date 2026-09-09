@@ -3,14 +3,23 @@
 
 This repo keeps durable memory in `knowledge-db/`. For EVERY task:
 
-1. **ALWAYS READ FIRST** — check `knowledge-db/INDEX.md` before exploring; reuse verified entries.
-2. **EMPTY KB** — if no (relevant) entries exist, say so and suggest either a codebase
-   exploration to seed it, or manual document/context input to ingest. Then continue the task.
-3. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,
+1. **LOOK UP FIRST** — one call: `knowledge-db/bin/kb find "<keywords>" -s` (hits plus the top
+   hit's fix). Start there, not with `ls`, `grep` or a full read of `INDEX.md` — the search
+   reads a generated index, so it stays one file read however large the KB grows. A
+   `verified` entry is proven: apply it instead of re-deriving it.
+2. **REUSE ENDS THE TASK** — if an entry already answered it, you are done when you refresh
+   THAT entry: bump `last_verified` with fresh proof, or add a one-line reuse note. Never
+   author a duplicate of an entry you just used — the write-back costs more than the lookup
+   saved, and it splits one answer into two.
+3. **EMPTY KB** — if no (relevant) entries exist, say so and suggest either a codebase
+   exploration to seed it (`knowledge-db/bin/kb discover <dir>`), or manual document/context
+   input to ingest (`knowledge-db/bin/kb ingest`). Then continue the task.
+4. **NEVER PROMPT, NEVER WITHHOLD** — create, update, and supersede KB entries autonomously,
    as insights occur. Superseding a verified entry needs a stated reason and a `related:`
    link to the replacement — never permission.
-4. **WRITE BACK** — non-trivial work (search, multi-file reads, debugging, decisions) ends
-   with KB entries. `knowledge-db/bin/kb check` must exit 0.
+5. **WRITE BACK NEW KNOWLEDGE** — work the KB did not already hold (search, multi-file reads,
+   debugging, decisions) ends with an entry, stating the fix as a diff or `file:line` list.
+   `knowledge-db/bin/kb check` must exit 0.
 
-Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB013): `knowledge-db/README.md`.
+Full rules: `knowledge-db/AGENT.md`. Rule table (KB001-KB015): `knowledge-db/README.md`.
 <!-- kb:agent-rules:end -->

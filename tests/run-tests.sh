@@ -151,6 +151,37 @@ run_test "runs on directory" "$ROOT_DIR/scripts/kb-discover $ROOT_DIR/scripts --
 
 echo ""
 
+# --- v0.7.0: one install path, shims forward to the CLI ---
+echo -e "${BLUE}Testing install path and CLI shims${NC}"
+
+run_test "init hands over to the installer" \
+    "$ROOT_DIR/scripts/init-knowledge-db.sh $TEMP_DIR/wired/knowledge-db 2>&1 | grep -q 'Wiring enforcement'"
+run_test "installed KB is wired (install.sh --check)" \
+    "$TEMP_DIR/wired/knowledge-db/install.sh --check"
+run_test "init --no-install scaffolds only" \
+    "$ROOT_DIR/scripts/init-knowledge-db.sh $TEMP_DIR/bare/knowledge-db --no-install 2>&1 | grep -q 'Next: run'"
+run_test "kb-discover shim forwards to bin/kb discover" \
+    "$ROOT_DIR/scripts/kb-discover $ROOT_DIR/scripts --summary --kb-dir $TEMP_DIR/wired/knowledge-db | grep -q 'kb discover:'"
+run_test "kb-ingest shim forwards to bin/kb ingest" \
+    "echo 'We decided to use Postgres because of joins.' | $ROOT_DIR/scripts/kb-ingest --dry-run --kb-dir $TEMP_DIR/wired/knowledge-db | grep -q 'decisions/'"
+run_test "discovered + ingested entries pass kb check" \
+    "$ROOT_DIR/scripts/kb-discover $ROOT_DIR/scripts --kb-dir $TEMP_DIR/wired/knowledge-db >/dev/null 2>&1 && $TEMP_DIR/wired/knowledge-db/bin/kb --kb-dir $TEMP_DIR/wired/knowledge-db check"
+
+echo ""
+
+# --- kb-benchmark ---
+echo -e "${BLUE}Testing kb-benchmark${NC}"
+
+run_test "shows help" "$ROOT_DIR/scripts/kb-benchmark --help"
+run_test "measures this repo's KB" \
+    "$ROOT_DIR/scripts/kb-benchmark --kb-dir $ROOT_DIR/knowledge-db | grep -q 'COST OF USING THE KB'"
+run_test "emits parseable json" \
+    "$ROOT_DIR/scripts/kb-benchmark --kb-dir $ROOT_DIR/knowledge-db --json | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d[\"kb\"][\"entries\"] > 0; assert d[\"reuse\"][\"cost_per_reuse\"] > 0'"
+run_test_fails "fails on a directory that is not a KB" \
+    "$ROOT_DIR/scripts/kb-benchmark --kb-dir $TEMP_DIR"
+
+echo ""
+
 # --- Summary ---
 echo -e "${BLUE}======================================${NC}"
 echo -e "${BLUE}Results: $PASSED/$TOTAL passed${NC}"
